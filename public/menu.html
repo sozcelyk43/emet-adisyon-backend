@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EMET LEZZET GÜNLERİ - MENÜ</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f9fafb; 
+        }
+        .category-section {
+             border: 1px solid #e5e7eb; 
+             transition: box-shadow 0.3s ease-in-out;
+        }
+         .category-section:hover {
+             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); 
+         }
+        .category-bg-ET-TAVUK { background-color: #fee2e2; border-left: 4px solid #f87171; } 
+        .category-bg-ATIŞTIRMALIK { background-color: #ffedd5; border-left: 4px solid #fb923c; } 
+        .category-bg-TATLI { background-color: #fce7f3; border-left: 4px solid #f472b6; } 
+        .category-bg-İÇECEK { background-color: #eff6ff; border-left: 4px solid #60a5fa; } 
+        .category-bg-ÇORBA { background-color: #fef9c3; border-left: 4px solid #facc15; } 
+        .category-bg-default { background-color: #f3f4f6; border-left: 4px solid #9ca3af; } 
+         .category-title {
+             display: flex;
+             align-items: center;
+             gap: 0.75rem; 
+         }
+         .category-title .icon-container { 
+            font-size: 1.5rem; 
+            line-height: 1;
+         }
+         .menu-item span:first-child { 
+             color: #374151; 
+         }
+         .menu-item span:last-child { 
+             color: #111827; 
+             font-weight: 500; 
+         }
+         #loadingMenuMessage.active {
+            display: flex;
+        }
+        #loadingMenuMessage {
+            display: none;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div class="container mx-auto p-4 md:p-8 max-w-3xl">
+        <header class="mb-10 text-center">
+            <h1 class="text-4xl font-bold text-blue-700 mb-2">EMET LEZZET GÜNLERİ</h1>
+            <h2 class="text-2xl font-semibold text-gray-700">MENÜ</h2>
+        </header>
+
+        <div id="loadingMenuMessage" class="fixed inset-0 bg-gray-900 bg-opacity-50 items-center justify-center z-50">
+            <p class="text-white text-xl">Menü yükleniyor...</p>
+        </div>
+
+        <div id="menuContainer" class="space-y-8"> 
+            <p class="text-center text-gray-500">Menü bilgisi bekleniyor...</p>
+        </div>
+    </div>
+
+<script>
+    // Render'daki uygulamanızın adını buraya yazın
+    const APP_NAME = "emet-adisyon"; // Örneğin: "emet-adisyon"
+    const WEBSOCKET_URL_MENU = `wss://${APP_NAME}.onrender.com`; 
+    let menuSocket;
+    let localProducts = []; // Sunucudan gelen ürünleri saklamak için
+
+    const menuContainer = document.getElementById('menuContainer');
+    const loadingMenuMessage = document.getElementById('loadingMenuMessage');
+
+    function formatPrice(price) {
+        if (typeof price !== 'number' || isNaN(price)) {
+            return '0 ₺'; 
+        }
+        const formatted = price.toFixed(2).replace('.', ',');
+        if (formatted.endsWith(',00')) {
+            return formatted.substring(0, formatted.length - 3) + ' ₺';
+        }
+        return formatted + ' ₺';
+    }
+
+    function sanitizeCategoryForCSS(categoryName) {
+        if (!categoryName) return 'default';
+        const turkishMap = { 'İ': 'I', 'ı': 'i', 'Ö': 'O', 'ö': 'o', 'Ü': 'U', 'ü': 'u', 'Ş': 'S', 'ş': 's', 'Ğ': 'G', 'ğ': 'g', 'Ç': 'C', 'ç': 'c' };
+        return categoryName
+            .replace(/[İıÖöÜüŞşĞğÇç]/g, match => turkishMap[match] || match) 
+            .replace(/&/g, 'AND') 
+            .replace(/\s+/g, '-') 
+            .replace(/[^a-zA-Z0-9-]/g, '') 
+            .toUpperCase(); 
+    }
+    
+    const categoryIcons = {
+        "ÇORBA": "🍲",
+        "ET - TAVUK": "🥩", 
+        "ATIŞTIRMALIK": "🥨", 
+        "İÇECEK": "🥤",
+        "TATLI": "🍰"
+    };
+    const defaultIcon = "🍽️"; 
+
+    function renderMenu() {
+        console.log("renderMenu çağrıldı, ürün sayısı:", localProducts.length);
+        menuContainer.innerHTML = ''; 
+        if (localProducts.length === 0) {
+            menuContainer.innerHTML = '<p class="text-center text-gray-500">Menüde henüz ürün bulunmuyor.</p>';
+            return;
+        }
+
+        const categories = {};
+        const categoryColors = { 
+            "ET - TAVUK": "category-bg-ET-TAVUK",
+            "ATIŞTIRMALIK": "category-bg-ATIŞTIRMALIK",
+            "TATLI": "category-bg-TATLI",
+            "İÇECEK": "category-bg-İÇECEK",
+            "ÇORBA": "category-bg-ÇORBA",
+        };
+        const defaultColor = "category-bg-default";
+
+        localProducts.forEach(product => {
+            const categoryKey = product.category; 
+            if (!categories[categoryKey]) {
+                categories[categoryKey] = [];
+            }
+            categories[categoryKey].push(product);
+        });
+
+        const categoryOrder = ["ÇORBA", "ET - TAVUK", "ATIŞTIRMALIK", "İÇECEK", "TATLI"];
+        
+        const sortedCategories = categoryOrder.filter(cat => categories[cat]); 
+
+        sortedCategories.forEach(category => {
+            const categorySection = document.createElement('div');
+            const bgColorClass = categoryColors[category] || defaultColor;
+            categorySection.className = `category-section mb-6 p-4 rounded-lg shadow-md ${bgColorClass}`; 
+
+            const categoryTitle = document.createElement('h3');
+            categoryTitle.className = 'category-title text-xl font-semibold mb-4 text-gray-800 border-b border-gray-300 pb-2';
+            categoryTitle.innerHTML = `
+                <span class="icon-container">${categoryIcons[category] || defaultIcon}</span>
+                <span>${category}</span>
+            `;
+            categorySection.appendChild(categoryTitle);
+
+            const ul = document.createElement('ul');
+            ul.className = 'space-y-2';
+            categories[category].sort((a, b) => a.name.localeCompare(b, 'tr')).forEach(product => {
+                const li = document.createElement('li');
+                li.className = 'menu-item flex justify-between items-center text-sm';
+                li.innerHTML = `
+                    <span class="text-gray-700">${product.name}</span>
+                    <span class="font-medium text-gray-900">${formatPrice(product.price)}</span>
+                `;
+                ul.appendChild(li);
+            });
+            categorySection.appendChild(ul);
+            menuContainer.appendChild(categorySection);
+        });
+    }
+
+    function connectMenuWebSocket() {
+        loadingMenuMessage.classList.add('active');
+        menuSocket = new WebSocket(WEBSOCKET_URL_MENU);
+
+        menuSocket.onopen = () => {
+            console.log("Menü WebSocket bağlantısı kuruldu.");
+            // Sunucudan güncel ürün listesini iste
+            menuSocket.send(JSON.stringify({ type: 'get_products' }));
+        };
+
+        menuSocket.onmessage = (event) => {
+            console.log("Menü WS'den mesaj alındı:", event.data);
+            let message;
+            try {
+                message = JSON.parse(event.data);
+            } catch (error) {
+                console.error("Menü WS JSON.parse hatası:", error);
+                return;
+            }
+
+            if (message.type === 'products_update' && message.payload && message.payload.products) {
+                localProducts = message.payload.products;
+                console.log("Menü ürünleri güncellendi:", localProducts);
+                renderMenu();
+                loadingMenuMessage.classList.remove('active');
+            }
+        };
+
+        menuSocket.onerror = (error) => {
+            console.error("Menü WebSocket hatası:", error);
+            menuContainer.innerHTML = '<p class="text-center text-red-500">Menü yüklenirken bir hata oluştu. Lütfen sayfayı yenileyin.</p>';
+            loadingMenuMessage.classList.remove('active');
+        };
+
+        menuSocket.onclose = () => {
+            console.log("Menü WebSocket bağlantısı kapandı.");
+            // İsteğe bağlı: Yeniden bağlanma denemesi eklenebilir
+            // loadingMenuMessage.classList.add('active');
+            // setTimeout(connectMenuWebSocket, 5000); // 5 saniye sonra tekrar dene
+        };
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        // Başlangıçta boş bir menü göster veya yükleniyor mesajı
+        renderMenu(); 
+        connectMenuWebSocket();
+    });
+</script>
+</body>
+</html>

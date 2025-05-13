@@ -1,0 +1,28 @@
+{
+  "name": "emet-adisyon-server",
+  "version": "1.0.0",
+  "description": "Emet Lezzet Günleri Adisyon Sunucusu",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "build": "pkg server.js --targets node18-win-x64 --assets ./public/**/* -o EmetAdisyonSunucu"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "dotenv": "^16.5.0",
+    "express": "^4.17.1",
+    "pg": "^8.16.0",
+    "ws": "^8.0.0"
+  },
+  "pkg": {
+    "assets": [
+      "./public/**/*"
+    ],
+    "scripts": []
+  },
+  "engines": {
+    "node": "18.x"
+  }
+}
