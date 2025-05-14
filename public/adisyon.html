@@ -1840,24 +1840,23 @@ window.handleAndroidBackButton = function() {
         appState.salesReport.sort((a, b) => (b.closingTimestamp || 0) - (a.closingTimestamp || 0));
 
         appState.salesReport.forEach(item => {
-            const itemTotal = parseFloat(item.total_item_price) || 0;
-            totalItems += item.quantity;
-            const itemTotal = parseFloat(item.total_item_price) || 0; 
+    const currentItemTotalPrice = parseFloat(item.total_item_price) || 0;
+    totalItems += parseInt(item.quantity, 10) || 0;
+    grandTotal += currentItemTotalPrice;
+    let itemName = item.item_name || 'Bilinmeyen';
 
-            let itemName = item.item_name || 'Bilinmeyen';
-            
-            const tr = document.createElement('tr');
+    const tr = document.createElement('tr');
     tr.className = 'border-b hover:bg-gray-50';
     tr.innerHTML = `
-        <td class="border p-2 whitespace-nowrap">${formatTimestamp(item.sale_timestamp)}</td> // Kapanış Zamanı için de sale_timestamp kullanılabilir veya ayrı bir alan bekleniyorsa JSON güncellenmeli. Şimdilik Ekleme Zamanı ile aynı kabul edelim.
-        <td class="border p-2">${item.table_name || 'Hızlı Satış'}</td> // YENİ: table_name
+        <td class="border p-2 whitespace-nowrap">${formatTimestamp(item.sale_timestamp)}</td>
+        <td class="border p-2">${item.table_name || 'Hızlı Satış'}</td>
         <td class="border p-2">${itemName}</td>
         <td class="border p-2 text-center">${item.quantity}</td>
-        <td class="border p-2 text-right">${formatPrice(parseFloat(item.item_price) || 0)}</td> // YENİ: item_price
-        <td class="border p-2 text-right">${formatPrice(itemTotal)}</td>
-        <td class="border p-2">${item.waiter_username || '-'}</td> // YENİ: waiter_username
+        <td class="border p-2 text-right">${formatPrice(parseFloat(item.item_price) || 0)}</td>
+        <td class="border p-2 text-right">${formatPrice(currentItemTotalPrice)}</td>
+        <td class="border p-2">${item.waiter_username || '-'}</td>
         <td class="border p-2">${item.description || '-'}</td>
-        <td class="border p-2 whitespace-nowrap">${formatTimestamp(item.sale_timestamp)}</td> // YENİ: sale_timestamp
+        <td class="border p-2 whitespace-nowrap">${formatTimestamp(item.sale_timestamp)}</td>
     `;
     tbody.appendChild(tr);
 });
