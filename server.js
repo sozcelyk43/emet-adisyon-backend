@@ -69,7 +69,7 @@ let users = [
     { id: 6, username: 'garson', password: 'gar.son', role: 'waiter' },
 ];
 
-let products = [ // Bu liste sabit kalacak veya başlangıçta yüklenecek
+let products = [
     { id: 1001, name: "İSKENDER - 120 GR", price: 275.00, category: "ET - TAVUK" },
     { id: 1002, name: "ET DÖNER EKMEK ARASI", price: 150.00, category: "ET - TAVUK" },
     { id: 1003, name: "ET DÖNER PORSİYON", price: 175.00, category: "ET - TAVUK" },
@@ -114,7 +114,7 @@ let products = [ // Bu liste sabit kalacak veya başlangıçta yüklenecek
 let tables = [];
 let nextTableIdCounter = 1;
 
-function initializeTables() { // Bu fonksiyon masaları bellekte oluşturmaya devam edecek
+function initializeTables() {
     tables = [];
     let currentId = 1;
     for (let i = 1; i <= 5; i++) {
@@ -174,16 +174,16 @@ function calculateTableTotal(order) {
     }, 0);
 }
 
-
 // --- Ana WebSocket Olay İşleyicisi ---
 wss.on('connection', (ws) => {
     console.log('Yeni bir istemci bağlandı (WebSocket).');
 
-    ws.on('message', async (messageAsString) => { // async yaptık çünkü DB işlemleri olacak
+    ws.on('message', async (messageAsString) => {
         let message;
         try {
             message = JSON.parse(messageAsString);
-            console.log('Alınan mesaj tipi:', message.type); // Sadece tipi loglayalım, payload uzun olabilir
+            // console.log('Alınan mesaj:', message); // Tüm payload'ı loglamak yerine sadece tipi loglayalım
+            console.log('Alınan mesaj tipi:', message.type);
         } catch (e) {
             console.error('Geçersiz JSON formatı:', messageAsString);
             ws.send(JSON.stringify({ type: 'error', payload: { message: 'Geçersiz JSON formatı.' } }));
@@ -194,8 +194,8 @@ wss.on('connection', (ws) => {
         let currentUserInfo = clients.get(ws);
 
         switch (type) {
-            case 'login':
-                const user = users.find(u => u.username === payload.username && u.password === payload.password); // Şifreler hash'lenmeli!
+            case 'login': // Bellekten çalışır
+                const user = users.find(u => u.username === payload.username && u.password === payload.password);
                 if (user) {
                     for (let [client, info] of clients.entries()) {
                         if (info.id === user.id && client !== ws) { client.terminate(); clients.delete(client); }
@@ -209,7 +209,7 @@ wss.on('connection', (ws) => {
                 }
                 break;
 
-            case 'reauthenticate':
+            case 'reauthenticate': // Bellekten çalışır
                  if (payload && payload.user && payload.user.id) {
                      const foundUser = users.find(u => u.id === payload.user.id && u.username === payload.user.username);
                      if (foundUser) {
@@ -224,11 +224,11 @@ wss.on('connection', (ws) => {
                  } else { ws.send(JSON.stringify({ type: 'error', payload: { message: 'Eksik oturum bilgisi.' } }));}
                 break;
 
-            case 'get_products':
+            case 'get_products': // Bellekten çalışır
                 ws.send(JSON.stringify({ type: 'products_update', payload: { products: products } }));
                 break;
 
-            case 'add_order_item': // Bu, siparişi bellekteki masanın order dizisine ekler
+            case 'add_order_item': // Siparişi bellekteki masanın order dizisine ekler
                 if (!currentUserInfo) { ws.send(JSON.stringify({ type: 'error', payload: { message: 'Giriş yapmalısınız.' } })); return; }
                 const tableToAdd = tables.find(t => t.id === payload.tableId);
                 const receivedProductId = parseInt(payload.productId, 10);
@@ -242,10 +242,10 @@ wss.on('connection', (ws) => {
                         existingItem.waiterUsername = currentUserInfo.username;
                         existingItem.timestamp = Date.now();
                     } else {
-                        tableToAdd.order.push({ // ÖNEMLİ: sales_log için gerekli tüm bilgileri buraya ekleyin
+                        tableToAdd.order.push({
                             productId: receivedProductId,
-                            name: productToAdd.name, // Ürün adını ekle
-                            category: productToAdd.category, // Kategori ekle
+                            name: productToAdd.name,       // sales_log için gerekli
+                            category: productToAdd.category, // sales_log için gerekli
                             quantity: payload.quantity,
                             priceAtOrder: productToAdd.price,
                             description: payload.description || '',
@@ -260,14 +260,14 @@ wss.on('connection', (ws) => {
                 } else { ws.send(JSON.stringify({ type: 'order_update_fail', payload: { error: 'Geçersiz masa, ürün veya adet.' } })); }
                 break;
 
-            case 'add_manual_order_item': // Bu da bellekteki siparişe ekler
+            case 'add_manual_order_item': // Siparişi bellekteki masanın order dizisine manuel ekler
                  if (!currentUserInfo || currentUserInfo.role !== 'cashier') { ws.send(JSON.stringify({ type: 'error', payload: { message: 'Yetkiniz yok.' } })); return; }
                 const tableForManual = tables.find(t => t.id === payload.tableId);
                 if (tableForManual && payload.name && typeof payload.price === 'number' && payload.price >= 0 && typeof payload.quantity === 'number' && payload.quantity > 0) {
                      tableForManual.order.push({
                          // productId: null, // Manuel ürün
-                         name: payload.name, // Bu zaten geliyor
-                         category: payload.category || 'Diğer', // Bu da geliyor
+                         name: payload.name,
+                         category: payload.category || 'Diğer', // sales_log için gerekli
                          quantity: payload.quantity,
                          priceAtOrder: payload.price,
                          description: payload.description || '',
@@ -281,8 +281,7 @@ wss.on('connection', (ws) => {
                 } else { ws.send(JSON.stringify({ type: 'manual_order_update_fail', payload: { error: 'Geçersiz manuel ürün bilgileri.' } }));}
                 break;
 
-            // --- SATIŞ KAYIT VE RAPORLAMA İÇİN GÜNCELLENMİŞ CASE'LER ---
-            case 'close_table':
+            case 'close_table': // SATIŞLARI VERİTABANINA KAYDEDER
                 if (!currentUserInfo || currentUserInfo.role !== 'cashier') {
                     ws.send(JSON.stringify({ type: 'error', payload: { message: 'Bu işlem için yetkiniz yok.' } }));
                     return;
@@ -337,7 +336,7 @@ wss.on('connection', (ws) => {
                 }
                 break;
 
-            case 'complete_quick_sale':
+            case 'complete_quick_sale': // HIZLI SATIŞLARI VERİTABANINA KAYDEDER
                 if (!currentUserInfo || currentUserInfo.role !== 'cashier') {
                     ws.send(JSON.stringify({ type: 'error', payload: { message: 'Yetkiniz yok.' } }));
                     return;
@@ -351,15 +350,20 @@ wss.on('connection', (ws) => {
                         await clientQuickSaleDB.query('BEGIN');
                         for (const item of payload.items) {
                             const totalItemPrice = (item.priceAtOrder || 0) * item.quantity;
+                            // Hızlı satıştaki ürünler için kategori bilgisi, eğer ürün menüdeyse oradan alınabilir
+                            // veya payload.items içinde item.category olarak gelmeli.
+                            const productDetails = products.find(p => p.id === item.productId); // Bellekten kontrol
+                            const category = item.category || (productDetails ? productDetails.category : 'Hızlı Satış');
+
                             await clientQuickSaleDB.query(
                                 `INSERT INTO sales_log (item_name, item_price, quantity, total_item_price, category, description, waiter_username, table_name, sale_timestamp)
                                  VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
                                 [
-                                    item.name || 'Bilinmeyen Ürün',
+                                    item.name || (productDetails ? productDetails.name : 'Bilinmeyen Ürün'),
                                     item.priceAtOrder || 0,
                                     item.quantity || 0,
                                     totalItemPrice,
-                                    item.category || 'Hızlı Satış', // Hızlı satıştaki ürünlerin kategorisi de item objesinde olmalı
+                                    category,
                                     item.description || null,
                                     processedByQuickSale,
                                     'Hızlı Satış',
@@ -382,7 +386,7 @@ wss.on('connection', (ws) => {
                 }
                 break;
 
-            case 'get_sales_report':
+            case 'get_sales_report': // RAPORU VERİTABANINDAN ÇEKER
                  if (!currentUserInfo || currentUserInfo.role !== 'cashier') {
                     ws.send(JSON.stringify({ type: 'error', payload: { message: 'Rapor görüntüleme yetkiniz yok.' } }));
                     return;
@@ -401,7 +405,7 @@ wss.on('connection', (ws) => {
                 }
                 break;
 
-            case 'export_completed_orders':
+            case 'export_completed_orders': // DIŞA AKTARMA İÇİN VERİTABANINDAN ÇEKER
                 if (currentUserInfo && currentUserInfo.role === 'cashier') {
                     try {
                         const exportResult = await pool.query(
@@ -419,7 +423,6 @@ wss.on('connection', (ws) => {
                     ws.send(JSON.stringify({ type: 'error', payload: { message: 'Bu işlem için yetkiniz yok.' } }));
                 }
                 break;
-            // --- SATIŞ KAYIT VE RAPORLAMA İÇİN GÜNCELLENMİŞ CASE'LER BİTTİ ---
 
             case 'logout':
                 if (clients.has(ws)) {
@@ -429,24 +432,122 @@ wss.on('connection', (ws) => {
                 }
                 break;
 
-            // Diğer orijinal case'leriniz (ürün yönetimi, masa yönetimi, garson yönetimi vb.)
+            // Diğer case'leriniz (add_product_to_main_menu, update_main_menu_product, add_table, vb.)
             // olduğu gibi kalacak ve bellekteki verilerle çalışacaktır.
-            // İhtiyaç duyarsanız buraya kopyalayıp yapıştırabilirsiniz.
-            // Örneğin:
+            // GitHub'daki orijinal server.js dosyanızdan bu kısımları alıp buraya ekleyebilirsiniz.
+            // Örnek birkaç tanesi:
             case 'add_product_to_main_menu':
                 if (!currentUserInfo || currentUserInfo.role !== 'cashier') { ws.send(JSON.stringify({ type: 'error', payload: { message: 'Yetkiniz yok.' } })); return; }
                 if (payload && payload.name && typeof payload.price === 'number' && payload.price >= 0 && payload.category) {
                     const maxId = products.reduce((max, p) => p.id > max ? p.id : max, 0);
                     const newProductId = maxId < 7000 ? 7001 : maxId + 1;
                     const newProduct = { id: newProductId, name: payload.name.toUpperCase(), price: parseFloat(payload.price), category: payload.category.toUpperCase() };
-                    products.push(newProduct); // Belleğe ekle
+                    products.push(newProduct);
                     console.log(`Yeni ürün (bellek): ${newProduct.name}`);
                     broadcastProductsUpdate();
                     ws.send(JSON.stringify({ type: 'main_menu_product_added', payload: { product: newProduct, message: `${newProduct.name} menüye eklendi.` } }));
                 } else { ws.send(JSON.stringify({ type: 'error', payload: { message: 'Eksik ürün bilgisi.' } }));}
                 break;
-            // ... Diğer case'leri (update_main_menu_product, add_table, vs.) buraya ekleyin ...
-            // remove_order_item bellekteki masadan silme işlemini yapmaya devam edecek.
+            case 'update_main_menu_product':
+                if (!currentUserInfo || currentUserInfo.role !== 'cashier') { ws.send(JSON.stringify({ type: 'error', payload: { message: 'Yetkiniz yok.' } })); return; }
+                if (payload && payload.id && payload.name && typeof payload.price === 'number' && payload.price >= 0 && payload.category) {
+                    const productIndex = products.findIndex(p => p.id === parseInt(payload.id));
+                    if (productIndex > -1) {
+                        products[productIndex].name = payload.name.toUpperCase();
+                        products[productIndex].price = parseFloat(payload.price);
+                        products[productIndex].category = payload.category.toUpperCase();
+                        broadcastProductsUpdate();
+                        ws.send(JSON.stringify({ type: 'main_menu_product_updated', payload: { product: products[productIndex], message: `${products[productIndex].name} güncellendi.` } }));
+                    } else { ws.send(JSON.stringify({ type: 'error', payload: { message: 'Ürün bulunamadı.' } }));}
+                } else { ws.send(JSON.stringify({ type: 'error', payload: { message: 'Eksik ürün bilgisi.' } }));}
+                break;
+             case 'add_table':
+                if (!currentUserInfo || currentUserInfo.role !== 'cashier') { ws.send(JSON.stringify({ type: 'error', payload: { message: 'Bu işlem için yetkiniz yok.' } })); return; }
+                if (payload && payload.name && payload.name.trim() !== "") {
+                    const newTable = { id: `masa-${nextTableIdCounter++}`, name: payload.name.trim(), type: payload.type || 'bahce', status: "boş", order: [], total: 0, waiterId: null, waiterUsername: null };
+                    tables.push(newTable); broadcastTableUpdates();
+                    ws.send(JSON.stringify({ type: 'table_operation_success', payload: { message: `${newTable.name} eklendi.` } }));
+                } else { ws.send(JSON.stringify({ type: 'table_operation_fail', payload: { error: 'Geçersiz masa adı.' } }));}
+                break;
+            case 'edit_table_name':
+                if (!currentUserInfo || currentUserInfo.role !== 'cashier') { ws.send(JSON.stringify({ type: 'error', payload: { message: 'Bu işlem için yetkiniz yok.' } })); return; }
+                if (payload && payload.tableId && payload.newName && payload.newName.trim() !== "") {
+                    const tableToEdit = tables.find(t => t.id === payload.tableId);
+                    if (tableToEdit) {
+                        tableToEdit.name = payload.newName.trim(); broadcastTableUpdates();
+                        ws.send(JSON.stringify({ type: 'table_operation_success', payload: { message: `Masa adı ${tableToEdit.name} olarak güncellendi.` } }));
+                    } else { ws.send(JSON.stringify({ type: 'table_operation_fail', payload: { error: 'Masa bulunamadı.' } }));}
+                } else { ws.send(JSON.stringify({ type: 'table_operation_fail', payload: { error: 'Eksik bilgi.' } }));}
+                break;
+            case 'delete_table':
+                if (!currentUserInfo || currentUserInfo.role !== 'cashier') { ws.send(JSON.stringify({ type: 'error', payload: { message: 'Yetkiniz yok.' } })); return; }
+                if (payload && payload.tableId) {
+                    const tableIndexToDelete = tables.findIndex(t => t.id === payload.tableId);
+                    if (tableIndexToDelete > -1) {
+                        if (tables[tableIndexToDelete].status === 'dolu' && tables[tableIndexToDelete].order.length > 0) {
+                            ws.send(JSON.stringify({ type: 'table_operation_fail', payload: { error: `"${tables[tableIndexToDelete].name}" dolu olduğu için silinemez.` } })); return;
+                        }
+                        const deletedTableName = tables[tableIndexToDelete].name;
+                        tables.splice(tableIndexToDelete, 1); broadcastTableUpdates();
+                        ws.send(JSON.stringify({ type: 'table_operation_success', payload: { message: `"${deletedTableName}" silindi.` } }));
+                    } else { ws.send(JSON.stringify({ type: 'table_operation_fail', payload: { error: 'Masa bulunamadı.' } }));}
+                } else { ws.send(JSON.stringify({ type: 'table_operation_fail', payload: { error: 'Eksik masa IDsi.' } }));}
+                break;
+            case 'get_waiters_list':
+                if (currentUserInfo && currentUserInfo.role === 'cashier') { broadcastWaitersList(ws); }
+                else { ws.send(JSON.stringify({ type: 'error', payload: { message: 'Yetkiniz yok.' } }));}
+                break;
+            case 'add_waiter':
+                if (!currentUserInfo || currentUserInfo.role !== 'cashier') { ws.send(JSON.stringify({ type: 'error', payload: { message: 'Yetkiniz yok.' } })); return; }
+                if (payload && payload.username && payload.password) {
+                    if (users.find(u => u.username === payload.username)) { ws.send(JSON.stringify({ type: 'waiter_operation_fail', payload: { error: 'Kullanıcı adı mevcut.' } })); return; }
+                    const maxUserId = users.reduce((max, u) => u.id > max ? u.id : max, 0);
+                    const newWaiter = { id: maxUserId + 1, username: payload.username, password: payload.password, role: 'waiter' };
+                    users.push(newWaiter); broadcastWaitersList();
+                    ws.send(JSON.stringify({ type: 'waiter_operation_success', payload: { message: `${newWaiter.username} eklendi.` } }));
+                } else { ws.send(JSON.stringify({ type: 'waiter_operation_fail', payload: { error: 'Eksik bilgi.' } }));}
+                break;
+            case 'edit_waiter_password':
+                 if (!currentUserInfo || currentUserInfo.role !== 'cashier') { ws.send(JSON.stringify({ type: 'error', payload: { message: 'Yetkiniz yok.' } })); return; }
+                if (payload && payload.userId && payload.newPassword) {
+                    const waiterToEdit = users.find(u => u.id === parseInt(payload.userId) && u.role === 'waiter');
+                    if (waiterToEdit) {
+                        waiterToEdit.password = payload.newPassword; // Şifre hashlenmeli!
+                        ws.send(JSON.stringify({ type: 'waiter_operation_success', payload: { message: `${waiterToEdit.username} şifresi güncellendi.` } }));
+                    } else { ws.send(JSON.stringify({ type: 'waiter_operation_fail', payload: { error: 'Garson bulunamadı.' } }));}
+                } else { ws.send(JSON.stringify({ type: 'waiter_operation_fail', payload: { error: 'Eksik bilgi.' } }));}
+                break;
+            case 'delete_waiter':
+                if (!currentUserInfo || currentUserInfo.role !== 'cashier') { ws.send(JSON.stringify({ type: 'error', payload: { message: 'Yetkiniz yok.' } })); return; }
+                if (payload && payload.userId) {
+                    const waiterIndexToDelete = users.findIndex(u => u.id === parseInt(payload.userId) && u.role === 'waiter');
+                    if (waiterIndexToDelete > -1) {
+                        const deletedWaiterName = users[waiterIndexToDelete].username;
+                        users.splice(waiterIndexToDelete, 1); broadcastWaitersList();
+                        ws.send(JSON.stringify({ type: 'waiter_operation_success', payload: { message: `${deletedWaiterName} silindi.` } }));
+                    } else { ws.send(JSON.stringify({ type: 'waiter_operation_fail', payload: { error: 'Garson bulunamadı.' } }));}
+                } else { ws.send(JSON.stringify({ type: 'waiter_operation_fail', payload: { error: 'Eksik garson IDsi.' } }));}
+                break;
+            case 'remove_order_item':
+                 if (!currentUserInfo) { ws.send(JSON.stringify({ type: 'error', payload: { message: 'Giriş yapmalısınız.' } })); return; }
+                const tableToRemoveFrom = tables.find(t => t.id === payload.tableId);
+                if (tableToRemoveFrom) {
+                    const productIdNum = payload.productId === null || payload.productId === 'manual' ? null : parseInt(payload.productId, 10);
+                    const itemIndex = tableToRemoveFrom.order.findIndex(item =>
+                        ( (productIdNum !== null && item.productId === productIdNum) || (productIdNum === null && item.name === payload.name) ) &&
+                        item.description === (payload.description || '')
+                    );
+                    if (itemIndex > -1) {
+                        tableToRemoveFrom.order.splice(itemIndex, 1);
+                        tableToRemoveFrom.total = calculateTableTotal(tableToRemoveFrom.order);
+                        if (tableToRemoveFrom.order.length === 0) {
+                            tableToRemoveFrom.status = 'boş'; tableToRemoveFrom.waiterId = null; tableToRemoveFrom.waiterUsername = null;
+                        }
+                        broadcastTableUpdates();
+                    } else { ws.send(JSON.stringify({ type: 'order_update_fail', payload: { error: 'Öğe bulunamadı.' } }));}
+                } else { ws.send(JSON.stringify({ type: 'order_update_fail', payload: { error: 'Masa bulunamadı.' } }));}
+                break;
+
 
             default:
                 console.log('Bilinmeyen mesaj tipi (default):', type);
