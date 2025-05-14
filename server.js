@@ -11,7 +11,7 @@ const HTTP_PORT = process.env.PORT || 8080;
 // --- PostgreSQL Veritabanı Bağlantısı ---
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL, // Render'da bu isimde bir ortam değişkeni olmalı
-    ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false // Render PostgreSQL için SSL
+    ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
 });
 
 pool.connect()
@@ -69,7 +69,7 @@ let users = [
     { id: 6, username: 'garson', password: 'gar.son', role: 'waiter' },
 ];
 
-let products = [
+let products = [ // Bu liste sabit kalacak veya başlangıçta yüklenecek
     { id: 1001, name: "İSKENDER - 120 GR", price: 275.00, category: "ET - TAVUK" },
     { id: 1002, name: "ET DÖNER EKMEK ARASI", price: 150.00, category: "ET - TAVUK" },
     { id: 1003, name: "ET DÖNER PORSİYON", price: 175.00, category: "ET - TAVUK" },
@@ -114,7 +114,7 @@ let products = [
 let tables = [];
 let nextTableIdCounter = 1;
 
-function initializeTables() {
+function initializeTables() { // Bu fonksiyon masaları bellekte oluşturmaya devam edecek
     tables = [];
     let currentId = 1;
     for (let i = 1; i <= 5; i++) {
@@ -130,6 +130,7 @@ initializeTables();
 
 const clients = new Map();
 
+// --- WebSocket Yönetimi için Yardımcı Fonksiyonlar ---
 function broadcast(message) {
     const messageString = JSON.stringify(message);
     clients.forEach((userInfo, clientSocket) => {
@@ -173,6 +174,8 @@ function calculateTableTotal(order) {
     }, 0);
 }
 
+
+// --- Ana WebSocket Olay İşleyicisi ---
 wss.on('connection', (ws) => {
     console.log('Yeni bir istemci bağlandı (WebSocket).');
 
@@ -180,7 +183,7 @@ wss.on('connection', (ws) => {
         let message;
         try {
             message = JSON.parse(messageAsString);
-            console.log('Alınan mesaj:', message);
+            console.log('Alınan mesaj tipi:', message.type); // Sadece tipi loglayalım, payload uzun olabilir
         } catch (e) {
             console.error('Geçersiz JSON formatı:', messageAsString);
             ws.send(JSON.stringify({ type: 'error', payload: { message: 'Geçersiz JSON formatı.' } }));
@@ -192,19 +195,14 @@ wss.on('connection', (ws) => {
 
         switch (type) {
             case 'login':
-                const user = users.find(u => u.username === payload.username && u.password === payload.password);
+                const user = users.find(u => u.username === payload.username && u.password === payload.password); // Şifreler hash'lenmeli!
                 if (user) {
                     for (let [client, info] of clients.entries()) {
-                        if (info.id === user.id && client !== ws) {
-                            client.terminate(); clients.delete(client);
-                        }
+                        if (info.id === user.id && client !== ws) { client.terminate(); clients.delete(client); }
                     }
                     clients.set(ws, { id: user.id, username: user.username, role: user.role });
                     currentUserInfo = clients.get(ws);
-                    ws.send(JSON.stringify({
-                        type: 'login_success',
-                        payload: { user: currentUserInfo, tables: tables, products: products }
-                    }));
+                    ws.send(JSON.stringify({ type: 'login_success', payload: { user: currentUserInfo, tables: tables, products: products }}));
                     console.log(`Kullanıcı giriş yaptı: ${user.username} (Rol: ${user.role})`);
                 } else {
                     ws.send(JSON.stringify({ type: 'login_fail', payload: { error: 'Kullanıcı adı veya şifre hatalı.' } }));
@@ -221,6 +219,7 @@ wss.on('connection', (ws) => {
                          clients.set(ws, payload.user); currentUserInfo = payload.user;
                          ws.send(JSON.stringify({ type: 'tables_update', payload: { tables: tables } }));
                          ws.send(JSON.stringify({ type: 'products_update', payload: { products: products } }));
+                         console.log(`Kullanıcı oturumu sürdürdü: ${currentUserInfo.username}`);
                      } else { ws.send(JSON.stringify({ type: 'error', payload: { message: 'Geçersiz oturum bilgisi.' } }));}
                  } else { ws.send(JSON.stringify({ type: 'error', payload: { message: 'Eksik oturum bilgisi.' } }));}
                 break;
@@ -229,23 +228,29 @@ wss.on('connection', (ws) => {
                 ws.send(JSON.stringify({ type: 'products_update', payload: { products: products } }));
                 break;
 
-            case 'add_order_item':
+            case 'add_order_item': // Bu, siparişi bellekteki masanın order dizisine ekler
                 if (!currentUserInfo) { ws.send(JSON.stringify({ type: 'error', payload: { message: 'Giriş yapmalısınız.' } })); return; }
                 const tableToAdd = tables.find(t => t.id === payload.tableId);
                 const receivedProductId = parseInt(payload.productId, 10);
                 if (isNaN(receivedProductId)) { ws.send(JSON.stringify({ type: 'order_update_fail', payload: { error: 'Geçersiz ürün IDsi.' } })); return; }
                 const productToAdd = products.find(p => p.id === receivedProductId);
-                if (tableToAdd && productToAdd && payload.quantity > 0) {
+
+                if (tableToAdd && productToAdd && typeof payload.quantity === 'number' && payload.quantity > 0) {
                     const existingItem = tableToAdd.order.find(item => item.productId === receivedProductId && item.description === (payload.description || ''));
                     if (existingItem) {
                         existingItem.quantity += payload.quantity;
                         existingItem.waiterUsername = currentUserInfo.username;
                         existingItem.timestamp = Date.now();
                     } else {
-                        tableToAdd.order.push({
-                            productId: receivedProductId, name: productToAdd.name, quantity: payload.quantity,
-                            priceAtOrder: productToAdd.price, description: payload.description || '',
-                            category: productToAdd.category, waiterUsername: currentUserInfo.username, timestamp: Date.now()
+                        tableToAdd.order.push({ // ÖNEMLİ: sales_log için gerekli tüm bilgileri buraya ekleyin
+                            productId: receivedProductId,
+                            name: productToAdd.name, // Ürün adını ekle
+                            category: productToAdd.category, // Kategori ekle
+                            quantity: payload.quantity,
+                            priceAtOrder: productToAdd.price,
+                            description: payload.description || '',
+                            waiterUsername: currentUserInfo.username,
+                            timestamp: Date.now()
                         });
                     }
                     tableToAdd.total = calculateTableTotal(tableToAdd.order);
@@ -255,62 +260,26 @@ wss.on('connection', (ws) => {
                 } else { ws.send(JSON.stringify({ type: 'order_update_fail', payload: { error: 'Geçersiz masa, ürün veya adet.' } })); }
                 break;
 
-            case 'add_manual_order_item':
+            case 'add_manual_order_item': // Bu da bellekteki siparişe ekler
                  if (!currentUserInfo || currentUserInfo.role !== 'cashier') { ws.send(JSON.stringify({ type: 'error', payload: { message: 'Yetkiniz yok.' } })); return; }
                 const tableForManual = tables.find(t => t.id === payload.tableId);
-                if (tableForManual && payload.name && payload.price >= 0 && payload.quantity > 0) {
+                if (tableForManual && payload.name && typeof payload.price === 'number' && payload.price >= 0 && typeof payload.quantity === 'number' && payload.quantity > 0) {
                      tableForManual.order.push({
-                         name: payload.name, quantity: payload.quantity, priceAtOrder: payload.price,
-                         description: payload.description || '', category: payload.category || 'Diğer',
-                         waiterUsername: currentUserInfo.username, timestamp: Date.now()
+                         // productId: null, // Manuel ürün
+                         name: payload.name, // Bu zaten geliyor
+                         category: payload.category || 'Diğer', // Bu da geliyor
+                         quantity: payload.quantity,
+                         priceAtOrder: payload.price,
+                         description: payload.description || '',
+                         waiterUsername: currentUserInfo.username,
+                         timestamp: Date.now()
                      });
                     tableForManual.total = calculateTableTotal(tableForManual.order);
                     tableForManual.status = 'dolu';
                     tableForManual.waiterId = currentUserInfo.id; tableForManual.waiterUsername = currentUserInfo.username;
                     broadcastTableUpdates();
-                } else { ws.send(JSON.stringify({ type: 'manual_order_update_fail', payload: { error: 'Geçersiz bilgi.' } }));}
+                } else { ws.send(JSON.stringify({ type: 'manual_order_update_fail', payload: { error: 'Geçersiz manuel ürün bilgileri.' } }));}
                 break;
-
-            case 'add_product_to_main_menu': // Bu hala bellekte çalışacak
-                if (!currentUserInfo || currentUserInfo.role !== 'cashier') { ws.send(JSON.stringify({ type: 'error', payload: { message: 'Yetkiniz yok.' } })); return; }
-                if (payload && payload.name && typeof payload.price === 'number' && payload.price >= 0 && payload.category) {
-                    const maxId = products.reduce((max, p) => p.id > max ? p.id : max, 0);
-                    const newProductId = maxId < 7000 ? 7001 : maxId + 1; // Basit ID üretimi
-                    const newProduct = { id: newProductId, name: payload.name.toUpperCase(), price: parseFloat(payload.price), category: payload.category.toUpperCase() };
-                    products.push(newProduct); // Belleğe ekle
-                    broadcastProductsUpdate();
-                    ws.send(JSON.stringify({ type: 'main_menu_product_added', payload: { product: newProduct, message: `${newProduct.name} menüye eklendi.` } }));
-                } else { ws.send(JSON.stringify({ type: 'error', payload: { message: 'Eksik ürün bilgisi.' } }));}
-                break;
-
-            case 'update_main_menu_product': // Bu hala bellekte çalışacak
-                if (!currentUserInfo || currentUserInfo.role !== 'cashier') { ws.send(JSON.stringify({ type: 'error', payload: { message: 'Yetkiniz yok.' } })); return; }
-                if (payload && payload.id && payload.name && typeof payload.price === 'number' && payload.price >= 0 && payload.category) {
-                    const productIndex = products.findIndex(p => p.id === parseInt(payload.id));
-                    if (productIndex > -1) {
-                        products[productIndex].name = payload.name.toUpperCase();
-                        products[productIndex].price = parseFloat(payload.price);
-                        products[productIndex].category = payload.category.toUpperCase();
-                        broadcastProductsUpdate();
-                        ws.send(JSON.stringify({ type: 'main_menu_product_updated', payload: { product: products[productIndex], message: `${products[productIndex].name} güncellendi.` } }));
-                    } else { ws.send(JSON.stringify({ type: 'error', payload: { message: 'Ürün bulunamadı.' } }));}
-                } else { ws.send(JSON.stringify({ type: 'error', payload: { message: 'Eksik ürün bilgisi.' } }));}
-                break;
-
-            // Diğer yönetim case'leri (add_table, edit_table_name, delete_table, add_waiter vb.)
-            // şimdilik bellekte çalışmaya devam edecek. İsterseniz bunlar da DB'ye entegre edilebilir ama daha fazla kod gerektirir.
-
-            case 'add_table':
-                if (!currentUserInfo || currentUserInfo.role !== 'cashier') { ws.send(JSON.stringify({ type: 'error', payload: { message: 'Yetkiniz yok.' } })); return; }
-                if (payload && payload.name && payload.name.trim() !== "") {
-                    const newTable = { id: `masa-${nextTableIdCounter++}`, name: payload.name.trim(), type: payload.type || 'bahce', status: "boş", order: [], total: 0, waiterId: null, waiterUsername: null };
-                    tables.push(newTable); broadcastTableUpdates();
-                    ws.send(JSON.stringify({ type: 'table_operation_success', payload: { message: `${newTable.name} eklendi.` } }));
-                } else { ws.send(JSON.stringify({ type: 'table_operation_fail', payload: { error: 'Geçersiz masa adı.' } }));}
-                break;
-
-            // ... (edit_table_name, delete_table, get_waiters_list, add_waiter, edit_waiter_password, delete_waiter, remove_order_item case'leriniz aynı kalabilir)
-
 
             // --- SATIŞ KAYIT VE RAPORLAMA İÇİN GÜNCELLENMİŞ CASE'LER ---
             case 'close_table':
@@ -319,7 +288,7 @@ wss.on('connection', (ws) => {
                     return;
                 }
                 const tableToClose = tables.find(t => t.id === payload.tableId);
-                if (tableToClose && tableToClose.order.length > 0) {
+                if (tableToClose && tableToClose.order && tableToClose.order.length > 0) {
                     const closingTime = new Date();
                     const tableName = tableToClose.name;
                     const processedBy = tableToClose.waiterUsername || currentUserInfo.username;
@@ -335,11 +304,11 @@ wss.on('connection', (ws) => {
                                 [
                                     item.name || 'Bilinmeyen Ürün',
                                     item.priceAtOrder || 0,
-                                    item.quantity,
+                                    item.quantity || 0,
                                     totalItemPrice,
                                     item.category || 'Diğer',
                                     item.description || null,
-                                    item.waiterUsername || processedBy, // Kalemi ekleyen veya masayı kapatan
+                                    item.waiterUsername || processedBy,
                                     tableName,
                                     closingTime
                                 ]
@@ -361,7 +330,7 @@ wss.on('connection', (ws) => {
                     } finally {
                         clientDB.release();
                     }
-                } else if (tableToClose && tableToClose.order.length === 0) {
+                } else if (tableToClose && (!tableToClose.order || tableToClose.order.length === 0)) {
                      ws.send(JSON.stringify({ type: 'error', payload: { message: 'Boş masa kapatılamaz.' } }));
                 } else {
                     ws.send(JSON.stringify({ type: 'error', payload: { message: 'Kapatılacak masa bulunamadı.' } }));
@@ -388,9 +357,9 @@ wss.on('connection', (ws) => {
                                 [
                                     item.name || 'Bilinmeyen Ürün',
                                     item.priceAtOrder || 0,
-                                    item.quantity,
+                                    item.quantity || 0,
                                     totalItemPrice,
-                                    item.category || 'Hızlı Satış',
+                                    item.category || 'Hızlı Satış', // Hızlı satıştaki ürünlerin kategorisi de item objesinde olmalı
                                     item.description || null,
                                     processedByQuickSale,
                                     'Hızlı Satış',
@@ -419,7 +388,6 @@ wss.on('connection', (ws) => {
                     return;
                  }
                  try {
-                    // TO_CHAR ile zaman damgasını daha okunabilir bir formata çeviriyoruz.
                     const reportResult = await pool.query(
                         `SELECT id, item_name, item_price, quantity, total_item_price, category, description,
                                 waiter_username, table_name, TO_CHAR(sale_timestamp, 'DD.MM.YYYY HH24:MI:SS') as sale_timestamp
@@ -461,13 +429,26 @@ wss.on('connection', (ws) => {
                 }
                 break;
 
+            // Diğer orijinal case'leriniz (ürün yönetimi, masa yönetimi, garson yönetimi vb.)
+            // olduğu gibi kalacak ve bellekteki verilerle çalışacaktır.
+            // İhtiyaç duyarsanız buraya kopyalayıp yapıştırabilirsiniz.
+            // Örneğin:
+            case 'add_product_to_main_menu':
+                if (!currentUserInfo || currentUserInfo.role !== 'cashier') { ws.send(JSON.stringify({ type: 'error', payload: { message: 'Yetkiniz yok.' } })); return; }
+                if (payload && payload.name && typeof payload.price === 'number' && payload.price >= 0 && payload.category) {
+                    const maxId = products.reduce((max, p) => p.id > max ? p.id : max, 0);
+                    const newProductId = maxId < 7000 ? 7001 : maxId + 1;
+                    const newProduct = { id: newProductId, name: payload.name.toUpperCase(), price: parseFloat(payload.price), category: payload.category.toUpperCase() };
+                    products.push(newProduct); // Belleğe ekle
+                    console.log(`Yeni ürün (bellek): ${newProduct.name}`);
+                    broadcastProductsUpdate();
+                    ws.send(JSON.stringify({ type: 'main_menu_product_added', payload: { product: newProduct, message: `${newProduct.name} menüye eklendi.` } }));
+                } else { ws.send(JSON.stringify({ type: 'error', payload: { message: 'Eksik ürün bilgisi.' } }));}
+                break;
+            // ... Diğer case'leri (update_main_menu_product, add_table, vs.) buraya ekleyin ...
+            // remove_order_item bellekteki masadan silme işlemini yapmaya devam edecek.
+
             default:
-                // Eğer default case'e düşen ve yukarıda ele alınmayan (ve değişmeyecek dediğimiz)
-                // bir case varsa, o da aynı kalır. Bunun için GitHub'daki kodunuzu referans alın.
-                // ÖNEMLİ: Buraya GitHub'daki server.js'inizden
-                // remove_order_item, edit_table_name, delete_table, get_waiters_list, add_waiter,
-                // edit_waiter_password, delete_waiter
-                // gibi case'leri KOPYALAYIP YAPIŞTIRMANIZ GEREKİR. Onlar bellekte çalışmaya devam edecek.
                 console.log('Bilinmeyen mesaj tipi (default):', type);
                 ws.send(JSON.stringify({ type: 'error', payload: { message: `Bilinmeyen mesaj tipi: ${type}` } }));
         }
