@@ -1729,7 +1729,7 @@ window.handleAndroidBackButton = function() {
         } else {
             let originalTotal = 0;
             table.order.forEach((item) => {
-                const itemTotal = (item.priceAtOrder || 0) * item.quantity;
+                const itemTotal = parseFloat(item.total_item_price) || 0;
                 originalTotal += itemTotal;
 
                 const orderItemDiv = document.createElement('div');
@@ -1840,7 +1840,7 @@ window.handleAndroidBackButton = function() {
         appState.salesReport.sort((a, b) => (b.closingTimestamp || 0) - (a.closingTimestamp || 0));
 
         appState.salesReport.forEach(item => {
-            const itemTotal = (item.priceAtOrder || 0) * item.quantity;
+            const itemTotal = parseFloat(item.total_item_price) || 0;
             totalItems += item.quantity;
             const itemTotal = parseFloat(item.total_item_price) || 0; 
 
