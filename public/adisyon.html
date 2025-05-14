@@ -899,20 +899,31 @@
 
 
     // Timestamp'i okunabilir tarih/saat formatına çevirir
-function formatTimestamp(timestampStr) {
-    if (!timestampStr) return '-';
-
-    let date;
-    const parts = timestampStr.match(/^(\d{2})\.(\d{2})\.(\d{4}) (\d{2}):(\d{2}):(\d{2})$/);
-
-    if (parts) {
-        date = new Date(parts[3], parseInt(parts[2], 10) - 1, parts[1], parts[4], parts[5], parts[6]);
-    } else {
-        date = new Date(timestampStr);
+function formatTimestamp(timestampInput) {
+    if (!timestampInput) {
+        return '-';
     }
 
-    if (isNaN(date.getTime())) {
-        console.warn("formatTimestamp: Geçersiz tarih formatı:", timestampStr);
+    let date;
+
+    if (typeof timestampInput === 'number') {
+        date = new Date(timestampInput);
+    } else if (timestampInput instanceof Date) {
+        date = timestampInput;
+    } else if (typeof timestampInput === 'string') {
+        const parts = timestampInput.match(/^(\d{2})\.(\d{2})\.(\d{4}) (\d{2}):(\d{2}):(\d{2})$/);
+        if (parts) {
+            date = new Date(parts[3], parseInt(parts[2], 10) - 1, parts[1], parts[4], parts[5], parts[6]);
+        } else {
+            date = new Date(timestampInput);
+        }
+    } else {
+        console.warn("formatTimestamp: Bilinmeyen zaman damgası türü:", timestampInput);
+        return '-';
+    }
+
+    if (!date || isNaN(date.getTime())) {
+        console.warn("formatTimestamp: Geçersiz tarih oluşturuldu. Giriş:", timestampInput);
         return '-';
     }
 
@@ -923,7 +934,6 @@ function formatTimestamp(timestampStr) {
     const minutes = String(date.getMinutes()).padStart(2, '0');
     return `${day}.${month}.${year} ${hours}:${minutes}`;
 }
-
 
     function getCurrentFormattedDate() {
         const now = new Date();
