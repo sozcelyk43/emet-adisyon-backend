@@ -1842,25 +1842,25 @@ window.handleAndroidBackButton = function() {
         appState.salesReport.forEach(item => {
             const itemTotal = (item.priceAtOrder || 0) * item.quantity;
             totalItems += item.quantity;
-            grandTotal += itemTotal;
+            const itemTotal = parseFloat(item.total_item_price) || 0; 
 
-            let itemName = item.name || (appState.products.find(p=>p.id === item.productId)?.name || 'Bilinmeyen');
-
+            let itemName = item.item_name || 'Bilinmeyen';
+            
             const tr = document.createElement('tr');
-            tr.className = 'border-b hover:bg-gray-50';
-            tr.innerHTML = `
-                <td class="border p-2 whitespace-nowrap">${formatTimestamp(item.closingTimestamp)}</td>
-                <td class="border p-2">${item.tableName || 'Hızlı Satış'}</td>
-                <td class="border p-2">${itemName}</td>
-                <td class="border p-2 text-center">${item.quantity}</td>
-                <td class="border p-2 text-right">${formatPrice(item.priceAtOrder || 0)}</td>
-                <td class="border p-2 text-right">${formatPrice(itemTotal)}</td>
-                <td class="border p-2">${item.waiterUsername || '-'}</td>
-                <td class="border p-2">${item.description || '-'}</td>
-                <td class="border p-2 whitespace-nowrap">${formatTimestamp(item.timestamp)}</td>
-            `;
-            tbody.appendChild(tr);
-        });
+    tr.className = 'border-b hover:bg-gray-50';
+    tr.innerHTML = `
+        <td class="border p-2 whitespace-nowrap">${formatTimestamp(item.sale_timestamp)}</td> // Kapanış Zamanı için de sale_timestamp kullanılabilir veya ayrı bir alan bekleniyorsa JSON güncellenmeli. Şimdilik Ekleme Zamanı ile aynı kabul edelim.
+        <td class="border p-2">${item.table_name || 'Hızlı Satış'}</td> // YENİ: table_name
+        <td class="border p-2">${itemName}</td>
+        <td class="border p-2 text-center">${item.quantity}</td>
+        <td class="border p-2 text-right">${formatPrice(parseFloat(item.item_price) || 0)}</td> // YENİ: item_price
+        <td class="border p-2 text-right">${formatPrice(itemTotal)}</td>
+        <td class="border p-2">${item.waiter_username || '-'}</td> // YENİ: waiter_username
+        <td class="border p-2">${item.description || '-'}</td>
+        <td class="border p-2 whitespace-nowrap">${formatTimestamp(item.sale_timestamp)}</td> // YENİ: sale_timestamp
+    `;
+    tbody.appendChild(tr);
+});
 
         salesReportTableContainer.appendChild(table);
         totalItemsSoldSpan.textContent = totalItems;
