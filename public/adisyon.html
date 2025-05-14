@@ -913,7 +913,19 @@ function formatTimestamp(timestampInput) {
     } else if (typeof timestampInput === 'string') {
         const parts = timestampInput.match(/^(\d{2})\.(\d{2})\.(\d{4}) (\d{2}):(\d{2}):(\d{2})$/);
         if (parts) {
-            initialDate = new Date(parts[3], parseInt(parts[2], 10) - 1, parts[1], parts[4], parts[5], parts[6]);
+            const year = parseInt(parts[3], 10);
+            const monthIndex = parseInt(parts[2], 10) - 1;
+            const day = parseInt(parts[1], 10);
+            const hour = parseInt(parts[4], 10);
+            const minute = parseInt(parts[5], 10);
+            const second = parseInt(parts[6], 10);
+
+            // Create a UTC timestamp assuming input string components were TRT (UTC+3)
+            // Date.UTC(year, monthIndex, day, hour, minute, second) would create a UTC timestamp
+            // as if these components were UTC. To make them TRT, we subtract 3 hours from
+            // the hour component to get the UTC equivalent hour.
+            const utcTimestamp = Date.UTC(year, monthIndex, day, hour - 3, minute, second);
+            initialDate = new Date(utcTimestamp);
         } else {
             initialDate = new Date(timestampInput);
         }
