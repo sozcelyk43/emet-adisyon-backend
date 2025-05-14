@@ -980,54 +980,17 @@
             }
         };
 
-        socket.onmessage = function(event) {
-    const msg = JSON.parse(event.data);
-
-    if (msg.type === 'sales_report_data') {
-        const sales = msg.payload.sales;
-        const container = document.getElementById('salesReportTableContainer');
-
-        if (!sales || sales.length === 0) {
-            container.innerHTML = '<p class="text-center text-gray-500">Hiç satış yok.</p>';
-            return;
-        }
-
-        let html = `
-            <table class="table-auto w-full border-collapse border border-gray-300">
-                <thead>
-                    <tr class="bg-gray-100 text-left">
-                        <th class="border px-2 py-1">Tarih</th>
-                        <th class="border px-2 py-1">Masa</th>
-                        <th class="border px-2 py-1">Ürün</th>
-                        <th class="border px-2 py-1">Adet</th>
-                        <th class="border px-2 py-1">Birim Fiyat</th>
-                        <th class="border px-2 py-1">Toplam</th>
-                        <th class="border px-2 py-1">Kategori</th>
-                        <th class="border px-2 py-1">Garson</th>
-                    </tr>
-                </thead>
-                <tbody>
-        `;
-
-        for (const item of sales) {
-            html += `
-                <tr>
-                    <td class="border px-2 py-1">${item.sale_timestamp}</td>
-                    <td class="border px-2 py-1">${item.table_name}</td>
-                    <td class="border px-2 py-1">${item.item_name}</td>
-                    <td class="border px-2 py-1">${item.quantity}</td>
-                    <td class="border px-2 py-1">${item.item_price} ₺</td>
-                    <td class="border px-2 py-1 font-semibold">${item.total_item_price} ₺</td>
-                    <td class="border px-2 py-1">${item.category}</td>
-                    <td class="border px-2 py-1">${item.waiter_username}</td>
-                </tr>
-            `;
-        }
-
-        html += `</tbody></table>`;
-        container.innerHTML = html;
-    }
-};
+        socket.onmessage = (event) => {
+            console.log("RAW Sunucudan mesaj alındı:", event.data);
+            let message;
+            try {
+                message = JSON.parse(event.data);
+            } catch (error) {
+                console.error("JSON.parse BAŞARISIZ!", "Hata:", error, "Alınan Veri:", event.data);
+                return;
+            }
+            handleServerMessage(message);
+        };
 
         socket.onerror = (error) => {
             console.error("WebSocket hatası:", error);
