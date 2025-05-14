@@ -899,7 +899,7 @@
 
 
     // Timestamp'i okunabilir tarih/saat formatına çevirir
-function formatTimestampForTurkey(timestampInput) {
+function formatTimestamp(timestampInput) {
     if (!timestampInput) {
         return '-';
     }
@@ -918,12 +918,12 @@ function formatTimestampForTurkey(timestampInput) {
             initialDate = new Date(timestampInput);
         }
     } else {
-        console.warn("formatTimestampForTurkey: Unknown timestamp type:", timestampInput);
+        console.warn("formatTimestamp: Bilinmeyen zaman damgası türü:", timestampInput);
         return '-';
     }
 
     if (!initialDate || isNaN(initialDate.getTime())) {
-        console.warn("formatTimestampForTurkey: Invalid date from input:", timestampInput);
+        console.warn("formatTimestamp: Geçersiz tarih oluşturuldu. Giriş:", timestampInput);
         return '-';
     }
 
