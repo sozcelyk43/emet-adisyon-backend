@@ -1711,97 +1711,102 @@ window.handleAndroidBackButton = function() {
     }
 
     // Sipariş sayfasındaki mevcut siparişleri render eder
-    function renderOrderPageForTable(table) {
-        orderPageCurrentOrderItems.innerHTML = '';
+function renderOrderPageForTable(table) {
+    orderPageCurrentOrderItems.innerHTML = '';
 
-        if (table.status === 'dolu' && table.waiterUsername) {
-            orderPageWaiterInfo.textContent = `Bu Siparişi Alan Garson: ${table.waiterUsername}`;
-        } else if (table.status === 'dolu' && !table.waiterUsername && appState.user && appState.user.role === 'cashier') {
-             orderPageWaiterInfo.textContent = `Sipariş Alındı (Garson Belirsiz)`;
-        }
-         else {
-            orderPageWaiterInfo.textContent = 'Bu Masaya Henüz Sipariş Alınmadı';
-        }
-
-        if (!table || !table.order || table.order.length === 0) {
-            orderPageCurrentOrderItems.innerHTML = '<p class="text-gray-500 py-4">Sipariş boş.</p>';
-            appState.currentOrderOriginalTotal = 0;
-        } else {
-            let originalTotal = 0;
-            table.order.forEach((item) => {
-                const itemTotal = parseFloat(item.total_item_price) || 0;
-                originalTotal += itemTotal;
-
-                const orderItemDiv = document.createElement('div');
-                orderItemDiv.className = 'flex justify-between items-start p-3 bg-gray-50 rounded-md';
-
-                let itemName = item.name || 'Bilinmeyen Ürün';
-                let itemPrice = item.priceAtOrder || 0;
-                const productDetails = appState.products.find(p => p.id === item.productId);
-                if(productDetails && !item.name) {
-                    itemName = productDetails.name;
-                }
-
-                let descriptionHTML = '';
-                if (item.description && item.description.trim() !== '') {
-                    descriptionHTML = `<p class="text-xs text-gray-500 pl-1 mt-1"><em>Açıklama: ${item.description}</em></p>`;
-                }
-
-                let waiterNameHTML = '';
-                 if (item.waiterUsername) {
-                     waiterNameHTML = `<p class="text-xs text-blue-500 pl-1 mt-1">Ekleyen: ${item.waiterUsername} (${formatTimestamp(item.timestamp)})</p>`;
-                 }
-
-
-                orderItemDiv.innerHTML = `
-                    <div class="flex-grow">
-                        <span class="font-medium">${itemName}</span>
-                        <span class="text-sm text-gray-600"> (${item.quantity} x ${formatPrice(itemPrice)})</span>
-                        ${descriptionHTML}
-                        ${waiterNameHTML}
-                    </div>
-                    <div class="flex items-center ml-2">
-                        <span class="font-semibold mr-3">${formatPrice(item.quantity * itemPrice)}</span>
-                        <button data-product-id="${item.productId || 'manual'}" data-item-name="${itemName}" data-item-description="${item.description || ''}" class="remove-item-btn-orderpage text-red-500 hover:text-red-700 text-sm font-bold p-1 rounded-full bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-red-400">X</button>
-                    </div>
-                `;
-                orderPageCurrentOrderItems.appendChild(orderItemDiv);
-            });
-            appState.currentOrderOriginalTotal = originalTotal;
-        }
-
-        // Toplamı ve indirim bilgisini güncelle
-        if (appState.currentOrderDiscountAmount > 0 && appState.currentOrderOriginalTotal > 0) {
-            const discounted = appState.currentOrderOriginalTotal - appState.currentOrderDiscountAmount;
-            orderPageCurrentOrderTotal.textContent = `Toplam: ${formatPrice(discounted)} (İndirimli)`;
-            discountInfoDiv.textContent = `İndirim Uygulandı: -${formatPrice(appState.currentOrderDiscountAmount)}`;
-            discountInfoDiv.classList.remove('hidden');
-        } else {
-            orderPageCurrentOrderTotal.textContent = `Toplam: ${formatPrice(appState.currentOrderOriginalTotal)}`;
-            discountInfoDiv.classList.add('hidden');
-        }
-
-        // Butonların görünürlüğünü rol bazlı ayarla
-        if (appState.user && appState.user.role === 'cashier') {
-            showReceiptButton.classList.remove('hidden');
-            finalizeAndCloseTableButton.classList.remove('hidden');
-            applyDiscountButton.classList.remove('hidden');
-        } else {
-            showReceiptButton.classList.add('hidden');
-            finalizeAndCloseTableButton.classList.add('hidden');
-            applyDiscountButton.classList.add('hidden');
-        }
-
-        document.querySelectorAll('.remove-item-btn-orderpage').forEach(button => {
-            button.addEventListener('click', (e) => {
-                const buttonElement = e.target.closest('button');
-                const productIdToRemove = buttonElement.dataset.productId;
-                const descriptionToRemove = buttonElement.dataset.description;
-                const nameToRemove = buttonElement.dataset.itemName;
-                removeItemFromOrderPage(productIdToRemove, descriptionToRemove, nameToRemove);
-            });
-        });
+    if (table.status === 'dolu' && table.waiterUsername) {
+        orderPageWaiterInfo.textContent = `Bu Siparişi Alan Garson: ${table.waiterUsername}`;
+    } else if (table.status === 'dolu' && !table.waiterUsername && appState.user && appState.user.role === 'cashier') {
+         orderPageWaiterInfo.textContent = `Sipariş Alındı (Garson Belirsiz)`;
+    } else {
+        orderPageWaiterInfo.textContent = 'Bu Masaya Henüz Sipariş Alınmadı';
     }
+
+    if (!table || !table.order || table.order.length === 0) {
+        orderPageCurrentOrderItems.innerHTML = '<p class="text-gray-500 py-4">Sipariş boş.</p>';
+        appState.currentOrderOriginalTotal = 0;
+    } else {
+        let originalTotal = 0;
+        table.order.forEach((item) => {
+            const price = parseFloat(item.priceAtOrder);
+            const qty = parseInt(item.quantity, 10);
+
+            let itemCalculatedTotal = 0;
+            if (!isNaN(price) && !isNaN(qty)) {
+                itemCalculatedTotal = price * qty;
+            }
+            
+            originalTotal += itemCalculatedTotal;
+
+            const orderItemDiv = document.createElement('div');
+            orderItemDiv.className = 'flex justify-between items-start p-3 bg-gray-50 rounded-md';
+
+            let itemName = item.name || 'Bilinmeyen Ürün';
+            const productDetails = appState.products.find(p => p.id === item.productId);
+            if(productDetails && !item.name) {
+                itemName = productDetails.name;
+            }
+
+            const displayPrice = !isNaN(price) ? price : 0;
+            const displayQty = !isNaN(qty) ? qty : 0;
+            const currentItemDisplayTotal = displayPrice * displayQty;
+
+            let descriptionHTML = '';
+            if (item.description && item.description.trim() !== '') {
+                descriptionHTML = `<p class="text-xs text-gray-500 pl-1 mt-1"><em>Açıklama: ${item.description}</em></p>`;
+            }
+            let waiterNameHTML = '';
+            if (item.waiterUsername) {
+                waiterNameHTML = `<p class="text-xs text-blue-500 pl-1 mt-1">Ekleyen: ${item.waiterUsername} (${formatTimestamp(item.timestamp)})</p>`;
+            }
+
+            orderItemDiv.innerHTML = `
+                <div class="flex-grow">
+                    <span class="font-medium">${itemName}</span>
+                    <span class="text-sm text-gray-600"> (${displayQty} x ${formatPrice(displayPrice)})</span>
+                    ${descriptionHTML}
+                    ${waiterNameHTML}
+                </div>
+                <div class="flex items-center ml-2">
+                    <span class="font-semibold mr-3">${formatPrice(currentItemDisplayTotal)}</span>
+                    <button data-product-id="${item.productId || 'manual'}" data-item-name="${itemName}" data-item-description="${item.description || ''}" class="remove-item-btn-orderpage text-red-500 hover:text-red-700 text-sm font-bold p-1 rounded-full bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-red-400">X</button>
+                </div>
+            `;
+            orderPageCurrentOrderItems.appendChild(orderItemDiv);
+        });
+        appState.currentOrderOriginalTotal = originalTotal;
+    }
+
+    if (appState.currentOrderDiscountAmount > 0 && appState.currentOrderOriginalTotal > 0) {
+        const discounted = appState.currentOrderOriginalTotal - appState.currentOrderDiscountAmount;
+        orderPageCurrentOrderTotal.textContent = `Toplam: ${formatPrice(discounted)} (İndirimli)`;
+        discountInfoDiv.textContent = `İndirim Uygulandı: -${formatPrice(appState.currentOrderDiscountAmount)}`;
+        discountInfoDiv.classList.remove('hidden');
+    } else {
+        orderPageCurrentOrderTotal.textContent = `Toplam: ${formatPrice(appState.currentOrderOriginalTotal)}`;
+        discountInfoDiv.classList.add('hidden');
+    }
+
+    if (appState.user && appState.user.role === 'cashier') {
+        showReceiptButton.classList.remove('hidden');
+        finalizeAndCloseTableButton.classList.remove('hidden');
+        applyDiscountButton.classList.remove('hidden');
+    } else {
+        showReceiptButton.classList.add('hidden');
+        finalizeAndCloseTableButton.classList.add('hidden');
+        applyDiscountButton.classList.add('hidden');
+    }
+
+    document.querySelectorAll('.remove-item-btn-orderpage').forEach(button => {
+        button.addEventListener('click', (e) => {
+            const buttonElement = e.target.closest('button');
+            const productIdToRemove = buttonElement.dataset.productId;
+            const descriptionToRemove = buttonElement.dataset.description;
+            const nameToRemove = buttonElement.dataset.itemName;
+            removeItemFromOrderPage(productIdToRemove, descriptionToRemove, nameToRemove);
+        });
+    });
+}
 
     // Satış Raporu Modalı'nı render eder
     function renderSalesReport() {
