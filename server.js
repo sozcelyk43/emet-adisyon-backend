@@ -710,25 +710,7 @@ wss.on('connection', (ws) => {
                 } else { ws.send(JSON.stringify({ type: 'waiter_operation_fail', payload: { error: 'Eksik garson IDsi.' } }));}
                 break;
                 
-            case 'remove_order_item':
-                 if (!currentUserInfo) { ws.send(JSON.stringify({ type: 'error', payload: { message: 'Giriş yapmalısınız.' } })); return; }
-                const tableToRemoveFrom = tables.find(t => t.id === payload.tableId);
-                if (tableToRemoveFrom) {
-                    const productIdNum = payload.productId === null || payload.productId === 'manual' ? null : parseInt(payload.productId, 10);
-                    const itemIndex = tableToRemoveFrom.order.findIndex(item =>
-                        ( (productIdNum !== null && item.productId === productIdNum) || (productIdNum === null && item.name === payload.name) ) &&
-                        item.description === (payload.description || '')
-                    );
-                    if (itemIndex > -1) {
-                        tableToRemoveFrom.order.splice(itemIndex, 1);
-                        tableToRemoveFrom.total = calculateTableTotal(tableToRemoveFrom.order);
-                        if (tableToRemoveFrom.order.length === 0) {
-                            tableToRemoveFrom.status = 'boş'; tableToRemoveFrom.waiterId = null; tableToRemoveFrom.waiterUsername = null;
-                        }
-                        broadcastTableUpdates();
-                    } else { ws.send(JSON.stringify({ type: 'order_update_fail', payload: { error: 'Öğe bulunamadı.' } }));}
-                } else { ws.send(JSON.stringify({ type: 'order_update_fail', payload: { error: 'Masa bulunamadı.' } }));}
-                break;
+            
 
       
                case 'update_main_menu_product':
