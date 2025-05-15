@@ -929,6 +929,22 @@
     function connectWebSocket() {
         showLoading("Sunucuya bağlanılıyor...");
         socket = new WebSocket(WEBSOCKET_URL);
+socket.onopen = function() {
+    console.log("Bağlantı kuruldu");
+    socket.send(JSON.stringify({ type: 'get_sales_report' }));
+};
+
+socket.onmessage = function(event) {
+    const msg = JSON.parse(event.data);
+
+    if (msg.type === 'sales_report') {
+        const reportData = msg.payload.report;
+        console.log("Rapor verisi geldi:", reportData);
+        // HTML'e tablo vs yazabilirsin
+    }
+
+    // Diğer mesajlar için case'ler...
+};
 
         socket.onopen = () => {
             console.log("WebSocket bağlantısı kuruldu.");
