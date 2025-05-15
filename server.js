@@ -61,8 +61,8 @@ console.log(`WebSocket sunucusu da bu HTTP sunucusu üzerinden çalışıyor.`);
 
 // --- Sunucu Verileri ---
 let users = [ // İdealde DB'de olmalı
-    { id: 1, username: 'onkasa', password: 'onkasa12', role: 'cashier' },
-    { id: 2, username: 'arkakasa', password: 'arkakasa12', role: 'cashier' },
+    { id: 1, username: 'hamza', password: 'hamza123', role: 'cashier' },
+    { id: 2, username: 'bilal', password: 'bilal123', role: 'cashier' },
     { id: 3, username: 'omerfaruk', password: 'omer.faruk', role: 'waiter' },
     { id: 4, username: 'zeynel', password: 'zey.nel', role: 'waiter' },
     { id: 5, username: 'halil', password: 'ha.lil', role: 'waiter' },
