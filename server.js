@@ -228,14 +228,15 @@ wss.on('connection', (ws) => {
 
                 
            case 'get_products':
-                try {
-                    const result = await pool.query('SELECT * FROM products ORDER BY id');
-                    ws.send(JSON.stringify({ type: 'products_list', payload: { products: result.rows } }));
-                } catch (err) {
-                    console.error('Ürünler alınırken hata:', err);
-                    ws.send(JSON.stringify({ type: 'error', payload: { message: 'Ürünler getirilemedi.' } }));
-                }
-                break;
+    try {
+        const dbProducts = await fetchProductsFromDB(); // Daha önce oluşturduğumuz yardımcı fonksiyonu kullanalım
+        // MESAJ TİPİNİ 'products_update' OLARAK DEĞİŞTİRİN:
+        ws.send(JSON.stringify({ type: 'products_update', payload: { products: dbProducts } }));
+    } catch (err) {
+        console.error('Ürünler (get_products) alınırken hata:', err);
+        ws.send(JSON.stringify({ type: 'error', payload: { message: 'Ürünler getirilemedi.' } }));
+    }
+    break;
 
 
                 case 'get_users':
