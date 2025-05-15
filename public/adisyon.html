@@ -1108,22 +1108,27 @@ function formatTimestamp(timestampInput) {
     }
 
     function handleServerMessage(message) {
-    hideLoading();
+    hideLoading(); // Yükleme göstergesini gizle
+
+    // Geliştirme sırasında hangi mesajın geldiğini görmek için bu logu açık bırakabilirsiniz.
+    // console.log("İşlenecek Mesaj Tipi:", message.type, "Payload:", message.payload);
 
     switch (message.type) {
         case 'login_success':
             const userDataFromServer = message.payload.user || message.payload.waiter;
             if (message.payload && typeof message.payload === 'object' && userDataFromServer && typeof userDataFromServer === 'object') {
                 appState.user = userDataFromServer;
-                if (message.payload.tables) {
+                if (message.payload.tables && Array.isArray(message.payload.tables)) {
                     appState.tables = message.payload.tables;
                 } else {
                     appState.tables = [];
+                    console.warn("login_success: payload.tables eksik veya array değil.");
                 }
-                if (message.payload.products) {
+                if (message.payload.products && Array.isArray(message.payload.products)) {
                     appState.products = message.payload.products;
                 } else {
                     appState.products = [];
+                    console.warn("login_success: payload.products eksik veya array değil.");
                 }
                 localStorage.setItem('adisyonUser', JSON.stringify(appState.user));
                 activeUserNameSpan.textContent = appState.user.username;
@@ -1132,8 +1137,8 @@ function formatTimestamp(timestampInput) {
                 appContainer.classList.remove('hidden');
                 orderPageContainer.classList.remove('active');
                 loginError.textContent = '';
-                renderInitialDataIfNeeded();
-                renderTables();
+                renderInitialDataIfNeeded(); // Ürünleri ve ilgili UI'ı render eder
+                renderTables();             // Masaları render eder
                 updateUIForRole();
                 console.log("Giriş başarılı ve UI güncellendi:", appState.user.username);
             } else {
@@ -1151,12 +1156,12 @@ function formatTimestamp(timestampInput) {
             localStorage.removeItem('adisyonUser');
             break;
 
-        case 'error':
+        case 'error': // BU BLOK ÖNEMLİ
             alert(`Sunucu Hatası: ${message.payload.message || 'Bilinmeyen bir sunucu hatası oluştu.'}`);
             console.error("Sunucudan hata mesajı alındı:", message.payload);
             break;
 
-        case 'tables_update':
+        case 'tables_update': // BU BLOK ÖNEMLİ
             if (message.payload && Array.isArray(message.payload.tables)) {
                 appState.tables = message.payload.tables;
                 renderTables();
@@ -1179,8 +1184,8 @@ function formatTimestamp(timestampInput) {
             }
             break;
 
-       case 'products_list': // Bu case, aşağıdaki products_update'e düşer (fall-through)
-        case 'products_update':
+        case 'products_list': // products_list'i de products_update gibi işleyebiliriz
+        case 'products_update': // BU BLOK ÖNEMLİ
             if (message.payload && Array.isArray(message.payload.products)) {
                 appState.products = message.payload.products;
                 console.log(`Ana ürün listesi sunucudan güncellendi (tip: ${message.type}).`);
@@ -1202,11 +1207,14 @@ function formatTimestamp(timestampInput) {
             } else {
                 console.warn(`'${message.type}' mesajı alındı ancak payload.products eksik veya array değil.`, message.payload);
             }
-            break; // Bu break ifadesi çok önemli!
+            break;
 
         case 'main_menu_product_added':
             alert(message.payload.message || "Yeni ürün menüye eklendi!");
             // Sunucu genellikle bu işlemden sonra bir 'products_update' gönderir.
+            // Eğer göndermiyorsa ve ürün listesinin hemen güncellenmesi gerekiyorsa,
+            // burada sendMessageToServer('get_products', {}); çağrılabilir veya
+            // gelen product objesi appState.products'a eklenebilir ve UI güncellenebilir.
             break;
 
          case 'main_menu_product_updated':
@@ -1226,13 +1234,13 @@ function formatTimestamp(timestampInput) {
         case 'waiters_list':
             if (message.payload && message.payload.waiters) {
                 appState.waiters = message.payload.waiters;
-                populateWaiterSelectsForManagement();
+                populateWaiterSelectsForManagement(); // Bu fonksiyonun tanımlı ve doğru çalıştığından emin olun
             }
             break;
 
         case 'waiter_operation_success':
             alert(message.payload.message || "Garson işlemi başarılı.");
-            sendMessageToServer('get_waiters_list', {});
+            sendMessageToServer('get_waiters_list', {}); // Garson listesini yenilemek için
             break;
 
         case 'waiter_operation_fail':
@@ -1244,9 +1252,9 @@ function formatTimestamp(timestampInput) {
             renderSalesReport();
             break;
 
-        case 'activity_log_data':
+        case 'activity_log_data': // Aktivite logları için
             appState.activityLog = message.payload.logs || [];
-            renderActivityLog();
+            renderActivityLog(); // Bu fonksiyonun tanımlı olduğundan emin olun
             break;
 
         case 'order_update_fail':
@@ -1259,7 +1267,13 @@ function formatTimestamp(timestampInput) {
 
         case 'quick_sale_success':
             console.log("Hızlı satış sunucuda tamamlandı.");
-            // İstemci tarafı sepet temizleme vb. işlemler fiş gösterildikten sonra yapılabilir.
+            // İstemci tarafı sepet temizleme, modal kapatma gibi işlemler
+            // genellikle fiş gösterildikten sonra veya burada tetiklenebilir.
+            // Örneğin:
+            // appState.currentQuickSaleOrder = [];
+            // renderQuickSaleOrder(); // Sepeti UI'da boşaltır
+            // quickSaleModal.classList.remove('active'); // Modalı kapatır
+            // showTablesView(); // Ana ekrana döner
             break;
 
         case 'quick_sale_fail':
@@ -1268,6 +1282,7 @@ function formatTimestamp(timestampInput) {
 
         default:
             console.warn("handleServerMessage: Bilinmeyen mesaj tipi:", message.type, "Payload:", message.payload);
+            // İsteğe bağlı: alert(`Sunucudan bilinmeyen mesaj tipi: ${message.type}`);
             break;
     }
 }
