@@ -1109,20 +1109,27 @@ function sendMessageToServer(type, payload) {
 }
 
 function handleServerMessage(message) {
-    hideLoading();
+    hideLoading(); // Yükleme göstergesini gizle
+
+    // Geliştirme sırasında hangi mesajın geldiğini görmek için bu logu açık bırakabilirsiniz.
+    // console.log("İşlenecek Mesaj Tipi:", message.type, "Payload:", message.payload);
+
     switch (message.type) {
         case 'login_success':
             const userDataFromServer = message.payload.user || message.payload.waiter;
             if (message.payload && typeof message.payload === 'object' && userDataFromServer && typeof userDataFromServer === 'object') {
                 appState.user = userDataFromServer;
-                // Sunucudan gelen products ve tables ile appState'i GÜNCELLE (ezme)
-                // Eğer sunucu bu bilgileri gönderiyorsa ve sabit kodlanmıştan farklıysa, bunlar kullanılır.
                 if (message.payload.tables && Array.isArray(message.payload.tables)) {
-                    appState.tables = message.payload.tables; // Sunucudan gelen masaları kullan
+                    appState.tables = message.payload.tables;
+                } else {
+                    appState.tables = [];
+                    console.warn("login_success: payload.tables eksik veya array değil.");
                 }
                 if (message.payload.products && Array.isArray(message.payload.products)) {
-                    appState.products = message.payload.products; // Sunucudan gelen ürünleri kullan
-                    initialDataRendered = false; // Ürünler değişti, yeniden render et
+                    appState.products = message.payload.products;
+                } else {
+                    appState.products = [];
+                    console.warn("login_success: payload.products eksik veya array değil.");
                 }
                 localStorage.setItem('adisyonUser', JSON.stringify(appState.user));
                 activeUserNameSpan.textContent = appState.user.username;
@@ -1131,15 +1138,17 @@ function handleServerMessage(message) {
                 appContainer.classList.remove('hidden');
                 orderPageContainer.classList.remove('active');
                 loginError.textContent = '';
-                renderInitialDataIfNeeded();
-                renderTables();
+                renderInitialDataIfNeeded(); // Ürünleri ve ilgili UI'ı render eder
+                renderTables();             // Masaları render eder
                 updateUIForRole();
-                console.log("Giriş başarılı ve UI güncellendi (sunucu verileriyle):", appState.user.username);
+                console.log("Giriş başarılı ve UI güncellendi:", appState.user.username);
             } else {
                 showLoginError("Sunucudan eksik veya hatalı giriş yanıtı alındı.");
                 appState.user = null;
                 localStorage.removeItem('adisyonUser');
-                showLoginScreen();
+                loginModal.classList.add('active'); // loginModal'ı göster
+                appContainer.classList.add('hidden');
+                orderPageContainer.classList.remove('active');
             }
             break;
 
@@ -1148,21 +1157,23 @@ function handleServerMessage(message) {
             localStorage.removeItem('adisyonUser');
             break;
 
-        case 'error':
+        case 'error': // BU BLOK EKLENMELİ/DÜZELTİLMELİ
             alert(`Sunucu Hatası: ${message.payload.message || 'Bilinmeyen bir sunucu hatası oluştu.'}`);
             console.error("Sunucudan hata mesajı alındı:", message.payload);
             break;
 
-        case 'tables_update':
+        case 'tables_update': // BU BLOK EKLENMELİ/DÜZELTİLMELİ
             if (message.payload && Array.isArray(message.payload.tables)) {
-                appState.tables = message.payload.tables; // Sunucudan gelen masalarla güncelle
+                appState.tables = message.payload.tables;
                 renderTables();
                 console.log("Masalar sunucudan güncellendi.");
+
                 if (orderPageContainer.classList.contains('active') && appState.currentTableId) {
                     const updatedTable = appState.tables.find(t => t.id === appState.currentTableId);
                     if (updatedTable) {
                         renderOrderPageForTable(updatedTable);
                     } else {
+                        console.log(`Aktif sipariş sayfasındaki masa (${appState.currentTableId}) güncel listede bulunamadı. Ana ekrana dönülüyor.`);
                         showTablesView();
                     }
                 }
@@ -1174,13 +1185,14 @@ function handleServerMessage(message) {
             }
             break;
 
-        case 'products_list':
-        case 'products_update':
+        case 'products_list': // products_list'i de products_update gibi işleyebiliriz
+        case 'products_update': // BU BLOK EKLENMELİ/DÜZELTİLMELİ
             if (message.payload && Array.isArray(message.payload.products)) {
-                appState.products = message.payload.products; // Sunucudan gelen ürünlerle güncelle
+                appState.products = message.payload.products;
                 console.log(`Ana ürün listesi sunucudan güncellendi (tip: ${message.type}).`);
                 initialDataRendered = false;
                 renderInitialDataIfNeeded();
+
                 if (orderPageContainer.classList.contains('active') && appState.currentTableId) {
                     const currentTable = appState.tables.find(t => t.id === appState.currentTableId);
                     if (currentTable) {
@@ -1200,17 +1212,17 @@ function handleServerMessage(message) {
 
         case 'main_menu_product_added':
             alert(message.payload.message || "Yeni ürün menüye eklendi!");
-            // Sunucu bu işlemden sonra 'products_update' göndermeli
+            // Sunucu bu işlemden sonra genellikle 'products_update' gönderir.
             break;
 
          case 'main_menu_product_updated':
             alert(message.payload.message || "Ürün menüde güncellendi!");
-            // Sunucu bu işlemden sonra 'products_update' göndermeli
+            // Sunucu bu işlemden sonra genellikle 'products_update' gönderir.
             break;
 
         case 'table_operation_success':
             alert(message.payload.message || "Masa işlemi başarılı.");
-            // Sunucu bu işlemden sonra 'tables_update' göndermeli
+            // Sunucu bu işlemden sonra genellikle 'tables_update' gönderir.
             break;
 
         case 'table_operation_fail':
@@ -1220,13 +1232,13 @@ function handleServerMessage(message) {
         case 'waiters_list':
             if (message.payload && Array.isArray(message.payload.waiters)) {
                 appState.waiters = message.payload.waiters;
-                populateWaiterSelectsForManagement();
+                populateWaiterSelectsForManagement(); // Bu fonksiyonun tanımlı olduğundan emin olun
             }
             break;
 
         case 'waiter_operation_success':
             alert(message.payload.message || "Garson işlemi başarılı.");
-            sendMessageToServer('get_waiters_list', {});
+            sendMessageToServer('get_waiters_list', {}); // Garson listesini yenilemek için
             break;
 
         case 'waiter_operation_fail':
@@ -1235,12 +1247,12 @@ function handleServerMessage(message) {
 
         case 'sales_report_data':
             appState.salesReport = message.payload.sales || [];
-            renderSalesReport();
+            renderSalesReport(); // Bu fonksiyonun tanımlı olduğundan emin olun
             break;
 
         case 'activity_log_data':
             appState.activityLog = message.payload.logs || [];
-            renderActivityLog();
+            renderActivityLog(); // Bu fonksiyonun tanımlı olduğundan emin olun
             break;
 
         case 'order_update_fail':
@@ -1253,6 +1265,8 @@ function handleServerMessage(message) {
 
         case 'quick_sale_success':
             console.log("Hızlı satış sunucuda tamamlandı.");
+            // İstemci tarafı sepet temizleme, modal kapatma gibi işlemler
+            // genellikle fiş gösterildikten sonra veya burada tetiklenebilir.
             break;
 
         case 'quick_sale_fail':
@@ -1264,6 +1278,7 @@ function handleServerMessage(message) {
             break;
     }
 }
+
 
 function showLoginError(message) {
     loginError.textContent = message;
