@@ -1,14 +1,9 @@
-// server.js
 const WebSocket = require('ws');
 const express = require('express');
 const http = require('http');
 const path = require('path');
-const { Pool } = require('pg'); // PostgreSQL kütüphanesini import et
-
-// --- Sunucu Ayarları ---
+const { Pool } = require('pg'); 
 const HTTP_PORT = process.env.PORT || 8080;
-
-// --- PostgreSQL Veritabanı Bağlantısı ---
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL, // Render'da bu isimde bir ortam değişkeni olmalı
     ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
@@ -20,11 +15,9 @@ pool.connect()
         console.error('!!! VERİTABANI BAĞLANTI HATASI (sales_log için) !!!:', err.stack);
     });
 
-// --- Express Uygulaması ve HTTP Sunucusu ---
 const app = express();
 const httpServer = http.createServer(app);
 
-// --- Statik Dosya Sunumu ('public' klasörü) ---
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.get('/', (req, res) => {
@@ -53,13 +46,11 @@ app.get('/menu', (req, res) => {
     });
 });
 
-// --- WebSocket Sunucusunu HTTP Sunucusuna Bağlama ---
 const wss = new WebSocket.Server({ server: httpServer });
 
 console.log(`EMET LEZZET GÜNLERİ HTTP Sunucusu ${HTTP_PORT} portunda başlatıldı.`);
 console.log(`WebSocket sunucusu da bu HTTP sunucusu üzerinden çalışıyor.`);
 
-// --- Sunucu Verileri (Bellekte Kalacak, Kalıcı Olmayacak Diğer Veriler) ---
 let users = [
     { id: 1, username: 'onkasa', password: 'onkasa12', role: 'cashier' },
     { id: 2, username: 'arkakasa', password: 'arkakasa12', role: 'cashier' },
@@ -130,7 +121,6 @@ initializeTables();
 
 const clients = new Map();
 
-// --- WebSocket Yönetimi için Yardımcı Fonksiyonlar ---
 function broadcast(message) {
     const messageString = JSON.stringify(message);
     clients.forEach((userInfo, clientSocket) => {
@@ -174,7 +164,6 @@ function calculateTableTotal(order) {
     }, 0);
 }
 
-// --- Ana WebSocket Olay İşleyicisi ---
 wss.on('connection', (ws) => {
     console.log('Yeni bir istemci bağlandı (WebSocket).');
 
@@ -195,7 +184,7 @@ wss.on('connection', (ws) => {
 
         switch (type) {
                 
-            case 'login': // Bellekten çalışır
+            case 'login': 
                 const user = users.find(u => u.username === payload.username && u.password === payload.password);
                 if (user) {
                     for (let [client, info] of clients.entries()) {
@@ -211,7 +200,7 @@ wss.on('connection', (ws) => {
                 break;
                 
 
-            case 'reauthenticate': // Bellekten çalışır
+            case 'reauthenticate': 
                  if (payload && payload.user && payload.user.id) {
                      const foundUser = users.find(u => u.id === payload.user.id && u.username === payload.user.username);
                      if (foundUser) {
@@ -229,14 +218,8 @@ wss.on('connection', (ws) => {
                 
    case 'get_products':
     try {
-        // fetchProductsFromDB, ürünleri veritabanından çeken yardımcı fonksiyonunuz olmalı.
-        // Eğer bu fonksiyon yoksa, doğrudan pool.query kullanabilirsiniz:
-        // const result = await pool.query('SELECT * FROM products ORDER BY category, name');
-        // const dbProducts = result.rows;
-        const dbProducts = await fetchProductsFromDB(); // Bu fonksiyonun tanımlı olduğundan emin olun
-
-        // ESKİ HALİ: ws.send(JSON.stringify({ type: 'products_list', payload: { products: dbProducts } }));
-        // YENİ HALİ (MESAJ TİPİNİ DEĞİŞTİRİN):
+       
+        const dbProducts = await fetchProductsFromDB();
         ws.send(JSON.stringify({ type: 'products_update', payload: { products: dbProducts } }));
         console.log('Sunucu: get_products isteğine products_update mesaj tipiyle yanıt verildi.');
     } catch (err) {
@@ -260,12 +243,11 @@ wss.on('connection', (ws) => {
                 }
                 break;
 
-                
-            
+                          
 
         
 
-            case 'close_table': // SATIŞLARI VERİTABANINA KAYDEDER
+            case 'close_table': 
                 if (!currentUserInfo || currentUserInfo.role !== 'cashier') {
                     ws.send(JSON.stringify({ type: 'error', payload: { message: 'Bu işlem için yetkiniz yok.' } }));
                     return;
@@ -321,7 +303,7 @@ wss.on('connection', (ws) => {
                 break;
                 
 
-            case 'complete_quick_sale': // HIZLI SATIŞLARI VERİTABANINA KAYDEDER
+            case 'complete_quick_sale':
                 if (!currentUserInfo || currentUserInfo.role !== 'cashier') {
                     ws.send(JSON.stringify({ type: 'error', payload: { message: 'Yetkiniz yok.' } }));
                     return;
@@ -335,9 +317,8 @@ wss.on('connection', (ws) => {
                         await clientQuickSaleDB.query('BEGIN');
                         for (const item of payload.items) {
                             const totalItemPrice = (item.priceAtOrder || 0) * item.quantity;
-                            // Hızlı satıştaki ürünler için kategori bilgisi, eğer ürün menüdeyse oradan alınabilir
-                            // veya payload.items içinde item.category olarak gelmeli.
-                            const productDetails = products.find(p => p.id === item.productId); // Bellekten kontrol
+                            
+                            const productDetails = products.find(p => p.id === item.productId); 
                             const category = item.category || (productDetails ? productDetails.category : 'Hızlı Satış');
 
                             await clientQuickSaleDB.query(
@@ -418,10 +399,7 @@ wss.on('connection', (ws) => {
                 }
                 break;
 
-            // Diğer case'leriniz (add_product_to_main_menu, update_main_menu_product, add_table, vb.)
-            // olduğu gibi kalacak ve bellekteki verilerle çalışacaktır.
-            // GitHub'daki orijinal server.js dosyanızdan bu kısımları alıp buraya ekleyebilirsiniz.
-            // Örnek birkaç tanesi:
+    
             case 'add_order_item': // Siparişi bellekteki masanın order dizisine ekler
                 if (!currentUserInfo) { ws.send(JSON.stringify({ type: 'error', payload: { message: 'Giriş yapmalısınız.' } })); return; }
                 const tableToAdd = tables.find(t => t.id === payload.tableId);
@@ -438,8 +416,8 @@ wss.on('connection', (ws) => {
                     } else {
                         tableToAdd.order.push({
                             productId: receivedProductId,
-                            name: productToAdd.name,       // sales_log için gerekli
-                            category: productToAdd.category, // sales_log için gerekli
+                            name: productToAdd.name,       
+                            category: productToAdd.category,
                             quantity: payload.quantity,
                             priceAtOrder: productToAdd.price,
                             description: payload.description || '',
@@ -459,9 +437,9 @@ wss.on('connection', (ws) => {
                 const tableForManual = tables.find(t => t.id === payload.tableId);
                 if (tableForManual && payload.name && typeof payload.price === 'number' && payload.price >= 0 && typeof payload.quantity === 'number' && payload.quantity > 0) {
                      tableForManual.order.push({
-                         // productId: null, // Manuel ürün
+                        
                          name: payload.name,
-                         category: payload.category || 'Diğer', // sales_log için gerekli
+                         category: payload.category || 'Diğer', 
                          quantity: payload.quantity,
                          priceAtOrder: payload.price,
                          description: payload.description || '',
@@ -476,7 +454,7 @@ wss.on('connection', (ws) => {
                 break;
 
            
-            case 'complete_quick_sale': // HIZLI SATIŞLARI VERİTABANINA KAYDEDER
+            case 'complete_quick_sale': 
                 if (!currentUserInfo || currentUserInfo.role !== 'cashier') {
                     ws.send(JSON.stringify({ type: 'error', payload: { message: 'Yetkiniz yok.' } }));
                     return;
@@ -573,12 +551,7 @@ wss.on('connection', (ws) => {
                     console.log(`Kullanıcı çıkış yaptı: ${loggedOutUser.username}`);
                 }
                 break;
-                
 
-            // Diğer case'leriniz (add_product_to_main_menu, update_main_menu_product, add_table, vb.)
-            // olduğu gibi kalacak ve bellekteki verilerle çalışacaktır.
-            // GitHub'daki orijinal server.js dosyanızdan bu kısımları alıp buraya ekleyebilirsiniz.
-            // Örnek birkaç tanesi:
             case 'add_product_to_main_menu':
                 if (!currentUserInfo || currentUserInfo.role !== 'cashier') {
                     ws.send(JSON.stringify({ type: 'error', payload: { message: 'Yetkiniz yok.' } }));
@@ -866,7 +839,7 @@ wss.on('connection', (ws) => {
     });
 });
 
-// --- HTTP Sunucusunu Başlatma ---
+
 httpServer.listen(HTTP_PORT, () => {
   console.log(`EMET LEZZET GÜNLERİ Sunucusu ${HTTP_PORT} portunda başlatıldı.`);
 });
