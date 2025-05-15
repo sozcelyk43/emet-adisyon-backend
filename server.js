@@ -462,61 +462,7 @@ case 'get_users':
                 } else { ws.send(JSON.stringify({ type: 'manual_order_update_fail', payload: { error: 'Geçersiz manuel ürün bilgileri.' } }));}
                 break;
 
-            case 'close_table': // SATIŞLARI VERİTABANINA KAYDEDER
-                if (!currentUserInfo || currentUserInfo.role !== 'cashier') {
-                    ws.send(JSON.stringify({ type: 'error', payload: { message: 'Bu işlem için yetkiniz yok.' } }));
-                    return;
-                }
-                const tableToClose = tables.find(t => t.id === payload.tableId);
-                if (tableToClose && tableToClose.order && tableToClose.order.length > 0) {
-                    const closingTime = new Date();
-                    const tableName = tableToClose.name;
-                    const processedBy = tableToClose.waiterUsername || currentUserInfo.username;
-
-                    const clientDB = await pool.connect();
-                    try {
-                        await clientDB.query('BEGIN');
-                        for (const item of tableToClose.order) {
-                            const totalItemPrice = (item.priceAtOrder || 0) * item.quantity;
-                            await clientDB.query(
-                                `INSERT INTO sales_log (item_name, item_price, quantity, total_item_price, category, description, waiter_username, table_name, sale_timestamp)
-                                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
-                                [
-                                    item.name || 'Bilinmeyen Ürün',
-                                    item.priceAtOrder || 0,
-                                    item.quantity || 0,
-                                    totalItemPrice,
-                                    item.category || 'Diğer',
-                                    item.description || null,
-                                    item.waiterUsername || processedBy,
-                                    tableName,
-                                    closingTime
-                                ]
-                            );
-                        }
-                        await clientDB.query('COMMIT');
-                        console.log(`${tableName} masasındaki satışlar sales_log'a kaydedildi.`);
-
-                        // Bellekteki masayı sıfırla
-                        tableToClose.order = [];
-                        tableToClose.total = 0;
-                        tableToClose.status = 'boş';
-                        tableToClose.waiterId = null; tableToClose.waiterUsername = null;
-                        broadcastTableUpdates();
-                    } catch (error) {
-                        await clientDB.query('ROLLBACK');
-                        console.error(`Satış logu kaydedilirken DB hatası (Masa: ${tableName}):`, error);
-                        ws.send(JSON.stringify({ type: 'error', payload: { message: 'Satışlar kaydedilirken bir veritabanı sorunu oluştu.' } }));
-                    } finally {
-                        clientDB.release();
-                    }
-                } else if (tableToClose && (!tableToClose.order || tableToClose.order.length === 0)) {
-                     ws.send(JSON.stringify({ type: 'error', payload: { message: 'Boş masa kapatılamaz.' } }));
-                } else {
-                    ws.send(JSON.stringify({ type: 'error', payload: { message: 'Kapatılacak masa bulunamadı.' } }));
-                }
-                break;
-
+           
             case 'complete_quick_sale': // HIZLI SATIŞLARI VERİTABANINA KAYDEDER
                 if (!currentUserInfo || currentUserInfo.role !== 'cashier') {
                     ws.send(JSON.stringify({ type: 'error', payload: { message: 'Yetkiniz yok.' } }));
