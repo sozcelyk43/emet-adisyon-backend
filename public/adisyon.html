@@ -1150,6 +1150,24 @@ function formatTimestamp(timestampInput) {
                     orderPageContainer.classList.remove('active');
                 }
                 break;
+
+case 'products_update':
+    const containerUpdate = document.getElementById('productItems');
+    if (!containerUpdate) return;
+    const updatedProducts = msg.payload.products;
+    containerUpdate.innerHTML = updatedProducts.map(p => `
+        <div class="border p-2 rounded bg-gray-50">
+            <div><strong>${p.name}</strong> <span class="text-sm text-gray-600">(${p.category})</span></div>
+            <div class="text-sm text-green-600">${p.price} ₺</div>
+        </div>
+    `).join('');
+    break;
+
+
+
+
+
+                
             case 'login_fail':
                 showLoginError(message.payload.error || "Kullanıcı adı veya şifre hatalı.");
                 localStorage.removeItem('adisyonUser');
