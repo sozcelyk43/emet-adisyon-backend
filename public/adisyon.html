@@ -1152,23 +1152,25 @@ function formatTimestamp(timestampInput) {
                 }
                 break;
             case 'products_update':
-                if (message.payload && message.payload.products) {
-                    appState.products = message.payload.products;
-                    console.log("Ana ürün listesi sunucudan güncellendi.");
-                    initialDataRendered = false;
-                    renderInitialDataIfNeeded();
-                    if (orderPageContainer.classList.contains('active') && appState.currentTableId) {
-                        const currentTable = appState.tables.find(t => t.id === appState.currentTableId);
-                        if (currentTable) renderOrderPageForTable(currentTable);
-                    }
-                     if (quickSaleModal.classList.contains('active')) {
-                        renderProductGrid(quickSaleProductGrid, true);
-                    }
-                    if (editProductModal.classList.contains('active')) {
-                        populateSelectProductToEdit();
-                    }
+            if (message.payload && message.payload.products) {
+                appState.products = message.payload.products;
+                // console.log(`Ana ürün listesi sunucudan alındı/güncellendi (tip: ${message.type}).`); // Log mesajını güncelleyebilirsiniz
+                console.log("Ana ürün listesi sunucudan güncellendi."); // Veya mevcut logu koruyun
+                initialDataRendered = false;
+                renderInitialDataIfNeeded();
+                if (orderPageContainer.classList.contains('active') && appState.currentTableId) {
+                    const currentTable = appState.tables.find(t => t.id === appState.currentTableId);
+                    if (currentTable) renderOrderPageForTable(currentTable);
                 }
-                break;
+                if (quickSaleModal.classList.contains('active')) {
+                    renderProductGrid(quickSaleProductGrid, true);
+                }
+                if (editProductModal.classList.contains('active')) {
+                    populateSelectProductToEdit(); // Bu fonksiyonun var olduğundan ve doğru çalıştığından emin olun
+                }
+            }
+            break;
+                
             case 'main_menu_product_added':
                 alert(message.payload.message || "Yeni ürün menüye eklendi!");
                 break;
