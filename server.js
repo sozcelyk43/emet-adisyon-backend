@@ -250,37 +250,7 @@ case 'get_users':
                 break;
 
                 
-            case 'add_order_item': // Siparişi bellekteki masanın order dizisine ekler
-                if (!currentUserInfo) { ws.send(JSON.stringify({ type: 'error', payload: { message: 'Giriş yapmalısınız.' } })); return; }
-                const tableToAdd = tables.find(t => t.id === payload.tableId);
-                const receivedProductId = parseInt(payload.productId, 10);
-                if (isNaN(receivedProductId)) { ws.send(JSON.stringify({ type: 'order_update_fail', payload: { error: 'Geçersiz ürün IDsi.' } })); return; }
-                const productToAdd = products.find(p => p.id === receivedProductId);
-
-                if (tableToAdd && productToAdd && typeof payload.quantity === 'number' && payload.quantity > 0) {
-                    const existingItem = tableToAdd.order.find(item => item.productId === receivedProductId && item.description === (payload.description || ''));
-                    if (existingItem) {
-                        existingItem.quantity += payload.quantity;
-                        existingItem.waiterUsername = currentUserInfo.username;
-                        existingItem.timestamp = Date.now();
-                    } else {
-                        tableToAdd.order.push({
-                            productId: receivedProductId,
-                            name: productToAdd.name,       // sales_log için gerekli
-                            category: productToAdd.category, // sales_log için gerekli
-                            quantity: payload.quantity,
-                            priceAtOrder: productToAdd.price,
-                            description: payload.description || '',
-                            waiterUsername: currentUserInfo.username,
-                            timestamp: Date.now()
-                        });
-                    }
-                    tableToAdd.total = calculateTableTotal(tableToAdd.order);
-                    tableToAdd.status = 'dolu';
-                    tableToAdd.waiterId = currentUserInfo.id; tableToAdd.waiterUsername = currentUserInfo.username;
-                    broadcastTableUpdates();
-                } else { ws.send(JSON.stringify({ type: 'order_update_fail', payload: { error: 'Geçersiz masa, ürün veya adet.' } })); }
-                break;
+            
 
             case 'add_manual_order_item': // Siparişi bellekteki masanın order dizisine manuel ekler
                  if (!currentUserInfo || currentUserInfo.role !== 'cashier') { ws.send(JSON.stringify({ type: 'error', payload: { message: 'Yetkiniz yok.' } })); return; }
