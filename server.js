@@ -227,11 +227,12 @@ wss.on('connection', (ws) => {
                 break;
 
                 
-           case 'get_products':
+    case 'get_products': // Bu blok products_list gönderiyordu
     try {
-        const dbProducts = await fetchProductsFromDB(); // Daha önce oluşturduğumuz yardımcı fonksiyonu kullanalım
+        const dbProducts = await fetchProductsFromDB(); // Ürünleri DB'den çeken yardımcı fonksiyonunuzu kullanın
         // MESAJ TİPİNİ 'products_update' OLARAK DEĞİŞTİRİN:
         ws.send(JSON.stringify({ type: 'products_update', payload: { products: dbProducts } }));
+        console.log('Sunucu: get_products isteğine products_update olarak yanıt verildi.'); // Eklendi: Loglama
     } catch (err) {
         console.error('Ürünler (get_products) alınırken hata:', err);
         ws.send(JSON.stringify({ type: 'error', payload: { message: 'Ürünler getirilemedi.' } }));
