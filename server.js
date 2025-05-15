@@ -69,49 +69,65 @@ let users = [ // İdealde DB'de olmalı
     { id: 6, username: 'garson', password: 'gar.son', role: 'waiter' },
 ];
 
-// Ürünler bellekte tutulacak
+// GÜNCELLENMİŞ Ürünler bellekte tutulacak
+let currentProductId = 1000;
 let products = [
-    { id: 1001, name: "İSKENDER - 120 GR", price: 275.00, category: "ET - TAVUK" },
-    { id: 1002, name: "ET DÖNER EKMEK ARASI", price: 150.00, category: "ET - TAVUK" },
-    { id: 1003, name: "ET DÖNER PORSİYON", price: 175.00, category: "ET - TAVUK" },
-    { id: 1004, name: "TAVUK DÖNER EKMEK ARASI", price: 130.00, category: "ET - TAVUK" },
-    { id: 1005, name: "TAVUK DÖNER PORSİYON", price: 150.00, category: "ET - TAVUK" },
-    { id: 1006, name: "KÖFTE EKMEK", price: 130.00, category: "ET - TAVUK" },
-    { id: 1007, name: "KÖFTE PORSİYON", price: 150.00, category: "ET - TAVUK" },
-    { id: 1008, name: "KUZU ŞİŞ", price: 150.00, category: "ET - TAVUK" },
-    { id: 1009, name: "ADANA ŞİŞ", price: 150.00, category: "ET - TAVUK" },
-    { id: 1010, name: "PİRZOLA - 4 ADET", price: 250.00, category: "ET - TAVUK" },
-    { id: 1011, name: "TAVUK FAJİTA", price: 200.00, category: "ET - TAVUK" },
-    { id: 1012, name: "TAVUK (PİLİÇ) ÇEVİRME", price: 250.00, category: "ET - TAVUK" },
-    { id: 1013, name: "ET DÖNER - KG", price: 1300.00, category: "ET - TAVUK" },
-    { id: 1014, name: "ET DÖNER - 500 GR", price: 650.00, category: "ET - TAVUK" },
-    { id: 1015, name: "TAVUK DÖNER - KG", price: 800.00, category: "ET - TAVUK" },
-    { id: 1016, name: "TAVUK DÖNER - 500 GR", price: 400.00, category: "ET - TAVUK" },
-    { id: 2001, name: "PİZZA KARIŞIK (ORTA BOY)", price: 150.00, category: "ATIŞTIRMALIK" },
-    { id: 2002, name: "PİZZA KARIŞIK (BÜYÜK BOY)", price: 200.00, category: "ATIŞTIRMALIK" },
-    { id: 2003, name: "LAHMACUN", price: 75.00, category: "ATIŞTIRMALIK" },
-    { id: 2004, name: "PİDE ÇEŞİTLERİ", price: 100.00, category: "ATIŞTIRMALIK" },
-    { id: 2005, name: "AYVALIK TOSTU", price: 100.00, category: "ATIŞTIRMALIK" },
-    { id: 2006, name: "HAMBURGER", price: 120.00, category: "ATIŞTIRMALIK" },
-    { id: 2007, name: "ÇİĞ KÖFTE KG (MARUL-LİMON)", price: 300.00, category: "ATIŞTIRMALIK" },
-    { id: 3001, name: "OSMANLI ŞERBETİ - 1 LİTRE", price: 75.00, category: "İÇECEK" },
-    { id: 3002, name: "LİMONATA", price: 75.00, category: "İÇECEK" },
-    { id: 3003, name: "SU", price: 10.00, category: "İÇECEK" },
-    { id: 3004, name: "AYRAN", price: 15.00, category: "İÇECEK" },
-    { id: 3005, name: "ÇAY", price: 10.00, category: "İÇECEK" },
-    { id: 3006, name: "GAZOZ", price: 25.00, category: "İÇECEK" },
-    { id: 4001, name: "EV BAKLAVASI - KG", price: 400.00, category: "TATLI" },
-    { id: 4002, name: "EV BAKLAVASI - 500 GRAM", price: 200.00, category: "TATLI" },
-    { id: 4003, name: "EV BAKLAVASI - PORSİYON", price: 75.00, category: "TATLI" },
-    { id: 4004, name: "AŞURE - 500 GRAM", price: 100.00, category: "TATLI" },
-    { id: 4005, name: "HÖŞMERİM - 500 GRAM", price: 100.00, category: "TATLI" },
-    { id: 4006, name: "DİĞER PASTA ÇEŞİTLERİ", price: 50.00, category: "TATLI" },
-    { id: 4007, name: "YAĞLI GÖZLEME", price: 50.00, category: "TATLI" },
-    { id: 4008, name: "İÇLİ GÖZLEME", price: 60.00, category: "TATLI" },
-    { id: 5001, name: "KELLE PAÇA ÇORBA", price: 60.00, category: "ÇORBA" },
-    { id: 5002, name: "TARHANA ÇORBA", price: 60.00, category: "ÇORBA" }
+    // ET - TAVUK
+    { id: ++currentProductId, name: "İSKENDER - 120 GR", price: 275.00, category: "ET - TAVUK" },
+    { id: ++currentProductId, name: "ET DÖNER EKMEK ARASI", price: 150.00, category: "ET - TAVUK" },
+    { id: ++currentProductId, name: "ET DÖNER PORSİYON", price: 175.00, category: "ET - TAVUK" },
+    { id: ++currentProductId, name: "TAVUK DÖNER EKMEK ARASI", price: 130.00, category: "ET - TAVUK" },
+    { id: ++currentProductId, name: "TAVUK DÖNER PORSİYON", price: 150.00, category: "ET - TAVUK" },
+    { id: ++currentProductId, name: "KÖFTE EKMEK", price: 130.00, category: "ET - TAVUK" },
+    { id: ++currentProductId, name: "KÖFTE PORSİYON", price: 150.00, category: "ET - TAVUK" },
+    { id: ++currentProductId, name: "KUZU ŞİŞ", price: 150.00, category: "ET - TAVUK" },
+    { id: ++currentProductId, name: "ADANA ŞİŞ", price: 150.00, category: "ET - TAVUK" },
+    { id: ++currentProductId, name: "PİRZOLA - 4 ADET", price: 250.00, category: "ET - TAVUK" },
+    { id: ++currentProductId, name: "TAVUK FAJİTA", price: 200.00, category: "ET - TAVUK" },
+    { id: ++currentProductId, name: "TAVUK (PİLİÇ) ÇEVİRME", price: 250.00, category: "ET - TAVUK" },
+    { id: ++currentProductId, name: "ET DÖNER - KG", price: 1300.00, category: "ET - TAVUK" },
+    { id: ++currentProductId, name: "ET DÖNER - 500 GR", price: 650.00, category: "ET - TAVUK" },
+    { id: ++currentProductId, name: "TAVUK DÖNER - KG", price: 800.00, category: "ET - TAVUK" },
+    { id: ++currentProductId, name: "TAVUK DÖNER - 500 GR", price: 400.00, category: "ET - TAVUK" },
+    // ATIŞTIRMALIK
+    { id: ++currentProductId, name: "AYVALIK TOSTU", price: 120.00, category: "ATIŞTIRMALIK" },
+    { id: ++currentProductId, name: "HAMBURGER", price: 150.00, category: "ATIŞTIRMALIK" },
+    { id: ++currentProductId, name: "BALIK BURGER", price: 150.00, category: "ATIŞTIRMALIK" },
+    { id: ++currentProductId, name: "PİDE ÇEŞİTLERİ", price: 120.00, category: "ATIŞTIRMALIK" },
+    { id: ++currentProductId, name: "PİZZA KARIŞIK (ORTA BOY)", price: 150.00, category: "ATIŞTIRMALIK" },
+    { id: ++currentProductId, name: "PİZZA KARIŞIK (BÜYÜK BOY)", price: 200.00, category: "ATIŞTIRMALIK" },
+    { id: ++currentProductId, name: "LAHMACUN", price: 75.00, category: "ATIŞTIRMALIK" },
+    { id: ++currentProductId, name: "ÇİĞ KÖFTE KG (MARUL-LİMON)", price: 300.00, category: "ATIŞTIRMALIK" },
+    { id: ++currentProductId, name: "YAĞLI GÖZLEME", price: 50.00, category: "ATIŞTIRMALIK" },
+    { id: ++currentProductId, name: "İÇLİ GÖZLEME", price: 60.00, category: "ATIŞTIRMALIK" },
+    // İÇECEK
+    { id: ++currentProductId, name: "OSMANLI ŞERBETİ - 1 LT", price: 75.00, category: "İÇECEK" },
+    { id: ++currentProductId, name: "LİMONATA - 1 LT", price: 75.00, category: "İÇECEK" },
+    { id: ++currentProductId, name: "AYRAN", price: 10.00, category: "İÇECEK" },
+    { id: ++currentProductId, name: "SU", price: 10.00, category: "İÇECEK" },
+    { id: ++currentProductId, name: "ÇAY", price: 10.00, category: "İÇECEK" },
+    { id: ++currentProductId, name: "SOĞUK ÇAY ÇEŞİTLERİ", price: 25.00, category: "İÇECEK" },
+    { id: ++currentProductId, name: "TAMEK MEYVE SUYU", price: 25.00, category: "İÇECEK" },
+    { id: ++currentProductId, name: "MEYVELİ MADEN SUYU", price: 25.00, category: "İÇECEK" },
+    { id: ++currentProductId, name: "NİĞDE GAZOZU", price: 25.00, category: "İÇECEK" },
+    { id: ++currentProductId, name: "ŞALGAM", price: 25.00, category: "İÇECEK" },
+    { id: ++currentProductId, name: "SADE MADEN SUYU", price: 15.00, category: "İÇECEK" },
+    { id: ++currentProductId, name: "TROPİKAL - ÇİLEK KOKUSU", price: 75.00, category: "İÇECEK" },
+    { id: ++currentProductId, name: "TROPİKAL - KAVUNEZYA", price: 75.00, category: "İÇECEK" }, // Kullanıcı "İÇEÇEK" yazmıştı, "İÇECEK" olarak düzeltildi.
+    { id: ++currentProductId, name: "TROPİKAL - NAR-I ŞAHANE", price: 75.00, category: "İÇECEK" },
+    // TATLI
+    { id: ++currentProductId, name: "EV BAKLAVASI - KG", price: 400.00, category: "TATLI" },
+    { id: ++currentProductId, name: "EV BAKLAVASI - 500 GR", price: 200.00, category: "TATLI" },
+    { id: ++currentProductId, name: "EV BAKLAVASI - PORSİYON", price: 75.00, category: "TATLI" },
+    { id: ++currentProductId, name: "AŞURE - 500 GRAM", price: 100.00, category: "TATLI" },
+    { id: ++currentProductId, name: "HÖŞMERİM - 500 GR", price: 100.00, category: "TATLI" },
+    { id: ++currentProductId, name: "WAFFLE", price: 150.00, category: "TATLI" },
+    { id: ++currentProductId, name: "DİĞER PASTA ÇEŞİTLERİ", price: 50.00, category: "TATLI" },
+    // ÇORBA
+    { id: ++currentProductId, name: "KELLE PAÇA ÇORBA", price: 60.00, category: "ÇORBA" },
+    { id: ++currentProductId, name: "TARHANA ÇORBA", price: 50.00, category: "ÇORBA" }
 ];
-let nextProductId = Math.max(...products.map(p => p.id), 0) + 1; // Yeni ürün ID'si için
+let nextProductId = currentProductId + 1; // Yeni ürün ID'si için bir sonraki değeri ayarla
 
 let tables = [];
 let nextTableIdCounter = 1;
@@ -155,24 +171,13 @@ function broadcastTableUpdates() {
     broadcast({ type: 'tables_update', payload: { tables: tables } });
 }
 
-// DEĞİŞTİRİLDİ: Artık bellekteki 'products' dizisini döndürüyor
+// DEĞİŞTİRİLDİ: Artık bellekteki 'products' dizisini döndürüyor ve sıralama yapmıyor.
 function fetchProductsFromDB() {
-    // Bellekteki ürünleri döndürürken bir kopya oluşturmak iyi bir pratiktir
-    // Böylece orijinal dizi dışarıdan doğrudan değiştirilemez.
-    // Ancak bu örnekte basitlik için doğrudan referans döndürüyoruz.
-    // Derin kopyalama için: return JSON.parse(JSON.stringify(products));
-    console.log("Bellekten ürünler çekiliyor.");
-    return products.slice().sort((a, b) => { // Kategori ve isme göre sırala
-        if (a.category < b.category) return -1;
-        if (a.category > b.category) return 1;
-        if (a.name < b.name) return -1;
-        if (a.name > b.name) return 1;
-        return 0;
-    });
+    console.log("Bellekten ürünler çekiliyor (kullanıcı tarafından sağlanan sıralamayla).");
+    return products.slice(); // Sıralama yapmadan, tanımlandığı sırayla döndür
 }
 
-// DEĞİŞTİRİLDİ: Artık bellekteki 'products' dizisini kullanıyor
-async function broadcastProductsUpdate() { // async kalabilir, fetchProductsFromDB async olmasa da
+async function broadcastProductsUpdate() {
     const currentProducts = fetchProductsFromDB();
     broadcast({ type: 'products_update', payload: { products: currentProducts } });
 }
@@ -261,7 +266,7 @@ wss.on('connection', (ws, req) => {
                     }
                     clients.set(ws, { id: user.id, username: user.username, role: user.role, ip: clientIpAddress });
                     currentUserInfo = clients.get(ws);
-                    const memProductsLogin = fetchProductsFromDB(); // Bellekten ürünleri çek
+                    const memProductsLogin = fetchProductsFromDB();
                     ws.send(JSON.stringify({ type: 'login_success', payload: { user: currentUserInfo, tables: tables, products: memProductsLogin }}));
                     console.log(`Kullanıcı giriş yaptı: ${user.username} (Rol: ${user.role}, IP: ${clientIpAddress})`);
                     await logActivity(user.username, 'KULLANICI_GIRIS', { rol: user.role }, 'User', user.id, clientIpAddress);
@@ -280,7 +285,7 @@ wss.on('connection', (ws, req) => {
                          }
                          clients.set(ws, { ...payload.user, ip: clientIpAddress });
                          currentUserInfo = clients.get(ws);
-                         const memProductsReauth = fetchProductsFromDB(); // Bellekten ürünleri çek
+                         const memProductsReauth = fetchProductsFromDB();
                          ws.send(JSON.stringify({ type: 'tables_update', payload: { tables: tables } }));
                          ws.send(JSON.stringify({ type: 'products_update', payload: { products: memProductsReauth } }));
                          console.log(`Kullanıcı oturumu sürdürdü: ${currentUserInfo.username} (IP: ${currentUserInfo.ip})`);
@@ -290,10 +295,10 @@ wss.on('connection', (ws, req) => {
 
             case 'get_products':
                 try {
-                    const memProducts = fetchProductsFromDB(); // Bellekten ürünleri çek
+                    const memProducts = fetchProductsFromDB();
                     ws.send(JSON.stringify({ type: 'products_update', payload: { products: memProducts } }));
                     console.log('Sunucu: get_products isteğine products_update (bellekten) mesaj tipiyle yanıt verildi.');
-                } catch (err) { // Bu catch bloğu fetchProductsFromDB'nin kendi hatası için pek olası değil ama kalsın
+                } catch (err) {
                     console.error('Ürünler (get_products) alınırken beklenmedik hata:', err);
                     ws.send(JSON.stringify({ type: 'error', payload: { message: 'Ürünler getirilemedi.' } }));
                 }
@@ -313,7 +318,7 @@ wss.on('connection', (ws, req) => {
                 const receivedProductId = parseInt(payload.productId, 10);
                 if (isNaN(receivedProductId)) { ws.send(JSON.stringify({ type: 'order_update_fail', payload: { error: 'Geçersiz ürün IDsi.' } })); return; }
                 
-                const currentProductsList = fetchProductsFromDB(); // Bellekten al
+                const currentProductsList = fetchProductsFromDB();
                 const productToAdd = currentProductsList.find(p => p.id === receivedProductId);
 
                 if (tableToAdd && productToAdd && typeof payload.quantity === 'number' && payload.quantity > 0) {
@@ -502,18 +507,18 @@ wss.on('connection', (ws, req) => {
                 if (!currentUserInfo || currentUserInfo.role !== 'cashier') { ws.send(JSON.stringify({ type: 'error', payload: { message: 'Yetkiniz yok.' } })); return; }
                 if (payload && payload.name && typeof payload.price === 'number' && payload.price >= 0 && payload.category) {
                     const newProduct = {
-                        id: nextProductId++, // Otomatik artan ID
+                        id: nextProductId++, 
                         name: payload.name.toUpperCase(),
                         price: parseFloat(payload.price),
                         category: payload.category.toUpperCase()
                     };
-                    products.push(newProduct); // Bellekteki diziye ekle
+                    products.push(newProduct); 
                     await logActivity(
                         currentUserInfo.username, 'URUN_EKLENDI_MENUYE (Bellek)',
                         { urun_id: newProduct.id, urun_adi: newProduct.name, fiyat: newProduct.price, kategori: newProduct.category },
                         'ProductInMemory', newProduct.id, clientIpAddress
                     );
-                    await broadcastProductsUpdate(); // Tüm istemcilere güncel listeyi (bellekten çekerek) gönder
+                    await broadcastProductsUpdate(); 
                     ws.send(JSON.stringify({ type: 'main_menu_product_added', payload: { product: newProduct, message: `${newProduct.name} menüye eklendi.` } }));
                 } else { ws.send(JSON.stringify({ type: 'error', payload: { message: 'Eksik ürün bilgisi.' } })); }
                 break;
@@ -526,7 +531,7 @@ wss.on('connection', (ws, req) => {
                         ws.send(JSON.stringify({ type: 'error', payload: { message: 'Güncellenecek ürün bulunamadı.' } }));
                         return;
                     }
-                    const oldProduct = { ...products[productIndex] }; // Eski halini loglamak için kopyala
+                    const oldProduct = { ...products[productIndex] }; 
                     products[productIndex] = {
                         ...products[productIndex],
                         name: payload.name.toUpperCase(),
@@ -546,7 +551,6 @@ wss.on('connection', (ws, req) => {
                 } else { ws.send(JSON.stringify({ type: 'error', payload: { message: 'Eksik ürün bilgisi.' } }));}
                 break;
 
-            // Masa ve Garson yönetimi hala bellekten çalışıyor.
             case 'add_table':
                 if (!currentUserInfo || currentUserInfo.role !== 'cashier') { ws.send(JSON.stringify({ type: 'error', payload: { message: 'Bu işlem için yetkiniz yok.' } })); return; }
                 if (payload && payload.name && payload.name.trim() !== "") {
