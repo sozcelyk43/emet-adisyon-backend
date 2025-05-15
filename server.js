@@ -60,16 +60,22 @@ console.log(`EMET LEZZET GÜNLERİ HTTP Sunucusu ${HTTP_PORT} portunda başlatı
 console.log(`WebSocket sunucusu da bu HTTP sunucusu üzerinden çalışıyor.`);
 
 // --- Sunucu Verileri ---
-let users = [ // İdealde DB'de olmalı
-    { id: 1, username: 'hamza', password: 'hamza123', role: 'cashier' },
-    { id: 2, username: 'bilal', password: 'bilal123', role: 'cashier' },
-    { id: 3, username: 'omerfaruk', password: 'omer.faruk', role: 'waiter' },
-    { id: 4, username: 'zeynel', password: 'zey.nel', role: 'waiter' },
-    { id: 5, username: 'halil', password: 'ha.lil', role: 'waiter' },
-    { id: 6, username: 'garson', password: 'gar.son', role: 'waiter' },
+// GÜNCELLENMİŞ KULLANICI LİSTESİ
+let users = [
+    // Kasiyerler
+    { id: 1, username: 'onkasa', password: 'onkasa12', role: 'cashier' },
+    { id: 2, username: 'arkakasa', password: 'arkakasa12', role: 'cashier' },
+    // Garsonlar
+    { id: 3, username: 'aykut', password: 'ay.kut', role: 'waiter' },
+    { id: 4, username: 'osman', password: 'os.man', role: 'waiter' },
+    { id: 5, username: 'omerfaruk', password: 'omer.faruk', role: 'waiter' },
+    { id: 6, username: 'zeynel', password: 'zey.nel', role: 'waiter' },
+    { id: 7, username: 'dursunali', password: 'd.ali', role: 'waiter' },
+    { id: 8, username: 'tevfik', password: 'tev.fik', role: 'waiter' },
+    { id: 9, username: 'garson', password: 'gar.son', role: 'waiter' },
 ];
 
-// GÜNCELLENMİŞ Ürünler bellekte tutulacak
+// Ürünler bellekte tutulacak (en son güncellenen menü)
 let currentProductId = 1000;
 let products = [
     // ET - TAVUK
@@ -113,7 +119,7 @@ let products = [
     { id: ++currentProductId, name: "ŞALGAM", price: 25.00, category: "İÇECEK" },
     { id: ++currentProductId, name: "SADE MADEN SUYU", price: 15.00, category: "İÇECEK" },
     { id: ++currentProductId, name: "TROPİKAL - ÇİLEK KOKUSU", price: 75.00, category: "İÇECEK" },
-    { id: ++currentProductId, name: "TROPİKAL - KAVUNEZYA", price: 75.00, category: "İÇECEK" }, // Kullanıcı "İÇEÇEK" yazmıştı, "İÇECEK" olarak düzeltildi.
+    { id: ++currentProductId, name: "TROPİKAL - KAVUNEZYA", price: 75.00, category: "İÇECEK" },
     { id: ++currentProductId, name: "TROPİKAL - NAR-I ŞAHANE", price: 75.00, category: "İÇECEK" },
     // TATLI
     { id: ++currentProductId, name: "EV BAKLAVASI - KG", price: 400.00, category: "TATLI" },
@@ -127,7 +133,7 @@ let products = [
     { id: ++currentProductId, name: "KELLE PAÇA ÇORBA", price: 60.00, category: "ÇORBA" },
     { id: ++currentProductId, name: "TARHANA ÇORBA", price: 50.00, category: "ÇORBA" }
 ];
-let nextProductId = currentProductId + 1; // Yeni ürün ID'si için bir sonraki değeri ayarla
+let nextProductId = currentProductId + 1;
 
 let tables = [];
 let nextTableIdCounter = 1;
@@ -171,10 +177,9 @@ function broadcastTableUpdates() {
     broadcast({ type: 'tables_update', payload: { tables: tables } });
 }
 
-// DEĞİŞTİRİLDİ: Artık bellekteki 'products' dizisini döndürüyor ve sıralama yapmıyor.
 function fetchProductsFromDB() {
     console.log("Bellekten ürünler çekiliyor (kullanıcı tarafından sağlanan sıralamayla).");
-    return products.slice(); // Sıralama yapmadan, tanımlandığı sırayla döndür
+    return products.slice();
 }
 
 async function broadcastProductsUpdate() {
