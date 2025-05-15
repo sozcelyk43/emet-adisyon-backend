@@ -1163,17 +1163,7 @@ case 'products_update':
     `).join('');
     break;
 
-case 'products_update':
-    const productArea = document.getElementById('productItems');
-    if (!productArea) return;
-    const updatedProducts = msg.payload.products;
-    productArea.innerHTML = updatedProducts.map(p => `
-        <div class="border p-2 rounded bg-gray-50">
-            <div><strong>${p.name}</strong> <span class="text-sm text-gray-600">(${p.category})</span></div>
-            <div class="text-sm text-green-600">${p.price} ₺</div>
-        </div>
-    `).join('');
-    break;
+
 
 
 
