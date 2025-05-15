@@ -615,56 +615,51 @@ wss.on('connection', (ws) => {
                 }
                 break;
 
-            case 'close_table':
-                if (!currentUserInfo) {
-                    ws.send(JSON.stringify({ type: 'error', payload: { message: 'İşlem için giriş yapmalısınız.' } }));
-                    return;
-                }
-                if (currentUserInfo.role !== 'cashier') {
-                    ws.send(JSON.stringify({ type: 'error', payload: { message: 'Bu işlem için yetkiniz yok (Sadece Kasa yapabilir).' } }));
-                    return;
-                }
+           case 'close_table':
+    if (!currentUserInfo || currentUserInfo.role !== 'cashier') {
+        ws.send(JSON.stringify({ type: 'error', payload: { message: 'Yetkisiz işlem.' } }));
+        return;
+    }
 
-                const tableToClose = tables.find(t => t.id === payload.tableId);
-                if (tableToClose && tableToClose.order.length > 0) { 
-                    const closingTime = Date.now(); 
-                    
-                    tableToClose.order.forEach(item => {
-                        completedOrders.push({
-                            ...item, 
-                            tableName: tableToClose.name,
-                            closingTimestamp: closingTime 
-                        });
-                    });
-                    
-                    tableToClose.order = [];
-                    tableToClose.total = 0;
-                    tableToClose.status = 'boş';
-                    tableToClose.waiterId = null;
-                    tableToClose.waiterUsername = null; 
-                    console.log(`${currentUserInfo.username} tarafından ${tableToClose.name} kapatıldı ve raporlandı.`);
-                    broadcastTableUpdates();
-                } else if (tableToClose && tableToClose.order.length === 0) {
-                     ws.send(JSON.stringify({ type: 'error', payload: { message: 'Boş masa kapatılamaz veya raporlanamaz.' } }));
-                }
-                 else {
-                    ws.send(JSON.stringify({ type: 'error', payload: { message: 'Kapatılacak masa bulunamadı.' } }));
-                }
-                break;
+    const { tableId } = payload;
+
+    try {
+        const orderResult = await pool.query(
+            "UPDATE orders SET status = 'kapalı' WHERE table_id = $1 AND status = 'açık' RETURNING id",
+            [tableId]
+        );
+
+        if (orderResult.rowCount === 0) {
+            ws.send(JSON.stringify({ type: 'error', payload: { message: 'Açık sipariş bulunamadı.' } }));
+            return;
+        }
+
+        await broadcastTableUpdates(); // diğer kullanıcılara güncel tabloyu gönder
+        ws.send(JSON.stringify({ type: 'table_closed', payload: { tableId } }));
+
+    } catch (err) {
+        console.error("Masa kapatma hatası:", err);
+        ws.send(JSON.stringify({ type: 'error', payload: { message: 'Masa kapatılamadı.' } }));
+    }
+    break;
+
             
-            case 'get_sales_report':
-                 console.log(`[get_sales_report] İstek alındı. İsteyen kullanıcı bilgisi (clients map'inden):`, currentUserInfo); 
-                 if (!currentUserInfo) {
-                    ws.send(JSON.stringify({ type: 'error', payload: { message: 'İşlem için giriş yapmalısınız.' } }));
-                    return;
-                }
-                 if (currentUserInfo.role !== 'cashier') {
-                     ws.send(JSON.stringify({ type: 'error', payload: { message: 'Rapor görüntüleme yetkiniz yok.' } }));
-                    return;
-                 }
-                 ws.send(JSON.stringify({ type: 'sales_report_data', payload: { sales: completedOrders } }));
-                 console.log(`${currentUserInfo.username} için satış raporu gönderildi.`);
-                break;
+           case 'get_sales_report':
+    try {
+        const result = await pool.query(`
+            SELECT o.id AS order_id, oi.name_at_order, oi.quantity, oi.price_at_order, oi.waiter_username, o.created_at
+            FROM orders o
+            JOIN order_items oi ON o.id = oi.order_id
+            WHERE o.status = 'kapalı'
+            ORDER BY o.created_at DESC
+        `);
+        ws.send(JSON.stringify({ type: 'sales_report', payload: { report: result.rows } }));
+    } catch (err) {
+        console.error("Satış raporu çekilirken hata:", err);
+        ws.send(JSON.stringify({ type: 'error', payload: { message: 'Rapor alınamadı.' } }));
+    }
+    break;
+
 
             case 'logout':
                 if (clients.has(ws)) {
