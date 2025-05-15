@@ -252,26 +252,7 @@ case 'get_users':
                 
             
 
-            case 'add_manual_order_item': // Siparişi bellekteki masanın order dizisine manuel ekler
-                 if (!currentUserInfo || currentUserInfo.role !== 'cashier') { ws.send(JSON.stringify({ type: 'error', payload: { message: 'Yetkiniz yok.' } })); return; }
-                const tableForManual = tables.find(t => t.id === payload.tableId);
-                if (tableForManual && payload.name && typeof payload.price === 'number' && payload.price >= 0 && typeof payload.quantity === 'number' && payload.quantity > 0) {
-                     tableForManual.order.push({
-                         // productId: null, // Manuel ürün
-                         name: payload.name,
-                         category: payload.category || 'Diğer', // sales_log için gerekli
-                         quantity: payload.quantity,
-                         priceAtOrder: payload.price,
-                         description: payload.description || '',
-                         waiterUsername: currentUserInfo.username,
-                         timestamp: Date.now()
-                     });
-                    tableForManual.total = calculateTableTotal(tableForManual.order);
-                    tableForManual.status = 'dolu';
-                    tableForManual.waiterId = currentUserInfo.id; tableForManual.waiterUsername = currentUserInfo.username;
-                    broadcastTableUpdates();
-                } else { ws.send(JSON.stringify({ type: 'manual_order_update_fail', payload: { error: 'Geçersiz manuel ürün bilgileri.' } }));}
-                break;
+        
 
             case 'close_table': // SATIŞLARI VERİTABANINA KAYDEDER
                 if (!currentUserInfo || currentUserInfo.role !== 'cashier') {
