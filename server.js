@@ -194,6 +194,7 @@ wss.on('connection', (ws) => {
         let currentUserInfo = clients.get(ws);
 
         switch (type) {
+                
             case 'login': // Bellekten çalışır
                 const user = users.find(u => u.username === payload.username && u.password === payload.password);
                 if (user) {
@@ -208,6 +209,7 @@ wss.on('connection', (ws) => {
                     ws.send(JSON.stringify({ type: 'login_fail', payload: { error: 'Kullanıcı adı veya şifre hatalı.' } }));
                 }
                 break;
+                
 
             case 'reauthenticate': // Bellekten çalışır
                  if (payload && payload.user && payload.user.id) {
@@ -224,6 +226,7 @@ wss.on('connection', (ws) => {
                  } else { ws.send(JSON.stringify({ type: 'error', payload: { message: 'Eksik oturum bilgisi.' } }));}
                 break;
 
+                
            case 'get_products':
                 try {
                     const result = await pool.query('SELECT * FROM products ORDER BY id');
@@ -235,7 +238,7 @@ wss.on('connection', (ws) => {
                 break;
 
 
-case 'get_users':
+                case 'get_users':
                 if (!currentUserInfo || currentUserInfo.role !== 'cashier') {
                     ws.send(JSON.stringify({ type: 'error', payload: { message: 'Yetkiniz yok.' } }));
                     return;
@@ -308,6 +311,7 @@ case 'get_users':
                     ws.send(JSON.stringify({ type: 'error', payload: { message: 'Kapatılacak masa bulunamadı.' } }));
                 }
                 break;
+                
 
             case 'complete_quick_sale': // HIZLI SATIŞLARI VERİTABANINA KAYDEDER
                 if (!currentUserInfo || currentUserInfo.role !== 'cashier') {
@@ -359,6 +363,7 @@ case 'get_users':
                 }
                 break;
 
+                
              case 'get_sales_report':
                 if (!currentUserInfo || currentUserInfo.role !== 'cashier') {
                     ws.send(JSON.stringify({ type: 'error', payload: { message: 'Rapor görüntüleme yetkiniz yok.' } }));
@@ -512,6 +517,7 @@ case 'get_users':
                     ws.send(JSON.stringify({ type: 'quick_sale_fail', payload: { error: 'Hızlı satış için ürün bulunamadı.' } }));
                 }
                 break;
+                
 
             case 'get_sales_report':
                 if (!currentUserInfo || currentUserInfo.role !== 'cashier') {
@@ -530,6 +536,7 @@ case 'get_users':
                     ws.send(JSON.stringify({ type: 'error', payload: { message: 'Rapor alınırken bir veritabanı sorunu oluştu.' } }));
                 }
                 break;
+                
 
 
            case 'export_completed_orders':
@@ -558,6 +565,7 @@ case 'get_users':
                     console.log(`Kullanıcı çıkış yaptı: ${loggedOutUser.username}`);
                 }
                 break;
+                
 
             // Diğer case'leriniz (add_product_to_main_menu, update_main_menu_product, add_table, vb.)
             // olduğu gibi kalacak ve bellekteki verilerle çalışacaktır.
@@ -586,6 +594,7 @@ case 'get_users':
                 }
                 break;
 
+                
            case 'update_main_menu_product':
                 if (!currentUserInfo || currentUserInfo.role !== 'cashier') {
                     ws.send(JSON.stringify({ type: 'error', payload: { message: 'Yetkiniz yok.' } }));
@@ -612,9 +621,10 @@ case 'get_users':
                     ws.send(JSON.stringify({ type: 'error', payload: { message: 'Eksik ürün bilgisi.' } }));
                 }
                 break;
+                
 
 
-case 'get_tables':
+                case 'get_tables':
                 try {
                     const result = await pool.query('SELECT * FROM tables ORDER BY id');
                     ws.send(JSON.stringify({ type: 'tables_list', payload: { tables: result.rows } }));
@@ -634,6 +644,7 @@ case 'get_tables':
                     ws.send(JSON.stringify({ type: 'table_operation_success', payload: { message: `${newTable.name} eklendi.` } }));
                 } else { ws.send(JSON.stringify({ type: 'table_operation_fail', payload: { error: 'Geçersiz masa adı.' } }));}
                 break;
+                
             case 'edit_table_name':
                 if (!currentUserInfo || currentUserInfo.role !== 'cashier') { ws.send(JSON.stringify({ type: 'error', payload: { message: 'Bu işlem için yetkiniz yok.' } })); return; }
                 if (payload && payload.tableId && payload.newName && payload.newName.trim() !== "") {
@@ -644,6 +655,7 @@ case 'get_tables':
                     } else { ws.send(JSON.stringify({ type: 'table_operation_fail', payload: { error: 'Masa bulunamadı.' } }));}
                 } else { ws.send(JSON.stringify({ type: 'table_operation_fail', payload: { error: 'Eksik bilgi.' } }));}
                 break;
+                
             case 'delete_table':
                 if (!currentUserInfo || currentUserInfo.role !== 'cashier') { ws.send(JSON.stringify({ type: 'error', payload: { message: 'Yetkiniz yok.' } })); return; }
                 if (payload && payload.tableId) {
@@ -658,10 +670,12 @@ case 'get_tables':
                     } else { ws.send(JSON.stringify({ type: 'table_operation_fail', payload: { error: 'Masa bulunamadı.' } }));}
                 } else { ws.send(JSON.stringify({ type: 'table_operation_fail', payload: { error: 'Eksik masa IDsi.' } }));}
                 break;
+                
             case 'get_waiters_list':
                 if (currentUserInfo && currentUserInfo.role === 'cashier') { broadcastWaitersList(ws); }
                 else { ws.send(JSON.stringify({ type: 'error', payload: { message: 'Yetkiniz yok.' } }));}
                 break;
+                
             case 'add_waiter':
                 if (!currentUserInfo || currentUserInfo.role !== 'cashier') { ws.send(JSON.stringify({ type: 'error', payload: { message: 'Yetkiniz yok.' } })); return; }
                 if (payload && payload.username && payload.password) {
@@ -672,6 +686,7 @@ case 'get_tables':
                     ws.send(JSON.stringify({ type: 'waiter_operation_success', payload: { message: `${newWaiter.username} eklendi.` } }));
                 } else { ws.send(JSON.stringify({ type: 'waiter_operation_fail', payload: { error: 'Eksik bilgi.' } }));}
                 break;
+                
             case 'edit_waiter_password':
                  if (!currentUserInfo || currentUserInfo.role !== 'cashier') { ws.send(JSON.stringify({ type: 'error', payload: { message: 'Yetkiniz yok.' } })); return; }
                 if (payload && payload.userId && payload.newPassword) {
@@ -682,6 +697,7 @@ case 'get_tables':
                     } else { ws.send(JSON.stringify({ type: 'waiter_operation_fail', payload: { error: 'Garson bulunamadı.' } }));}
                 } else { ws.send(JSON.stringify({ type: 'waiter_operation_fail', payload: { error: 'Eksik bilgi.' } }));}
                 break;
+                
             case 'delete_waiter':
                 if (!currentUserInfo || currentUserInfo.role !== 'cashier') { ws.send(JSON.stringify({ type: 'error', payload: { message: 'Yetkiniz yok.' } })); return; }
                 if (payload && payload.userId) {
@@ -693,6 +709,7 @@ case 'get_tables':
                     } else { ws.send(JSON.stringify({ type: 'waiter_operation_fail', payload: { error: 'Garson bulunamadı.' } }));}
                 } else { ws.send(JSON.stringify({ type: 'waiter_operation_fail', payload: { error: 'Eksik garson IDsi.' } }));}
                 break;
+                
             case 'remove_order_item':
                  if (!currentUserInfo) { ws.send(JSON.stringify({ type: 'error', payload: { message: 'Giriş yapmalısınız.' } })); return; }
                 const tableToRemoveFrom = tables.find(t => t.id === payload.tableId);
@@ -713,13 +730,8 @@ case 'get_tables':
                 } else { ws.send(JSON.stringify({ type: 'order_update_fail', payload: { error: 'Masa bulunamadı.' } }));}
                 break;
 
-        }
-            default:
-                console.log('Bilinmeyen mesaj tipi (default):', type);
-                ws.send(JSON.stringify({ type: 'error', payload: { message: `Bilinmeyen mesaj tipi: ${type}` } }));
-        }
-    });
-            case 'update_main_menu_product':
+      
+               case 'update_main_menu_product':
                 if (!currentUserInfo || currentUserInfo.role !== 'cashier') {
                     ws.send(JSON.stringify({ type: 'error', payload: { message: 'Yetkiniz yok.' } }));
                     return;
@@ -747,6 +759,7 @@ case 'get_tables':
                     ws.send(JSON.stringify({ type: 'error', payload: { message: 'Eksik ürün bilgisi.' } }));
                 }
                 break;
+                
              case 'add_table':
                 if (!currentUserInfo || currentUserInfo.role !== 'cashier') { ws.send(JSON.stringify({ type: 'error', payload: { message: 'Bu işlem için yetkiniz yok.' } })); return; }
                 if (payload && payload.name && payload.name.trim() !== "") {
@@ -765,6 +778,7 @@ case 'get_tables':
                     } else { ws.send(JSON.stringify({ type: 'table_operation_fail', payload: { error: 'Masa bulunamadı.' } }));}
                 } else { ws.send(JSON.stringify({ type: 'table_operation_fail', payload: { error: 'Eksik bilgi.' } }));}
                 break;
+                
             case 'delete_table':
                 if (!currentUserInfo || currentUserInfo.role !== 'cashier') { ws.send(JSON.stringify({ type: 'error', payload: { message: 'Yetkiniz yok.' } })); return; }
                 if (payload && payload.tableId) {
@@ -779,10 +793,12 @@ case 'get_tables':
                     } else { ws.send(JSON.stringify({ type: 'table_operation_fail', payload: { error: 'Masa bulunamadı.' } }));}
                 } else { ws.send(JSON.stringify({ type: 'table_operation_fail', payload: { error: 'Eksik masa IDsi.' } }));}
                 break;
+                
             case 'get_waiters_list':
                 if (currentUserInfo && currentUserInfo.role === 'cashier') { broadcastWaitersList(ws); }
                 else { ws.send(JSON.stringify({ type: 'error', payload: { message: 'Yetkiniz yok.' } }));}
                 break;
+                
             case 'add_waiter':
                 if (!currentUserInfo || currentUserInfo.role !== 'cashier') { ws.send(JSON.stringify({ type: 'error', payload: { message: 'Yetkiniz yok.' } })); return; }
                 if (payload && payload.username && payload.password) {
@@ -793,6 +809,7 @@ case 'get_tables':
                     ws.send(JSON.stringify({ type: 'waiter_operation_success', payload: { message: `${newWaiter.username} eklendi.` } }));
                 } else { ws.send(JSON.stringify({ type: 'waiter_operation_fail', payload: { error: 'Eksik bilgi.' } }));}
                 break;
+                
             case 'edit_waiter_password':
                  if (!currentUserInfo || currentUserInfo.role !== 'cashier') { ws.send(JSON.stringify({ type: 'error', payload: { message: 'Yetkiniz yok.' } })); return; }
                 if (payload && payload.userId && payload.newPassword) {
@@ -803,6 +820,7 @@ case 'get_tables':
                     } else { ws.send(JSON.stringify({ type: 'waiter_operation_fail', payload: { error: 'Garson bulunamadı.' } }));}
                 } else { ws.send(JSON.stringify({ type: 'waiter_operation_fail', payload: { error: 'Eksik bilgi.' } }));}
                 break;
+
             case 'delete_waiter':
                 if (!currentUserInfo || currentUserInfo.role !== 'cashier') { ws.send(JSON.stringify({ type: 'error', payload: { message: 'Yetkiniz yok.' } })); return; }
                 if (payload && payload.userId) {
@@ -814,6 +832,7 @@ case 'get_tables':
                     } else { ws.send(JSON.stringify({ type: 'waiter_operation_fail', payload: { error: 'Garson bulunamadı.' } }));}
                 } else { ws.send(JSON.stringify({ type: 'waiter_operation_fail', payload: { error: 'Eksik garson IDsi.' } }));}
                 break;
+                
             case 'remove_order_item':
                  if (!currentUserInfo) { ws.send(JSON.stringify({ type: 'error', payload: { message: 'Giriş yapmalısınız.' } })); return; }
                 const tableToRemoveFrom = tables.find(t => t.id === payload.tableId);
