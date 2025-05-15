@@ -713,7 +713,7 @@ case 'get_tables':
                 } else { ws.send(JSON.stringify({ type: 'order_update_fail', payload: { error: 'Masa bulunamadı.' } }));}
                 break;
 
-
+        }
             default:
                 console.log('Bilinmeyen mesaj tipi (default):', type);
                 ws.send(JSON.stringify({ type: 'error', payload: { message: `Bilinmeyen mesaj tipi: ${type}` } }));
