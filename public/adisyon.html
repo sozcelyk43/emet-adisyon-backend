@@ -1033,11 +1033,13 @@ const WEBSOCKET_URL = (() => {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const host = window.location.hostname;
     const port = window.location.port;
+
     if (host === "localhost" || host === "127.0.0.1") {
-        return `ws://${host}:8080`; // Yerel sunucu portunuz
+        return `ws://${host}:8080`; // Yerel sunucunuzun portu (örneğin 8080)
     }
     return `${protocol}//${host}${port ? ':' + port : ''}`;
 })();
+
 
 function connectWebSocket() {
     showLoading("Sunucuya bağlanılıyor...");
