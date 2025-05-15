@@ -4,11 +4,9 @@ const express = require('express');
 const http = require('http');
 const path = require('path');
 const { Pool } = require('pg'); // PostgreSQL kütüphanesini import et
-const bcrypt = require('bcryptjs'); // Şifre hashleme için (npm install bcryptjs)
 
 // --- Sunucu Ayarları ---
 const HTTP_PORT = process.env.PORT || 8080;
-const SALT_ROUNDS = 10; // bcrypt için salt rounds
 
 // --- PostgreSQL Veritabanı Bağlantısı ---
 // Render.com'daki Environment Variables'dan DATABASE_URL'i alacak.
