@@ -709,23 +709,84 @@
 
 
 
-
+const WEBSOCKET_URL = 'wss://emet-adisyon.onrender.com'; 
 
     // Global WebSocket değişkeni
+// Global WebSocket değişkeni
 let socket;
 
 // Uygulama genelindeki durumu tutacak obje
+
+// Örnek sabit ürün listesi (sunucudaki products_in_memory_fallback gibi)
+const staticProducts = [
+    { id: 1001, name: "İSKENDER - 120 GR", price: 275.00, category: "ET - TAVUK" },
+    { id: 1002, name: "ET DÖNER EKMEK ARASI", price: 150.00, category: "ET - TAVUK" },
+    { id: 1003, name: "ET DÖNER PORSİYON", price: 175.00, category: "ET - TAVUK" },
+    { id: 1004, name: "TAVUK DÖNER EKMEK ARASI", price: 130.00, category: "ET - TAVUK" },
+    { id: 1005, name: "TAVUK DÖNER PORSİYON", price: 150.00, category: "ET - TAVUK" },
+    { id: 1006, name: "KÖFTE EKMEK", price: 130.00, category: "ET - TAVUK" },
+    { id: 1007, name: "KÖFTE PORSİYON", price: 150.00, category: "ET - TAVUK" },
+    { id: 1008, name: "KUZU ŞİŞ", price: 150.00, category: "ET - TAVUK" },
+    { id: 1009, name: "ADANA ŞİŞ", price: 150.00, category: "ET - TAVUK" },
+    { id: 1010, name: "PİRZOLA - 4 ADET", price: 250.00, category: "ET - TAVUK" },
+    { id: 1011, name: "TAVUK FAJİTA", price: 200.00, category: "ET - TAVUK" },
+    { id: 1012, name: "TAVUK (PİLİÇ) ÇEVİRME", price: 250.00, category: "ET - TAVUK" },
+    { id: 1013, name: "ET DÖNER - KG", price: 1300.00, category: "ET - TAVUK" },
+    { id: 1014, name: "ET DÖNER - 500 GR", price: 650.00, category: "ET - TAVUK" },
+    { id: 1015, name: "TAVUK DÖNER - KG", price: 800.00, category: "ET - TAVUK" },
+    { id: 1016, name: "TAVUK DÖNER - 500 GR", price: 400.00, category: "ET - TAVUK" },
+    { id: 2001, name: "PİZZA KARIŞIK (ORTA BOY)", price: 150.00, category: "ATIŞTIRMALIK" },
+    { id: 2002, name: "PİZZA KARIŞIK (BÜYÜK BOY)", price: 200.00, category: "ATIŞTIRMALIK" },
+    { id: 2003, name: "LAHMACUN", price: 75.00, category: "ATIŞTIRMALIK" },
+    { id: 2004, name: "PİDE ÇEŞİTLERİ", price: 100.00, category: "ATIŞTIRMALIK" },
+    { id: 2005, name: "AYVALIK TOSTU", price: 100.00, category: "ATIŞTIRMALIK" },
+    { id: 2006, name: "HAMBURGER", price: 120.00, category: "ATIŞTIRMALIK" },
+    { id: 2007, name: "ÇİĞ KÖFTE KG (MARUL-LİMON)", price: 300.00, category: "ATIŞTIRMALIK" },
+    { id: 3001, name: "OSMANLI ŞERBETİ - 1 LİTRE", price: 75.00, category: "İÇECEK" },
+    { id: 3002, name: "LİMONATA", price: 75.00, category: "İÇECEK" },
+    { id: 3003, name: "SU", price: 10.00, category: "İÇECEK" },
+    { id: 3004, name: "AYRAN", price: 15.00, category: "İÇECEK" },
+    { id: 3005, name: "ÇAY", price: 10.00, category: "İÇECEK" },
+    { id: 3006, name: "GAZOZ", price: 25.00, category: "İÇECEK" },
+    { id: 4001, name: "EV BAKLAVASI - KG", price: 400.00, category: "TATLI" },
+    { id: 4002, name: "EV BAKLAVASI - 500 GRAM", price: 200.00, category: "TATLI" },
+    { id: 4003, name: "EV BAKLAVASI - PORSİYON", price: 75.00, category: "TATLI" },
+    { id: 4004, name: "AŞURE - 500 GRAM", price: 100.00, category: "TATLI" },
+    { id: 4005, name: "HÖŞMERİM - 500 GRAM", price: 100.00, category: "TATLI" },
+    { id: 4006, name: "DİĞER PASTA ÇEŞİTLERİ", price: 50.00, category: "TATLI" },
+    { id: 4007, name: "YAĞLI GÖZLEME", price: 50.00, category: "TATLI" },
+    { id: 4008, name: "İÇLİ GÖZLEME", price: 60.00, category: "TATLI" },
+    { id: 5001, name: "KELLE PAÇA ÇORBA", price: 60.00, category: "ÇORBA" },
+    { id: 5002, name: "TARHANA ÇORBA", price: 60.00, category: "ÇORBA" }
+];
+
+// İstemci tarafında masaları oluşturan fonksiyon
+let clientNextTableIdCounter = 1; // Masa ID'lerinin benzersiz olması için
+function initializeClientTables() {
+    const clientTables = [];
+    let currentId = 1;
+    for (let i = 1; i <= 5; i++) {
+        clientTables.push({ id: `masa-${currentId++}`, name: `Kamelya ${i}`, type: 'kamelya', status: "boş", order: [], total: 0, waiterId: null, waiterUsername: null });
+    }
+    for (let i = 1; i <= 16; i++) {
+        clientTables.push({ id: `masa-${currentId++}`, name: `Bahçe ${i}`, type: 'bahce', status: "boş", order: [], total: 0, waiterId: null, waiterUsername: null });
+    }
+    clientNextTableIdCounter = currentId;
+    console.log(`${clientTables.length} masa istemci tarafında oluşturuldu.`);
+    return clientTables;
+}
+
 const appState = {
-    user: null, // Giriş yapan kullanıcı bilgileri (id, username, role)
-    products: [], // Sunucudan gelen ürün listesi
-    tables: [], // Sunucudan gelen masa listesi
-    currentTableId: null, // Sipariş sayfasında aktif olan masanın ID'si
-    salesReport: [], // Satış raporu verileri
-    activityLog: [], // Aktivite logları verileri
-    currentQuickSaleOrder: [], // Hızlı satış sepetindeki ürünler
-    currentOrderOriginalTotal: 0, // Mevcut siparişin indirimsiz orijinal toplamı
-    currentOrderDiscountAmount: 0, // Mevcut siparişe uygulanan indirim miktarı
-    waiters: [] // Garson listesi (yönetim için)
+    user: null,
+    products: staticProducts, // Ürünleri doğrudan ata
+    tables: initializeClientTables(), // Masaları doğrudan oluştur ve ata
+    currentTableId: null,
+    salesReport: [],
+    activityLog: [],
+    currentQuickSaleOrder: [],
+    currentOrderOriginalTotal: 0,
+    currentOrderDiscountAmount: 0,
+    waiters: [] // Garsonlar sunucudan gelmeye devam edebilir veya sabit kodlanabilir
 };
 
 // DOM Elementleri (Global olarak erişilebilir)
@@ -742,7 +803,7 @@ const activeUserRoleSpan = document.getElementById('activeUserRole');
 const logoutButton = document.getElementById('logoutButton');
 
 const salesReportButton = document.getElementById('salesReportButton');
-const activityLogButton = document.getElementById('activityLogButton'); // Aktivite logları butonu
+const activityLogButton = document.getElementById('activityLogButton');
 const quickSaleEntryButton = document.getElementById('quickSaleEntryButton');
 const quickSaleButtonContainerTop = document.getElementById('quickSaleButtonContainerTop');
 const addProductToMenuButton = document.getElementById('addProductToMenuButton');
@@ -864,7 +925,7 @@ const confirmDeleteWaiterNoButton = document.getElementById('confirmDeleteWaiter
 
 // Satış Raporu Modalı Elementleri
 const salesReportModal = document.getElementById('salesReportModal');
-const salesReportModalContent = document.getElementById('salesReportModalContent'); // Yazdırma için
+const salesReportModalContent = document.getElementById('salesReportModalContent');
 const closeSalesReportModalButton = document.getElementById('closeSalesReportModalButton');
 const salesReportTableContainer = document.getElementById('salesReportTableContainer');
 const totalItemsSoldSpan = document.getElementById('totalItemsSold');
@@ -874,27 +935,23 @@ const printSalesReportButton = document.getElementById('printSalesReportButton')
 
 // Aktivite Logları Modalı Elementleri
 const activityLogModal = document.getElementById('activityLogModal');
-const activityLogModalContent = document.getElementById('activityLogModalContent'); // Yazdırma için (opsiyonel)
+const activityLogModalContent = document.getElementById('activityLogModalContent');
 const closeActivityLogModalButton = document.getElementById('closeActivityLogModalButton');
 const activityLogTableContainer = document.getElementById('activityLogTableContainer');
 const refreshActivityLogButton = document.getElementById('refreshActivityLogButton');
 
 // --- Yardımcı Fonksiyonlar ---
-
-// Fiyatları "₺" sembolü ile formatlar
 function formatPrice(price) {
     if (typeof price !== 'number' || isNaN(price)) {
         return '0 ₺';
     }
     const formatted = price.toFixed(2).replace('.', ',');
-    // ",00" ise ondalık kısmı at
     if (formatted.endsWith(',00')) {
         return formatted.substring(0, formatted.length - 3) + ' ₺';
     }
     return formatted + ' ₺';
 }
 
-// Zaman damgasını "GG.AA.YYYY SS:DD" formatına çevirir (Türkiye saatine göre)
 function formatTimestamp(timestampInput) {
     if (!timestampInput) {
         return '-';
@@ -906,7 +963,7 @@ function formatTimestamp(timestampInput) {
         initialDate = timestampInput;
     } else if (typeof timestampInput === 'string') {
         const parts = timestampInput.match(/^(\d{2})\.(\d{2})\.(\d{4}) (\d{2}):(\d{2}):(\d{2})$/);
-        if (parts) { // "GG.AA.YYYY SS:DD:NN" formatındaki string'in UTC olduğu varsayılır
+        if (parts) {
             const year = parseInt(parts[3], 10);
             const monthIndex = parseInt(parts[2], 10) - 1;
             const day = parseInt(parts[1], 10);
@@ -915,7 +972,7 @@ function formatTimestamp(timestampInput) {
             const second = parseInt(parts[6], 10);
             const utcTimestamp = Date.UTC(year, monthIndex, day, hour, minute, second);
             initialDate = new Date(utcTimestamp);
-        } else { // Diğer string formatları (örn: ISO)
+        } else {
             initialDate = new Date(timestampInput);
         }
     } else {
@@ -935,10 +992,9 @@ function formatTimestamp(timestampInput) {
             timeZone: 'Europe/Istanbul', hour12: false
         };
         let formattedDate = new Intl.DateTimeFormat('tr-TR', options).format(initialDate);
-        return formattedDate.replace(',', ''); // "GG.AA.YYYY, SS:DD" -> "GG.AA.YYYY SS:DD"
+        return formattedDate.replace(',', '');
     } catch (e) {
         console.error("Intl.DateTimeFormat ile tarih formatlama hatası:", e);
-        // Fallback (tarayıcının lokal saatini kullanır, TRT garantisi yok)
         const day = String(initialDate.getDate()).padStart(2, '0');
         const month = String(initialDate.getMonth() + 1).padStart(2, '0');
         const year = initialDate.getFullYear();
@@ -948,24 +1004,20 @@ function formatTimestamp(timestampInput) {
     }
 }
 
-// Mevcut tarihi "GG.AA.YYYY SS:DD" formatında döndürür
 function getCurrentFormattedDate() {
     const now = new Date();
-    return formatTimestamp(now); // formatTimestamp zaten TRT'ye çeviriyor
+    return formatTimestamp(now);
 }
 
-// Yükleme ekranını gösterir
 function showLoading(message = "İşleniyor...") {
     loadingMessage.textContent = message;
     loadingOverlay.classList.add('active');
 }
 
-// Yükleme ekranını gizler
 function hideLoading() {
     loadingOverlay.classList.remove('active');
 }
 
-// Kategori adını CSS sınıfı için güvenli hale getirir
 function sanitizeCategoryForCSS(categoryName) {
     if (!categoryName) return 'default';
     const turkishMap = { 'İ': 'I', 'ı': 'i', 'Ö': 'O', 'ö': 'o', 'Ü': 'U', 'ü': 'u', 'Ş': 'S', 'ş': 's', 'Ğ': 'G', 'ğ': 'g', 'Ç': 'C', 'ç': 'c' };
@@ -977,21 +1029,13 @@ function sanitizeCategoryForCSS(categoryName) {
         .toUpperCase();
 }
 
-// --- WebSocket Fonksiyonları ---
 const WEBSOCKET_URL = (() => {
-    // Tarayıcıda çalışıyorsak ve sayfa HTTPS üzerinden sunuluyorsa wss, değilse ws kullan
-    // Yerelde test ederken (http://localhost veya http://127.0.0.1) ws://localhost:PORTNO şeklinde olmalı
-    // Render gibi platformlarda genellikle wss://<uygulama-adi>.onrender.com şeklinde olur.
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const host = window.location.hostname;
-    const port = window.location.port; // HTTP_PORT ile aynı olmalı (Render için bu boş olabilir)
-
+    const port = window.location.port;
     if (host === "localhost" || host === "127.0.0.1") {
-        // Yerel geliştirme için portu manuel olarak belirtin (sunucunuzun çalıştığı port)
-        // Örneğin sunucunuz 8080'de çalışıyorsa:
-        return `ws://${host}:8080`; // VEYA `ws://${host}:${HTTP_PORT_FROM_SERVER_CONFIG}`
+        return `ws://${host}:8080`; // Yerel sunucu portunuz
     }
-    // Render veya benzeri bir platform için (port genellikle URL'de belirtilmez, HTTPS için 443, HTTP için 80)
     return `${protocol}//${host}${port ? ':' + port : ''}`;
 })();
 
@@ -1008,20 +1052,30 @@ function connectWebSocket() {
             try {
                 appState.user = JSON.parse(storedUser);
                 console.log("Oturum bulundu:", appState.user.username);
+                // Oturum bulunduğunda, UI'ı hemen sabit kodlu verilerle render et
+                activeUserNameSpan.textContent = appState.user.username;
+                activeUserRoleSpan.textContent = appState.user.role;
+                loginModal.classList.remove('active');
+                appContainer.classList.remove('hidden');
+                renderInitialDataIfNeeded();
+                renderTables();
+                updateUIForRole();
+                // Sunucuya reauthenticate gönder, sunucu daha sonra güncel product/table gönderirse onlar da işlenir.
                 sendMessageToServer('reauthenticate', { user: appState.user });
-                // UI güncellemeleri reauthenticate yanıtından sonra yapılmalı
             } catch (e) {
                 console.error("localStorage'dan kullanıcı verisi okunamadı:", e);
                 localStorage.removeItem('adisyonUser');
                 showLoginScreen();
             }
         } else {
+            // Sabit kodlu products ve tables zaten appState'de var, login ekranını göster.
+            // UI render fonksiyonları login sonrası çağrılacak.
+            renderInitialDataIfNeeded(); // Kategori select'leri vb. doldurmak için
             showLoginScreen();
         }
     };
 
     socket.onmessage = (event) => {
-        // console.log("RAW SUNUCUDAN GELEN MESAJ:", event.data); // Hata ayıklama için
         let message;
         try {
             message = JSON.parse(event.data);
@@ -1041,7 +1095,7 @@ function connectWebSocket() {
     socket.onclose = (event) => {
         console.log("WebSocket bağlantısı kapandı. Kod:", event.code, "Neden:", event.reason);
         showLoginError("Sunucu bağlantısı kesildi. Yeniden bağlanmak için sayfayı yenileyin.");
-        showLoginScreen(); // Login ekranına yönlendir
+        showLoginScreen();
         hideLoading();
     };
 }
@@ -1050,43 +1104,32 @@ function sendMessageToServer(type, payload) {
     if (socket && socket.readyState === WebSocket.OPEN) {
         const message = JSON.stringify({ type, payload });
         socket.send(message);
-        // console.log("Sunucuya gönderildi:", message); // Çok fazla log üretebilir
     } else {
         console.error("WebSocket bağlantısı açık değil veya henüz kurulmadı.");
         if (!appState.user) {
             showLoginError("Lütfen önce giriş yapın.");
             showLoginScreen();
         } else {
-            // Bağlantı koptuysa ve kullanıcı giriş yapmışsa, yeniden bağlanmayı deneyebiliriz
-            // Veya kullanıcıya bilgi verebiliriz.
             showLoginError("Sunucuya mesaj gönderilemedi. Bağlantı sorunu. Sayfayı yenilemeyi deneyin.");
-            // connectWebSocket(); // Otomatik yeniden bağlanma (dikkatli kullanılmalı)
         }
     }
 }
 
-// Sunucudan gelen mesajları işleyen ana fonksiyon
 function handleServerMessage(message) {
     hideLoading();
-
-    // console.log("İşlenecek Mesaj Tipi:", message.type, "Payload:", message.payload);
-
     switch (message.type) {
         case 'login_success':
             const userDataFromServer = message.payload.user || message.payload.waiter;
             if (message.payload && typeof message.payload === 'object' && userDataFromServer && typeof userDataFromServer === 'object') {
                 appState.user = userDataFromServer;
+                // Sunucudan gelen products ve tables ile appState'i GÜNCELLE (ezme)
+                // Eğer sunucu bu bilgileri gönderiyorsa ve sabit kodlanmıştan farklıysa, bunlar kullanılır.
                 if (message.payload.tables && Array.isArray(message.payload.tables)) {
-                    appState.tables = message.payload.tables;
-                } else {
-                    appState.tables = [];
-                    console.warn("login_success: payload.tables eksik veya array değil.");
+                    appState.tables = message.payload.tables; // Sunucudan gelen masaları kullan
                 }
                 if (message.payload.products && Array.isArray(message.payload.products)) {
-                    appState.products = message.payload.products;
-                } else {
-                    appState.products = [];
-                    console.warn("login_success: payload.products eksik veya array değil.");
+                    appState.products = message.payload.products; // Sunucudan gelen ürünleri kullan
+                    initialDataRendered = false; // Ürünler değişti, yeniden render et
                 }
                 localStorage.setItem('adisyonUser', JSON.stringify(appState.user));
                 activeUserNameSpan.textContent = appState.user.username;
@@ -1098,7 +1141,7 @@ function handleServerMessage(message) {
                 renderInitialDataIfNeeded();
                 renderTables();
                 updateUIForRole();
-                console.log("Giriş başarılı ve UI güncellendi:", appState.user.username);
+                console.log("Giriş başarılı ve UI güncellendi (sunucu verileriyle):", appState.user.username);
             } else {
                 showLoginError("Sunucudan eksik veya hatalı giriş yanıtı alındı.");
                 appState.user = null;
@@ -1119,16 +1162,14 @@ function handleServerMessage(message) {
 
         case 'tables_update':
             if (message.payload && Array.isArray(message.payload.tables)) {
-                appState.tables = message.payload.tables;
+                appState.tables = message.payload.tables; // Sunucudan gelen masalarla güncelle
                 renderTables();
                 console.log("Masalar sunucudan güncellendi.");
-
                 if (orderPageContainer.classList.contains('active') && appState.currentTableId) {
                     const updatedTable = appState.tables.find(t => t.id === appState.currentTableId);
                     if (updatedTable) {
                         renderOrderPageForTable(updatedTable);
                     } else {
-                        console.log(`Aktif sipariş sayfasındaki masa (${appState.currentTableId}) güncel listede bulunamadı. Ana ekrana dönülüyor.`);
                         showTablesView();
                     }
                 }
@@ -1140,14 +1181,13 @@ function handleServerMessage(message) {
             }
             break;
 
-        case 'products_list': // products_list'i de products_update gibi işleyebiliriz
+        case 'products_list':
         case 'products_update':
             if (message.payload && Array.isArray(message.payload.products)) {
-                appState.products = message.payload.products;
+                appState.products = message.payload.products; // Sunucudan gelen ürünlerle güncelle
                 console.log(`Ana ürün listesi sunucudan güncellendi (tip: ${message.type}).`);
                 initialDataRendered = false;
                 renderInitialDataIfNeeded();
-
                 if (orderPageContainer.classList.contains('active') && appState.currentTableId) {
                     const currentTable = appState.tables.find(t => t.id === appState.currentTableId);
                     if (currentTable) {
@@ -1167,17 +1207,17 @@ function handleServerMessage(message) {
 
         case 'main_menu_product_added':
             alert(message.payload.message || "Yeni ürün menüye eklendi!");
-            // Sunucu genellikle bu işlemden sonra bir 'products_update' gönderir.
+            // Sunucu bu işlemden sonra 'products_update' göndermeli
             break;
 
          case 'main_menu_product_updated':
             alert(message.payload.message || "Ürün menüde güncellendi!");
-            // Sunucu genellikle bu işlemden sonra bir 'products_update' gönderir.
+            // Sunucu bu işlemden sonra 'products_update' göndermeli
             break;
 
         case 'table_operation_success':
             alert(message.payload.message || "Masa işlemi başarılı.");
-            // Sunucu genellikle bu işlemden sonra bir 'tables_update' gönderir.
+            // Sunucu bu işlemden sonra 'tables_update' göndermeli
             break;
 
         case 'table_operation_fail':
@@ -1220,7 +1260,6 @@ function handleServerMessage(message) {
 
         case 'quick_sale_success':
             console.log("Hızlı satış sunucuda tamamlandı.");
-            // İstemci tarafı sepet temizleme vb. işlemler fiş gösterildikten sonra yapılabilir.
             break;
 
         case 'quick_sale_fail':
@@ -1233,121 +1272,79 @@ function handleServerMessage(message) {
     }
 }
 
-
 function showLoginError(message) {
     loginError.textContent = message;
-    passwordInput.value = ''; // Şifreyi temizle
+    passwordInput.value = '';
 }
 
 function showLoginScreen() {
     loginModal.classList.add('active');
     appContainer.classList.add('hidden');
-    orderPageContainer.classList.remove('active'); // Diğer tüm sayfaları/modalları gizle
-    quickSaleModal.classList.remove('active');
-    addProductToMenuModal.classList.remove('active');
-    editProductModal.classList.remove('active');
-    manageTablesModal.classList.remove('active');
-    manageWaitersModal.classList.remove('active');
-    salesReportModal.classList.remove('active');
-    activityLogModal.classList.remove('active');
-    receiptModal.classList.remove('active');
-    confirmCloseTableModal.classList.remove('active');
-    confirmDiscountModal.classList.remove('active');
-    confirmExitAppModal.classList.remove('active');
-    confirmDeleteTableModal.classList.remove('active');
-    confirmDeleteWaiterModal.classList.remove('active');
+    [orderPageContainer, quickSaleModal, addProductToMenuModal, editProductModal,
+     manageTablesModal, manageWaitersModal, salesReportModal, activityLogModal,
+     receiptModal, confirmCloseTableModal, confirmDiscountModal, confirmExitAppModal,
+     confirmDeleteTableModal, confirmDeleteWaiterModal].forEach(el => el.classList.remove('active'));
 }
 
-
-// Android WebView'dan geri tuşu için
 window.handleAndroidBackButton = function() {
     const isActive = (element) => element && (element.classList.contains('active') || (element.style.display !== 'none' && getComputedStyle(element).display !== 'none'));
-
     const activeModals = [
         confirmExitAppModal, confirmCloseTableModal, confirmDiscountModal,
         confirmDeleteTableModal, confirmDeleteWaiterModal, receiptModal,
         salesReportModal, activityLogModal, manageWaitersModal, manageTablesModal,
         editProductModal, addProductToMenuModal, quickSaleModal
     ];
-
     for (const modal of activeModals) {
         if (isActive(modal)) {
-            // Özel kapatma mantığı olanlar için
             if (modal === receiptModal) closeReceiptModalOnly();
             else if (modal === quickSaleModal) {
-                quickSaleModal.classList.remove('active');
-                showTablesView(); // Hızlı satıştan sonra masalara dön
+                quickSaleModal.classList.remove('active'); showTablesView();
             }
             else modal.classList.remove('active');
-            console.log("Geri tuşu: Modal kapatıldı -", modal.id);
-            return; // Bir modal kapatıldı, işlem tamam
+            console.log("Geri tuşu: Modal kapatıldı -", modal.id); return;
         }
     }
-
-    if (isActive(orderPageContainer)) {
-        console.log("Geri tuşu: Sipariş sayfasından ana ekrana dönülüyor.");
-        showTablesView();
-        return;
-    }
-
-    if (isActive(appContainer) && !isActive(loginModal)) {
-        console.log("Geri tuşu: Ana ekranda, çıkış onayı gösteriliyor.");
-        confirmExitAppModal.classList.add('active');
-        return;
-    }
-
+    if (isActive(orderPageContainer)) { console.log("Geri tuşu: Sipariş sayfasından ana ekrana dönülüyor."); showTablesView(); return; }
+    if (isActive(appContainer) && !isActive(loginModal)) { console.log("Geri tuşu: Ana ekranda, çıkış onayı gösteriliyor."); confirmExitAppModal.classList.add('active'); return; }
     if (isActive(loginModal)) {
         console.log("Geri tuşu: Login ekranında, uygulama kapanabilir.");
-        if (window.Android && typeof window.Android.closeApp === 'function') {
-            window.Android.closeApp();
-        } else {
-            console.warn("Login ekranında geri tuşuna basıldı, ancak 'window.Android.closeApp' bulunamadı.");
-        }
+        if (window.Android && typeof window.Android.closeApp === 'function') window.Android.closeApp();
+        else console.warn("Login ekranında geri tuşuna basıldı, ancak 'window.Android.closeApp' bulunamadı.");
         return;
     }
-
     console.log("Geri tuşu: Tanımlanmayan durum, varsayılan çıkış.");
-    if (window.Android && typeof window.Android.closeApp === 'function') {
-        window.Android.closeApp();
-    }
+    if (window.Android && typeof window.Android.closeApp === 'function') window.Android.closeApp();
 };
 
-// --- Rol Bazlı UI Güncelleme ---
 function updateUIForRole() {
     if (!appState.user) return;
     console.log("UI güncelleniyor. Kullanıcı rolü:", appState.user.role);
-
     const isCashier = appState.user.role === 'cashier';
-
-    // Kasiyere özel butonlar
     [manualProductSection, salesReportButton, quickSaleButtonContainerTop,
      addProductToMenuButton, editProductMenuButton, manageTablesButton,
      manageWaitersButton, finalizeAndCloseTableButton, applyDiscountButton,
      applyQuickSaleDiscountButton, activityLogButton].forEach(el => {
         if (el) el.classList.toggle('hidden', !isCashier);
      });
-
-    // Herkese açık butonlar (ama bazıları sipariş sayfasında vs. görünebilir)
-    // showReceiptButton gizli/görünür ayarı renderOrderPageForTable içinde yapılabilir.
-    // logoutButton her zaman görünür olmalı.
     logoutButton.textContent = "Uygulamadan Çık";
 }
 
 let initialDataRendered = false;
 function renderInitialDataIfNeeded() {
-    if (!initialDataRendered || appState.products.length > 0) { // appState.products doluysa render et
-        renderProductGrid(orderPageProductGrid, false); // Sipariş sayfası için ürün gridi
-        renderProductGrid(quickSaleProductGrid, true);  // Hızlı satış için ürün gridi
-        renderProductsForReference(); // Sağdaki referans menü
-        populateManualCategorySelect(); // Manuel ürün ekleme için kategoriler
-        populateNewProductCategorySelect(); // Yeni ürün ekleme modalı için kategoriler
-        populateEditProductCategorySelect(); // Ürün düzenleme modalı için kategoriler
+    // Sabit kodlu products ve tables zaten appState'de var.
+    // Bu fonksiyon artık sadece UI elemanlarını (gridler, selectler) render etmeli.
+    if (!initialDataRendered || appState.products.length > 0) {
+        renderProductGrid(orderPageProductGrid, false);
+        renderProductGrid(quickSaleProductGrid, true);
+        renderProductsForReference();
+        populateManualCategorySelect();
+        populateNewProductCategorySelect();
+        populateEditProductCategorySelect();
         initialDataRendered = true;
-        console.log("İlk data render edildi (ürün gridleri, referans menü, kategori selectleri).");
+        console.log("İlk UI render edildi (ürün gridleri, referans menü, kategori selectleri).");
     }
 }
 
-// --- Render Fonksiyonları ---
 function renderTables() {
     console.log("[renderTables] Fonksiyon çağrıldı. Masa sayısı:", appState.tables ? appState.tables.length : 0);
     tablesGrid.innerHTML = '';
@@ -1361,7 +1358,6 @@ function renderTables() {
         let baseColorClass = 'bg-gray-400 hover:bg-gray-500';
         if (table.type === 'kamelya') baseColorClass = 'bg-yellow-500 hover:bg-yellow-600';
         else if (table.type === 'bahce') baseColorClass = 'bg-green-500 hover:bg-green-600';
-
         tableCard.className = `p-4 rounded-lg shadow-md cursor-pointer transition-all duration-200 ease-in-out transform hover:scale-105 ${isDolu ? 'bg-red-500 hover:bg-red-600' : baseColorClass}`;
         let waiterInfoHtml = isDolu && table.waiterUsername ? `<p class="text-xs text-white text-center mt-1">Garson: ${table.waiterUsername}</p>` : '';
         tableCard.innerHTML = `
@@ -1381,10 +1377,9 @@ function renderProductGrid(targetGridElement, forQuickSale = false) {
         targetGridElement.innerHTML = '<p class="text-gray-500 text-center py-4">Ürün listesi boş veya yüklenemedi.</p>';
         return;
     }
-
     const categories = {};
-    const categorySectionColors = { /* ... CSS'den gelen renkler ... */ };
-    const productCardColors = { /* ... CSS'den gelen renkler ... */ };
+    const categorySectionColors = { "ET-TAVUK": "category-section-bg-ET-TAVUK", "ATIŞTIRMALIK": "category-section-bg-ATIŞTIRMALIK", "TATLI": "category-section-bg-TATLI", "İÇECEK": "category-section-bg-İÇECEK", "ÇORBA": "category-section-bg-ÇORBA", "DİĞER": "category-section-bg-DİĞER" };
+    const productCardColors = { "ET-TAVUK": "product-card-bg-ET-TAVUK", "ATIŞTIRMALIK": "product-card-bg-ATIŞTIRMALIK", "TATLI": "product-card-bg-TATLI", "İÇECEK": "product-card-bg-İÇECEK", "ÇORBA": "product-card-bg-ÇORBA", "DİĞER": "product-card-bg-DİĞER" };
     const defaultSectionColor = "category-section-bg-default";
     const defaultCardColor = "product-card-bg-default";
 
@@ -1393,20 +1388,18 @@ function renderProductGrid(targetGridElement, forQuickSale = false) {
         if (!categories[categoryKey]) categories[categoryKey] = [];
         categories[categoryKey].push(product);
     });
-
     const categoryOrder = ["ÇORBA", "ET - TAVUK", "ATIŞTIRMALIK", "İÇECEK", "TATLI", "DİĞER"];
     const sortedCategoryNames = Object.keys(categories).sort((a, b) => {
-        const indexA = categoryOrder.indexOf(a);
-        const indexB = categoryOrder.indexOf(b);
+        const indexA = categoryOrder.indexOf(a); const indexB = categoryOrder.indexOf(b);
         if (indexA !== -1 && indexB !== -1) return indexA - indexB;
-        if (indexA !== -1) return -1;
-        if (indexB !== -1) return 1;
+        if (indexA !== -1) return -1; if (indexB !== -1) return 1;
         return a.localeCompare(b, 'tr');
     });
 
     sortedCategoryNames.forEach(category => {
         const categorySection = document.createElement('div');
-        const sectionBgColorClass = categorySectionColors[sanitizeCategoryForCSS(category)] || defaultSectionColor;
+        const sanitizedCatName = sanitizeCategoryForCSS(category);
+        const sectionBgColorClass = categorySectionColors[sanitizedCatName] || defaultSectionColor;
         categorySection.className = `mb-6 p-4 rounded-lg ${sectionBgColorClass}`;
         const categoryTitle = document.createElement('h4');
         categoryTitle.className = 'text-lg font-semibold mb-3 text-gray-700 border-b border-gray-400 pb-1';
@@ -1414,34 +1407,15 @@ function renderProductGrid(targetGridElement, forQuickSale = false) {
         categorySection.appendChild(categoryTitle);
         const productGridDiv = document.createElement('div');
         productGridDiv.className = forQuickSale ? 'grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2' : 'grid grid-cols-2 md:grid-cols-3 gap-3';
-
         categories[category].sort((a, b) => a.name.localeCompare(b.name, 'tr')).forEach(product => {
             const card = document.createElement('div');
-            const cardBgColorClass = productCardColors[sanitizeCategoryForCSS(category)] || defaultCardColor;
+            const cardBgColorClass = productCardColors[sanitizedCatName] || defaultCardColor;
             card.className = `product-card ${cardBgColorClass} ${forQuickSale ? 'quick-sale-card' : ''}`;
             card.dataset.productId = product.id;
-
             if (forQuickSale) {
-                card.innerHTML = `
-                    <h5>${product.name}</h5>
-                    <button data-product-id="${product.id}" class="add-item-from-card-btn bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-2 rounded w-full mt-auto">Ekle</button>
-                `;
+                card.innerHTML = `<h5>${product.name}</h5><button data-product-id="${product.id}" class="add-item-from-card-btn bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-2 rounded w-full mt-auto">Ekle</button>`;
             } else {
-                card.innerHTML = `
-                    <div>
-                        <h5>${product.name}</h5>
-                        <p class="product-price">${formatPrice(product.price)}</p>
-                    </div>
-                    <div class="mt-2">
-                        <input type="text" placeholder="Açıklama..." class="description-input border border-gray-300 rounded text-xs p-1 w-full mb-2">
-                        <div class="product-card-quantity flex items-center justify-center space-x-1">
-                            <button class="quantity-decrease bg-red-200 hover:bg-red-300 text-red-700 font-bold rounded">-</button>
-                            <input type="number" value="1" min="1" class="quantity-input border border-gray-300 rounded text-xs p-1">
-                            <button class="quantity-increase bg-green-200 hover:bg-green-300 text-green-700 font-bold rounded">+</button>
-                        </div>
-                    </div>
-                    <button data-product-id="${product.id}" class="add-item-from-card-btn bg-blue-500 hover:bg-blue-600 text-white text-xs font-semibold py-1 px-2 rounded w-full mt-2">Siparişe Ekle</button>
-                `;
+                card.innerHTML = `<div><h5>${product.name}</h5><p class="product-price">${formatPrice(product.price)}</p></div><div class="mt-2"><input type="text" placeholder="Açıklama..." class="description-input border border-gray-300 rounded text-xs p-1 w-full mb-2"><div class="product-card-quantity flex items-center justify-center space-x-1"><button class="quantity-decrease bg-red-200 hover:bg-red-300 text-red-700 font-bold rounded">-</button><input type="number" value="1" min="1" class="quantity-input border border-gray-300 rounded text-xs p-1"><button class="quantity-increase bg-green-200 hover:bg-green-300 text-green-700 font-bold rounded">+</button></div></div><button data-product-id="${product.id}" class="add-item-from-card-btn bg-blue-500 hover:bg-blue-600 text-white text-xs font-semibold py-1 px-2 rounded w-full mt-2">Siparişe Ekle</button>`;
             }
             productGridDiv.appendChild(card);
         });
@@ -1457,107 +1431,60 @@ function addProductCardEventListeners(targetGridElement, forQuickSale) {
             const card = addBtn.closest('.product-card');
             const productId = card.dataset.productId;
             if (forQuickSale) {
-                addProductToQuickSale(productId, 1, ''); // Hızlı satışta adet ve açıklama şimdilik sabit
+                addProductToQuickSale(productId, 1, '');
             } else {
                 const quantityInput = card.querySelector('.quantity-input');
                 const descriptionInput = card.querySelector('.description-input');
                 const quantity = parseInt(quantityInput.value) || 1;
                 const description = descriptionInput ? descriptionInput.value.trim() : '';
                 addProductToOrder(productId, quantity, description);
-                quantityInput.value = 1; // Adedi sıfırla
-                if (descriptionInput) descriptionInput.value = ''; // Açıklamayı sıfırla
+                quantityInput.value = 1;
+                if (descriptionInput) descriptionInput.value = '';
             }
         });
     });
-
     if (!forQuickSale) {
         targetGridElement.querySelectorAll('.quantity-decrease').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const input = btn.nextElementSibling;
-                let val = parseInt(input.value);
-                if (val > 1) input.value = val - 1;
-            });
+            btn.addEventListener('click', () => { const input = btn.nextElementSibling; let val = parseInt(input.value); if (val > 1) input.value = val - 1; });
         });
         targetGridElement.querySelectorAll('.quantity-increase').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const input = btn.previousElementSibling;
-                input.value = parseInt(input.value) + 1;
-            });
+            btn.addEventListener('click', () => { const input = btn.previousElementSibling; input.value = parseInt(input.value) + 1; });
         });
     }
 }
 
 function addProductToOrder(productId, quantity, description) {
     const product = appState.products.find(p => String(p.id) === String(productId));
-    if (!product || quantity <= 0 || !appState.currentTableId) {
-        alert("Ürün siparişe eklenirken bir hata oluştu.");
-        return;
-    }
+    if (!product || quantity <= 0 || !appState.currentTableId) { alert("Ürün siparişe eklenirken bir hata oluştu."); return; }
     showLoading("Sipariş ekleniyor...");
-    sendMessageToServer('add_order_item', {
-        tableId: appState.currentTableId,
-        productId: parseInt(productId), // Sunucuya integer gönder
-        quantity: quantity,
-        description: description
-    });
-    resetCurrentOrderDiscount(); // Siparişe yeni ürün eklendiğinde indirim sıfırlanmalı
+    sendMessageToServer('add_order_item', { tableId: appState.currentTableId, productId: parseInt(productId), quantity: quantity, description: description });
+    resetCurrentOrderDiscount();
 }
 
 function addProductToQuickSale(productId, quantity, description) {
     const product = appState.products.find(p => String(p.id) === String(productId));
-    if (!product || quantity <= 0) {
-        alert("Ürün hızlı satış sepetine eklenirken bir hata oluştu.");
-        return;
-    }
-    const existingItem = appState.currentQuickSaleOrder.find(item =>
-        item.productId === parseInt(productId) &&
-        item.description === description // Açıklama da aynı olmalı
-    );
-    if (existingItem) {
-        existingItem.quantity += quantity;
-    } else {
-        appState.currentQuickSaleOrder.push({
-            productId: parseInt(productId),
-            name: product.name,
-            priceAtOrder: product.price,
-            quantity: quantity,
-            description: description,
-            waiterUsername: appState.user.username, // Kasiyer ekliyor
-            timestamp: Date.now() // İstemci tarafı zaman damgası
-        });
-    }
-    resetCurrentOrderDiscount(); // Hızlı satışa yeni ürün eklendiğinde indirim sıfırlanmalı
+    if (!product || quantity <= 0) { alert("Ürün hızlı satış sepetine eklenirken bir hata oluştu."); return; }
+    const existingItem = appState.currentQuickSaleOrder.find(item => item.productId === parseInt(productId) && item.description === description);
+    if (existingItem) { existingItem.quantity += quantity; }
+    else { appState.currentQuickSaleOrder.push({ productId: parseInt(productId), name: product.name, priceAtOrder: product.price, quantity: quantity, description: description, waiterUsername: appState.user.username, timestamp: Date.now() }); }
+    resetCurrentOrderDiscount();
     renderQuickSaleOrder();
 }
 
 function renderQuickSaleOrder() {
     quickSaleCurrentItems.innerHTML = '';
     let originalTotal = 0;
-    if (appState.currentQuickSaleOrder.length === 0) {
-        quickSaleCurrentItems.innerHTML = '<p class="text-gray-500 text-center py-4">Sepet boş.</p>';
-    } else {
+    if (appState.currentQuickSaleOrder.length === 0) { quickSaleCurrentItems.innerHTML = '<p class="text-gray-500 text-center py-4">Sepet boş.</p>'; }
+    else {
         appState.currentQuickSaleOrder.forEach((item, index) => {
-            const itemTotal = item.priceAtOrder * item.quantity;
-            originalTotal += itemTotal;
-            const itemDiv = document.createElement('div');
-            itemDiv.className = 'flex justify-between items-start p-2 bg-white rounded-md text-sm shadow';
+            const itemTotal = item.priceAtOrder * item.quantity; originalTotal += itemTotal;
+            const itemDiv = document.createElement('div'); itemDiv.className = 'flex justify-between items-start p-2 bg-white rounded-md text-sm shadow';
             let descriptionHTML = item.description ? `<p class="text-xs text-gray-500 italic ml-2">(${item.description})</p>` : '';
-            itemDiv.innerHTML = `
-                <div class="flex-grow">
-                    <span class="font-medium">${item.name}</span>
-                    <span class="text-xs text-gray-600"> (${item.quantity} x ${formatPrice(item.priceAtOrder)})</span>
-                    ${descriptionHTML}
-                </div>
-                <div class="flex items-center">
-                    <span class="font-semibold mr-2">${formatPrice(itemTotal)}</span>
-                    <button data-index="${index}" class="remove-item-quick-sale-btn text-red-500 hover:text-red-700 font-bold p-1 rounded-full hover:bg-red-100 transition-colors">&times;</button>
-                </div>
-            `;
+            itemDiv.innerHTML = `<div class="flex-grow"><span class="font-medium">${item.name}</span><span class="text-xs text-gray-600"> (${item.quantity} x ${formatPrice(item.priceAtOrder)})</span>${descriptionHTML}</div><div class="flex items-center"><span class="font-semibold mr-2">${formatPrice(itemTotal)}</span><button data-index="${index}" class="remove-item-quick-sale-btn text-red-500 hover:text-red-700 font-bold p-1 rounded-full hover:bg-red-100 transition-colors">&times;</button></div>`;
             quickSaleCurrentItems.appendChild(itemDiv);
         });
     }
-    appState.currentOrderOriginalTotal = originalTotal; // İndirim hesaplaması için sakla
-
+    appState.currentOrderOriginalTotal = originalTotal;
     if (appState.currentOrderDiscountAmount > 0 && originalTotal > 0) {
         const discountedTotal = originalTotal - appState.currentOrderDiscountAmount;
         quickSaleTotal.textContent = `Toplam: ${formatPrice(discountedTotal)} (İndirimli)`;
@@ -1567,13 +1494,11 @@ function renderQuickSaleOrder() {
         quickSaleTotal.textContent = `Toplam: ${formatPrice(originalTotal)}`;
         quickSaleDiscountInfo.classList.add('hidden');
     }
-
     quickSaleCurrentItems.querySelectorAll('.remove-item-quick-sale-btn').forEach(button => {
         button.addEventListener('click', (e) => {
             const itemIndex = parseInt(e.target.closest('button').dataset.index);
             appState.currentQuickSaleOrder.splice(itemIndex, 1);
-            resetCurrentOrderDiscount(); // Ürün silindiğinde indirim sıfırlanmalı
-            renderQuickSaleOrder();
+            resetCurrentOrderDiscount(); renderQuickSaleOrder();
         });
     });
 }
@@ -1581,130 +1506,62 @@ function renderQuickSaleOrder() {
 function populateCategorySelect(selectElement) {
     selectElement.innerHTML = '<option value="">Mevcut Kategori Seçin</option>';
     const uniqueCategories = [...new Set(appState.products.map(p => p.category || "DİĞER"))].sort((a,b) => a.localeCompare(b, 'tr'));
-    uniqueCategories.forEach(category => {
-        const option = document.createElement('option');
-        option.value = category;
-        option.textContent = category;
-        selectElement.appendChild(option);
-    });
+    uniqueCategories.forEach(category => { const option = document.createElement('option'); option.value = category; option.textContent = category; selectElement.appendChild(option); });
 }
-
-function populateManualCategorySelect() {
-    populateCategorySelect(manualProductCategory);
-}
-
+function populateManualCategorySelect() { populateCategorySelect(manualProductCategory); }
 function populateNewProductCategorySelect() {
     populateCategorySelect(newProductCategorySelect);
     newProductCategorySelect.innerHTML += '<option value="YENI">** YENİ KATEGORİ **</option>';
-    newProductCategorySelect.addEventListener('change', () => {
-        newProductCategoryInput.classList.toggle('hidden', newProductCategorySelect.value !== 'YENI');
-        if(newProductCategorySelect.value === 'YENI') newProductCategoryInput.focus();
-        else newProductCategoryInput.value = '';
-    });
+    newProductCategorySelect.addEventListener('change', () => { newProductCategoryInput.classList.toggle('hidden', newProductCategorySelect.value !== 'YENI'); if(newProductCategorySelect.value === 'YENI') newProductCategoryInput.focus(); else newProductCategoryInput.value = ''; });
 }
-
 function populateEditProductCategorySelect() {
     populateCategorySelect(editProductCategorySelect);
     editProductCategorySelect.innerHTML += '<option value="YENI_EDIT">** YENİ KATEGORİ **</option>';
-    editProductCategorySelect.addEventListener('change', () => {
-        editProductCategoryInput.classList.toggle('hidden', editProductCategorySelect.value !== 'YENI_EDIT');
-        if(editProductCategorySelect.value === 'YENI_EDIT') editProductCategoryInput.focus();
-        else editProductCategoryInput.value = '';
-    });
+    editProductCategorySelect.addEventListener('change', () => { editProductCategoryInput.classList.toggle('hidden', editProductCategorySelect.value !== 'YENI_EDIT'); if(editProductCategorySelect.value === 'YENI_EDIT') editProductCategoryInput.focus(); else editProductCategoryInput.value = ''; });
 }
 
 function renderProductsForReference() {
     productsListRef.innerHTML = '';
-    if (!appState.products || appState.products.length === 0) {
-        productsListRef.innerHTML = '<p class="text-gray-500 text-center py-4">Ürün listesi boş.</p>';
-        return;
-    }
+    if (!appState.products || appState.products.length === 0) { productsListRef.innerHTML = '<p class="text-gray-500 text-center py-4">Ürün listesi boş.</p>'; return; }
     const categories = {};
-    appState.products.forEach(product => {
-        const categoryKey = product.category || 'DİĞER';
-        if (!categories[categoryKey]) categories[categoryKey] = [];
-        categories[categoryKey].push(product);
-    });
+    appState.products.forEach(product => { const categoryKey = product.category || 'DİĞER'; if (!categories[categoryKey]) categories[categoryKey] = []; categories[categoryKey].push(product); });
     const categoryOrder = ["ÇORBA", "ET - TAVUK", "ATIŞTIRMALIK", "İÇECEK", "TATLI", "DİĞER"];
-    const sortedCategoryNames = Object.keys(categories).sort((a, b) => {
-        const indexA = categoryOrder.indexOf(a); const indexB = categoryOrder.indexOf(b);
-        if (indexA !== -1 && indexB !== -1) return indexA - indexB;
-        if (indexA !== -1) return -1; if (indexB !== -1) return 1;
-        return a.localeCompare(b, 'tr');
-    });
-
+    const sortedCategoryNames = Object.keys(categories).sort((a, b) => { const indexA = categoryOrder.indexOf(a); const indexB = categoryOrder.indexOf(b); if (indexA !== -1 && indexB !== -1) return indexA - indexB; if (indexA !== -1) return -1; if (indexB !== -1) return 1; return a.localeCompare(b, 'tr'); });
     sortedCategoryNames.forEach(category => {
-        const categoryTitle = document.createElement('h3');
-        categoryTitle.className = 'text-lg font-semibold mt-4 mb-2 text-blue-700';
-        categoryTitle.textContent = category;
-        productsListRef.appendChild(categoryTitle);
-        const ul = document.createElement('ul');
-        ul.className = 'space-y-1 text-sm';
-        categories[category].sort((a,b) => a.name.localeCompare(b.name, 'tr')).forEach(product => {
-            const li = document.createElement('li');
-            li.className = 'text-gray-800 flex justify-between';
-            li.innerHTML = `<span>${product.name}</span> <span class="font-medium">${formatPrice(product.price)}</span>`;
-            ul.appendChild(li);
-        });
+        const categoryTitle = document.createElement('h3'); categoryTitle.className = 'text-lg font-semibold mt-4 mb-2 text-blue-700'; categoryTitle.textContent = category; productsListRef.appendChild(categoryTitle);
+        const ul = document.createElement('ul'); ul.className = 'space-y-1 text-sm';
+        categories[category].sort((a,b) => a.name.localeCompare(b.name, 'tr')).forEach(product => { const li = document.createElement('li'); li.className = 'text-gray-800 flex justify-between'; li.innerHTML = `<span>${product.name}</span> <span class="font-medium">${formatPrice(product.price)}</span>`; ul.appendChild(li); });
         productsListRef.appendChild(ul);
     });
 }
 
 function renderOrderPageForTable(table) {
     orderPageCurrentOrderItems.innerHTML = '';
-    appState.currentOrderOriginalTotal = 0; // Her render'da sıfırla
+    appState.currentOrderOriginalTotal = 0;
+    if (table.status === 'dolu' && table.waiterUsername) { orderPageWaiterInfo.textContent = `Bu Siparişi Alan Garson: ${table.waiterUsername}`; }
+    else if (table.status === 'dolu' && !table.waiterUsername && appState.user && appState.user.role === 'cashier') { orderPageWaiterInfo.textContent = `Sipariş Alındı (Garson Belirsiz)`; }
+    else { orderPageWaiterInfo.textContent = 'Bu Masaya Henüz Sipariş Alınmadı'; }
 
-    if (table.status === 'dolu' && table.waiterUsername) {
-        orderPageWaiterInfo.textContent = `Bu Siparişi Alan Garson: ${table.waiterUsername}`;
-    } else if (table.status === 'dolu' && !table.waiterUsername && appState.user && appState.user.role === 'cashier') {
-         orderPageWaiterInfo.textContent = `Sipariş Alındı (Garson Belirsiz)`;
-    } else {
-        orderPageWaiterInfo.textContent = 'Bu Masaya Henüz Sipariş Alınmadı';
-    }
-
-    if (!table || !table.order || table.order.length === 0) {
-        orderPageCurrentOrderItems.innerHTML = '<p class="text-gray-500 py-4 text-center">Sipariş boş.</p>';
-    } else {
+    if (!table || !table.order || table.order.length === 0) { orderPageCurrentOrderItems.innerHTML = '<p class="text-gray-500 py-4 text-center">Sipariş boş.</p>'; }
+    else {
         let currentTotal = 0;
         table.order.forEach((item) => {
-            const price = parseFloat(item.priceAtOrder);
-            const qty = parseInt(item.quantity, 10);
-            let itemCalculatedTotal = 0;
-            if (!isNaN(price) && !isNaN(qty)) {
-                itemCalculatedTotal = price * qty;
-            }
+            const price = parseFloat(item.priceAtOrder); const qty = parseInt(item.quantity, 10);
+            let itemCalculatedTotal = 0; if (!isNaN(price) && !isNaN(qty)) itemCalculatedTotal = price * qty;
             currentTotal += itemCalculatedTotal;
-
-            const orderItemDiv = document.createElement('div');
-            orderItemDiv.className = 'flex justify-between items-start p-3 bg-gray-50 rounded-md shadow';
+            const orderItemDiv = document.createElement('div'); orderItemDiv.className = 'flex justify-between items-start p-3 bg-gray-50 rounded-md shadow';
             let itemName = item.name || 'Bilinmeyen Ürün';
-            const productDetails = appState.products.find(p => String(p.id) === String(item.productId)); // ID'ler string veya number olabilir
+            const productDetails = appState.products.find(p => String(p.id) === String(item.productId));
             if(productDetails && !item.name) itemName = productDetails.name;
-
-            const displayPrice = !isNaN(price) ? price : 0;
-            const displayQty = !isNaN(qty) ? qty : 0;
+            const displayPrice = !isNaN(price) ? price : 0; const displayQty = !isNaN(qty) ? qty : 0;
             const currentItemDisplayTotal = displayPrice * displayQty;
-
             let descriptionHTML = item.description ? `<p class="text-xs text-gray-500 italic ml-2 mt-1">(${item.description})</p>` : '';
             let waiterNameHTML = item.waiterUsername ? `<p class="text-xs text-blue-600 ml-2 mt-1">Ekleyen: ${item.waiterUsername} (${formatTimestamp(item.timestamp)})</p>` : '';
-
-            orderItemDiv.innerHTML = `
-                <div class="flex-grow">
-                    <span class="font-medium">${itemName}</span>
-                    <span class="text-sm text-gray-600"> (${displayQty} x ${formatPrice(displayPrice)})</span>
-                    ${descriptionHTML}
-                    ${waiterNameHTML}
-                </div>
-                <div class="flex items-center ml-2">
-                    <span class="font-semibold mr-3">${formatPrice(currentItemDisplayTotal)}</span>
-                    <button data-product-id="${item.productId || 'manual'}" data-item-name="${itemName}" data-item-description="${item.description || ''}" class="remove-item-btn-orderpage text-red-500 hover:text-red-700 text-lg font-bold p-1 rounded-full hover:bg-red-100 transition-colors">&times;</button>
-                </div>
-            `;
+            orderItemDiv.innerHTML = `<div class="flex-grow"><span class="font-medium">${itemName}</span><span class="text-sm text-gray-600"> (${displayQty} x ${formatPrice(displayPrice)})</span>${descriptionHTML}${waiterNameHTML}</div><div class="flex items-center ml-2"><span class="font-semibold mr-3">${formatPrice(currentItemDisplayTotal)}</span><button data-product-id="${item.productId || 'manual'}" data-item-name="${itemName}" data-item-description="${item.description || ''}" class="remove-item-btn-orderpage text-red-500 hover:text-red-700 text-lg font-bold p-1 rounded-full hover:bg-red-100 transition-colors">&times;</button></div>`;
             orderPageCurrentOrderItems.appendChild(orderItemDiv);
         });
-        appState.currentOrderOriginalTotal = currentTotal; // İndirim hesaplaması için sakla
+        appState.currentOrderOriginalTotal = currentTotal;
     }
-
     if (appState.currentOrderDiscountAmount > 0 && appState.currentOrderOriginalTotal > 0) {
         const discounted = appState.currentOrderOriginalTotal - appState.currentOrderDiscountAmount;
         orderPageCurrentOrderTotal.textContent = `Toplam: ${formatPrice(discounted)} (İndirimli)`;
@@ -1714,690 +1571,278 @@ function renderOrderPageForTable(table) {
         orderPageCurrentOrderTotal.textContent = `Toplam: ${formatPrice(appState.currentOrderOriginalTotal)}`;
         discountInfoDiv.classList.add('hidden');
     }
-
     const isCashier = appState.user && appState.user.role === 'cashier';
-    showReceiptButton.classList.toggle('hidden', !isCashier && table.order && table.order.length === 0); // Kasiyer değilse ve sipariş yoksa gizle
+    showReceiptButton.classList.toggle('hidden', !isCashier && (!table || !table.order || table.order.length === 0));
     finalizeAndCloseTableButton.classList.toggle('hidden', !isCashier);
     applyDiscountButton.classList.toggle('hidden', !isCashier);
-
-
     orderPageCurrentOrderItems.querySelectorAll('.remove-item-btn-orderpage').forEach(button => {
         button.addEventListener('click', (e) => {
             const btnElement = e.target.closest('button');
-            const productIdToRemove = btnElement.dataset.productId;
-            const descriptionToRemove = btnElement.dataset.description;
-            const nameToRemove = btnElement.dataset.itemName;
+            const productIdToRemove = btnElement.dataset.productId; const descriptionToRemove = btnElement.dataset.description; const nameToRemove = btnElement.dataset.itemName;
             removeItemFromOrderPage(productIdToRemove, descriptionToRemove, nameToRemove);
         });
     });
 }
 
 function renderSalesReport() {
-    salesReportTableContainer.innerHTML = '';
-    let totalItems = 0;
-    let grandTotal = 0;
-
-    if (!appState.salesReport || appState.salesReport.length === 0) {
-        salesReportTableContainer.innerHTML = '<p class="text-center text-gray-500 py-6">Henüz tamamlanmış satış yok veya rapor yüklenemedi.</p>';
-        totalItemsSoldSpan.textContent = '0';
-        grandTotalSalesSpan.textContent = formatPrice(0);
-        return;
-    }
-
-    const table = document.createElement('table');
-    table.className = 'w-full text-sm border-collapse border border-gray-300';
-    table.innerHTML = `
-        <thead class="bg-gray-100">
-            <tr>
-                <th class="border p-2">Kapanış Zamanı</th> <th class="border p-2">Masa/Satış Tipi</th>
-                <th class="border p-2">Ürün</th> <th class="border p-2 text-center">Adet</th>
-                <th class="border p-2 text-right">Birim Fiyat</th> <th class="border p-2 text-right">Toplam</th>
-                <th class="border p-2">Garson/Kasa</th> <th class="border p-2">Açıklama</th>
-                <th class="border p-2">Ekleme Zamanı</th>
-            </tr>
-        </thead>
-        <tbody></tbody>
-    `;
+    salesReportTableContainer.innerHTML = ''; let totalItems = 0; let grandTotal = 0;
+    if (!appState.salesReport || appState.salesReport.length === 0) { salesReportTableContainer.innerHTML = '<p class="text-center text-gray-500 py-6">Henüz tamamlanmış satış yok veya rapor yüklenemedi.</p>'; totalItemsSoldSpan.textContent = '0'; grandTotalSalesSpan.textContent = formatPrice(0); return; }
+    const table = document.createElement('table'); table.className = 'w-full text-sm border-collapse border border-gray-300';
+    table.innerHTML = `<thead class="bg-gray-100"><tr><th class="border p-2">Kapanış Zamanı</th><th class="border p-2">Masa/Satış Tipi</th><th class="border p-2">Ürün</th><th class="border p-2 text-center">Adet</th><th class="border p-2 text-right">Birim Fiyat</th><th class="border p-2 text-right">Toplam</th><th class="border p-2">Garson/Kasa</th><th class="border p-2">Açıklama</th><th class="border p-2">Ekleme Zamanı</th></tr></thead><tbody></tbody>`;
     const tbody = table.querySelector('tbody');
-    // Sunucu zaten DESC sıralı gönderiyor, burada tekrar sıralamaya gerek yok.
     appState.salesReport.forEach(item => {
-        const itemPrice = parseFloat(item.item_price) || 0;
-        const quantity = parseInt(item.quantity, 10) || 0;
-        const itemTotal = parseFloat(item.total_item_price) || (itemPrice * quantity); // total_item_price yoksa hesapla
-
-        totalItems += quantity;
-        grandTotal += itemTotal;
-
-        const tr = document.createElement('tr');
-        tr.className = 'border-b hover:bg-gray-50';
-        tr.innerHTML = `
-            <td class="border p-2 whitespace-nowrap">${item.sale_timestamp}</td> {/* Sunucudan formatlı geliyor */}
-            <td class="border p-2">${item.table_name || 'Hızlı Satış'}</td>
-            <td class="border p-2">${item.item_name || 'Bilinmeyen'}</td>
-            <td class="border p-2 text-center">${quantity}</td>
-            <td class="border p-2 text-right">${formatPrice(itemPrice)}</td>
-            <td class="border p-2 text-right">${formatPrice(itemTotal)}</td>
-            <td class="border p-2">${item.waiter_username || '-'}</td>
-            <td class="border p-2">${item.description || '-'}</td>
-            <td class="border p-2 whitespace-nowrap">${item.sale_timestamp}</td> {/* Ekleme zamanı için ayrı bir alan yoksa, satış zamanı kullanılabilir */}
-        `;
+        const itemPrice = parseFloat(item.item_price) || 0; const quantity = parseInt(item.quantity, 10) || 0;
+        const itemTotal = parseFloat(item.total_item_price) || (itemPrice * quantity);
+        totalItems += quantity; grandTotal += itemTotal;
+        const tr = document.createElement('tr'); tr.className = 'border-b hover:bg-gray-50';
+        tr.innerHTML = `<td class="border p-2 whitespace-nowrap">${item.sale_timestamp}</td><td class="border p-2">${item.table_name || 'Hızlı Satış'}</td><td class="border p-2">${item.item_name || 'Bilinmeyen'}</td><td class="border p-2 text-center">${quantity}</td><td class="border p-2 text-right">${formatPrice(itemPrice)}</td><td class="border p-2 text-right">${formatPrice(itemTotal)}</td><td class="border p-2">${item.waiter_username || '-'}</td><td class="border p-2">${item.description || '-'}</td><td class="border p-2 whitespace-nowrap">${item.sale_timestamp}</td>`;
         tbody.appendChild(tr);
     });
-    salesReportTableContainer.appendChild(table);
-    totalItemsSoldSpan.textContent = totalItems;
-    grandTotalSalesSpan.textContent = formatPrice(grandTotal);
+    salesReportTableContainer.appendChild(table); totalItemsSoldSpan.textContent = totalItems; grandTotalSalesSpan.textContent = formatPrice(grandTotal);
 }
 
 function renderActivityLog() {
     activityLogTableContainer.innerHTML = '';
-    if (!appState.activityLog || appState.activityLog.length === 0) {
-        activityLogTableContainer.innerHTML = '<p class="text-center text-gray-500 py-6">Gösterilecek aktivite logu bulunmuyor.</p>';
-        return;
-    }
-    const table = document.createElement('table');
-    table.className = 'w-full text-sm border-collapse border border-gray-300';
-    table.innerHTML = `
-        <thead class="bg-gray-100">
-            <tr>
-                <th class="border p-2">Zaman Damgası</th> <th class="border p-2">Kullanıcı</th>
-                <th class="border p-2">İşlem Türü</th> <th class="border p-2">Detaylar</th>
-            </tr>
-        </thead>
-        <tbody></tbody>
-    `;
+    if (!appState.activityLog || appState.activityLog.length === 0) { activityLogTableContainer.innerHTML = '<p class="text-center text-gray-500 py-6">Gösterilecek aktivite logu bulunmuyor.</p>'; return; }
+    const table = document.createElement('table'); table.className = 'w-full text-sm border-collapse border border-gray-300';
+    table.innerHTML = `<thead class="bg-gray-100"><tr><th class="border p-2">Zaman Damgası</th><th class="border p-2">Kullanıcı</th><th class="border p-2">İşlem Türü</th><th class="border p-2">Detaylar</th></tr></thead><tbody></tbody>`;
     const tbody = table.querySelector('tbody');
-    appState.activityLog.forEach(log => { // Sunucu zaten DESC sıralı gönderiyor
-        const tr = document.createElement('tr');
-        tr.className = 'border-b hover:bg-gray-50';
+    appState.activityLog.forEach(log => {
+        const tr = document.createElement('tr'); tr.className = 'border-b hover:bg-gray-50';
         let detailsFormatted = log.log_details || '-';
-        if (typeof log.log_details === 'string') {
-            try {
-                const parsed = JSON.parse(log.log_details);
-                detailsFormatted = Object.entries(parsed)
-                    .map(([key, value]) => `${key}: ${typeof value === 'object' ? JSON.stringify(value) : value}`)
-                    .join('<br>');
-            } catch (e) { /* JSON değilse olduğu gibi kalsın */ }
-        } else if (typeof log.log_details === 'object' && log.log_details !== null) {
-             detailsFormatted = Object.entries(log.log_details)
-                .map(([key, value]) => `${key}: ${typeof value === 'object' ? JSON.stringify(value) : value}`)
-                .join('<br>');
-        }
-
-        tr.innerHTML = `
-            <td class="border p-2 whitespace-nowrap">${log.log_timestamp}</td> {/* Sunucudan formatlı geliyor */}
-            <td class="border p-2">${log.user_username || '-'}</td>
-            <td class="border p-2">${log.action_type || '-'}</td>
-            <td class="border p-2" style="word-break: break-all; max-width: 300px; overflow-wrap: break-word;">${detailsFormatted}</td>
-        `;
+        if (typeof log.log_details === 'string') { try { const parsed = JSON.parse(log.log_details); detailsFormatted = Object.entries(parsed).map(([key, value]) => `${key}: ${typeof value === 'object' ? JSON.stringify(value) : value}`).join('<br>'); } catch (e) {} }
+        else if (typeof log.log_details === 'object' && log.log_details !== null) { detailsFormatted = Object.entries(log.log_details).map(([key, value]) => `${key}: ${typeof value === 'object' ? JSON.stringify(value) : value}`).join('<br>'); }
+        tr.innerHTML = `<td class="border p-2 whitespace-nowrap">${log.log_timestamp}</td><td class="border p-2">${log.user_username || '-'}</td><td class="border p-2">${log.action_type || '-'}</td><td class="border p-2" style="word-break: break-all; max-width: 300px; overflow-wrap: break-word;">${detailsFormatted}</td>`;
         tbody.appendChild(tr);
     });
     activityLogTableContainer.appendChild(table);
 }
 
-
-// --- İşlevler (Event Handlers ve Diğer Mantık) ---
 function handleLogin() {
-    const username = usernameInput.value.trim();
-    const password = passwordInput.value.trim();
-    if (!username || !password) {
-        showLoginError("Kullanıcı adı ve şifre boş bırakılamaz.");
-        return;
-    }
-    loginError.textContent = '';
-    showLoading("Giriş yapılıyor...");
-    sendMessageToServer('login', { username, password });
+    const username = usernameInput.value.trim(); const password = passwordInput.value.trim();
+    if (!username || !password) { showLoginError("Kullanıcı adı ve şifre boş bırakılamaz."); return; }
+    loginError.textContent = ''; showLoading("Giriş yapılıyor..."); sendMessageToServer('login', { username, password });
 }
-
-function handleLogout() {
-    confirmExitAppModal.classList.add('active');
-}
-
+function handleLogout() { confirmExitAppModal.classList.add('active'); }
 function performLogout() {
-    localStorage.removeItem('adisyonUser');
-    sendMessageToServer('logout', {}); // Sunucuya çıkış bilgisini gönder
-    appState.user = null;
-    appState.tables = []; // Bellekteki verileri temizle
-    appState.products = [];
-    appState.currentTableId = null;
-    initialDataRendered = false;
-    showLoginScreen();
+    localStorage.removeItem('adisyonUser'); sendMessageToServer('logout', {});
+    appState.user = null; appState.tables = initializeClientTables(); appState.products = staticProducts; // Sabit kodluya dön
+    appState.currentTableId = null; initialDataRendered = false; showLoginScreen();
+    renderInitialDataIfNeeded(); renderTables(); // UI'ı sıfırlanmış/sabit kodlu verilerle güncelle
     console.log("Çıkış yapıldı ve oturum temizlendi.");
-
-    if (window.Android && typeof window.Android.closeApp === 'function') {
-        window.Android.closeApp();
-    } else {
-        console.log("Uygulama kapatma simüle edildi (tarayıcı ortamı).");
-    }
+    if (window.Android && typeof window.Android.closeApp === 'function') window.Android.closeApp();
+    else console.log("Uygulama kapatma simüle edildi (tarayıcı ortamı).");
 }
-
 function showTablesView() {
-    [orderPageContainer, quickSaleModal, addProductToMenuModal, editProductModal,
-     manageTablesModal, manageWaitersModal, receiptModal, confirmCloseTableModal,
-     confirmDiscountModal, salesReportModal, activityLogModal, confirmDeleteTableModal,
-     confirmDeleteWaiterModal, confirmExitAppModal].forEach(el => el.classList.remove('active'));
-
-    appContainer.classList.remove('hidden');
-    appContainer.classList.add('block'); // Ana konteyneri göster
-    appState.currentTableId = null;
-    resetCurrentOrderDiscount();
-    console.log("Masalar ekranına dönüldü.");
+    [orderPageContainer, quickSaleModal, addProductToMenuModal, editProductModal, manageTablesModal, manageWaitersModal, receiptModal, confirmCloseTableModal, confirmDiscountModal, salesReportModal, activityLogModal, confirmDeleteTableModal, confirmDeleteWaiterModal, confirmExitAppModal].forEach(el => el.classList.remove('active'));
+    appContainer.classList.remove('hidden'); appContainer.classList.add('block');
+    appState.currentTableId = null; resetCurrentOrderDiscount(); console.log("Masalar ekranına dönüldü.");
 }
-
 function selectTableForOrder(tableId) {
-    appState.currentTableId = tableId;
-    const table = appState.tables.find(t => t.id === tableId);
+    appState.currentTableId = tableId; const table = appState.tables.find(t => t.id === tableId);
     if (table) {
-        orderPageTableName.textContent = table.name;
-        resetCurrentOrderDiscount(); // Yeni masaya geçildiğinde indirimi sıfırla
-        renderOrderPageForTable(table);
-        updateUIForRole(); // Buton görünürlüklerini ayarla
-        appContainer.classList.add('hidden');
-        orderPageContainer.classList.add('active');
-    } else {
-        console.error("Seçilen masa bulunamadı:", tableId);
-        showTablesView();
-    }
+        orderPageTableName.textContent = table.name; resetCurrentOrderDiscount(); renderOrderPageForTable(table);
+        updateUIForRole(); appContainer.classList.add('hidden'); orderPageContainer.classList.add('active');
+    } else { console.error("Seçilen masa bulunamadı:", tableId); showTablesView(); }
 }
-
 function addManualProduct() {
-    const name = manualProductName.value.trim();
-    const category = manualProductCategory.value;
-    const price = parseFloat(manualProductPrice.value);
-    const quantity = parseInt(manualProductQuantity.value);
-    const description = manualProductDescription.value.trim();
-
-    if (!name || !category || isNaN(price) || price < 0 || isNaN(quantity) || quantity <= 0 || !appState.currentTableId) {
-         alert("Lütfen geçerli bir ürün adı, kategori, fiyat ve adet girin.");
-        return;
-    }
-    if (appState.user && appState.user.role !== 'cashier') {
-        alert("Manuel ürün ekleme yetkiniz yok."); return;
-    }
-    showLoading("Manuel ürün ekleniyor...");
-    sendMessageToServer('add_manual_order_item', {
-        tableId: appState.currentTableId, name: name, category: category,
-        price: price, quantity: quantity, description: description
-    });
-    resetCurrentOrderDiscount();
-    [manualProductName, manualProductCategory, manualProductPrice, manualProductDescription].forEach(el => el.value = '');
-    manualProductQuantity.value = '1';
+    const name = manualProductName.value.trim(); const category = manualProductCategory.value; const price = parseFloat(manualProductPrice.value); const quantity = parseInt(manualProductQuantity.value); const description = manualProductDescription.value.trim();
+    if (!name || !category || isNaN(price) || price < 0 || isNaN(quantity) || quantity <= 0 || !appState.currentTableId) { alert("Lütfen geçerli bir ürün adı, kategori, fiyat ve adet girin."); return; }
+    if (appState.user && appState.user.role !== 'cashier') { alert("Manuel ürün ekleme yetkiniz yok."); return; }
+    showLoading("Manuel ürün ekleniyor..."); sendMessageToServer('add_manual_order_item', { tableId: appState.currentTableId, name: name, category: category, price: price, quantity: quantity, description: description });
+    resetCurrentOrderDiscount(); [manualProductName, manualProductCategory, manualProductPrice, manualProductDescription].forEach(el => el.value = ''); manualProductQuantity.value = '1';
 }
-
 function removeItemFromOrderPage(productIdToRemove, descriptionToRemove, nameToRemove) {
-     if (!appState.currentTableId) return;
-    showLoading("Ürün siparişten siliniyor...");
-    sendMessageToServer('remove_order_item', {
-        tableId: appState.currentTableId,
-        productId: productIdToRemove === 'manual' ? null : parseInt(productIdToRemove),
-        name: productIdToRemove === 'manual' ? nameToRemove : null, // Manuel ürünler isimle silinebilir
-        description: descriptionToRemove
-    });
+    if (!appState.currentTableId) return; showLoading("Ürün siparişten siliniyor...");
+    sendMessageToServer('remove_order_item', { tableId: appState.currentTableId, productId: productIdToRemove === 'manual' ? null : parseInt(productIdToRemove), name: productIdToRemove === 'manual' ? nameToRemove : null, description: descriptionToRemove });
     resetCurrentOrderDiscount();
 }
-
 function handleShowReceipt() {
     const table = appState.tables.find(t => t.id === appState.currentTableId);
-    if (!table || !table.order || table.order.length === 0) {
-        alert("Masada fiş kesilecek sipariş bulunmuyor."); return;
-    }
+    if (!table || !table.order || table.order.length === 0) { alert("Masada fiş kesilecek sipariş bulunmuyor."); return; }
     const finalTotal = appState.currentOrderDiscountAmount > 0 ? (appState.currentOrderOriginalTotal - appState.currentOrderDiscountAmount) : appState.currentOrderOriginalTotal;
     prepareAndShowReceipt(table.order, table.name, table.waiterUsername, appState.currentOrderOriginalTotal, finalTotal);
 }
-
 function handleFinalizeAndCloseTable() {
     if (appState.currentTableId && appState.user && appState.user.role === 'cashier') {
         const table = appState.tables.find(t => t.id === appState.currentTableId);
-        if (table && table.order && table.order.length > 0) {
-            confirmCloseTableModal.classList.add('active');
-        } else {
-            alert("Masada kapatılacak sipariş bulunmuyor. Önce sipariş ekleyin.");
-        }
-    } else {
-        alert("Masayı kapatma yetkiniz yok veya masa seçili değil.");
-    }
+        if (table && table.order && table.order.length > 0) { confirmCloseTableModal.classList.add('active'); }
+        else { alert("Masada kapatılacak sipariş bulunmuyor. Önce sipariş ekleyin."); }
+    } else { alert("Masayı kapatma yetkiniz yok veya masa seçili değil."); }
 }
-
 function handleApplyDiscount(isForQuickSale = false) {
     if (appState.user && appState.user.role === 'cashier') {
         let orderLength = 0;
-        if (isForQuickSale) {
-            orderLength = appState.currentQuickSaleOrder.length;
-        } else if (appState.currentTableId) {
-            const table = appState.tables.find(t => t.id === appState.currentTableId);
-            if (table && table.order) orderLength = table.order.length;
-        }
-
-        if (orderLength > 0) {
-            // appState.currentOrderOriginalTotal zaten renderOrderPageForTable veya renderQuickSaleOrder içinde set ediliyor.
-            confirmDiscountModal.classList.add('active');
-        } else {
-            alert("İndirim uygulanacak sipariş/sepet bulunmuyor.");
-        }
-    } else {
-        alert("İndirim uygulama yetkiniz yok.");
-    }
+        if (isForQuickSale) orderLength = appState.currentQuickSaleOrder.length;
+        else if (appState.currentTableId) { const table = appState.tables.find(t => t.id === appState.currentTableId); if (table && table.order) orderLength = table.order.length; }
+        if (orderLength > 0) { confirmDiscountModal.classList.add('active'); }
+        else { alert("İndirim uygulanacak sipariş/sepet bulunmuyor."); }
+    } else { alert("İndirim uygulama yetkiniz yok."); }
 }
-
 function resetCurrentOrderDiscount() {
     appState.currentOrderDiscountAmount = 0;
-    if (discountInfoDiv) { // Normal sipariş için
-        discountInfoDiv.classList.add('hidden');
-        discountInfoDiv.textContent = '';
-    }
-    if (quickSaleDiscountInfo) { // Hızlı satış için
-        quickSaleDiscountInfo.classList.add('hidden');
-        quickSaleDiscountInfo.textContent = '';
-    }
-
-    // Toplamları yeniden render et (eğer ilgili sayfa/modal açıksa)
-    if (orderPageContainer.classList.contains('active') && appState.currentTableId) {
-        const table = appState.tables.find(t => t.id === appState.currentTableId);
-        if (table) renderOrderPageForTable(table); // Bu fonksiyon toplamı günceller
-    }
-    if (quickSaleModal.classList.contains('active')) {
-        renderQuickSaleOrder(); // Bu fonksiyon toplamı günceller
-    }
+    if (discountInfoDiv) { discountInfoDiv.classList.add('hidden'); discountInfoDiv.textContent = ''; }
+    if (quickSaleDiscountInfo) { quickSaleDiscountInfo.classList.add('hidden'); quickSaleDiscountInfo.textContent = ''; }
+    if (orderPageContainer.classList.contains('active') && appState.currentTableId) { const table = appState.tables.find(t => t.id === appState.currentTableId); if (table) renderOrderPageForTable(table); }
+    if (quickSaleModal.classList.contains('active')) renderQuickSaleOrder();
 }
-
 function openQuickSaleModal() {
     if (appState.user && appState.user.role === 'cashier') {
-        appState.currentQuickSaleOrder = [];
-        resetCurrentOrderDiscount();
-        renderQuickSaleOrder(); // Sepeti ve toplamı render et
-        renderProductGrid(quickSaleProductGrid, true); // Ürünleri render et
-        quickSaleModal.classList.add('active');
-        appContainer.classList.add('hidden');
-        orderPageContainer.classList.remove('active');
-    } else {
-        alert("Bu özelliği kullanma yetkiniz yok.");
-    }
+        appState.currentQuickSaleOrder = []; resetCurrentOrderDiscount(); renderQuickSaleOrder(); renderProductGrid(quickSaleProductGrid, true);
+        quickSaleModal.classList.add('active'); appContainer.classList.add('hidden'); orderPageContainer.classList.remove('active');
+    } else { alert("Bu özelliği kullanma yetkiniz yok."); }
 }
-
 function completeQuickSale() {
-    if (appState.currentQuickSaleOrder.length === 0) {
-        alert("Hızlı satış sepeti boş."); return;
-    }
+    if (appState.currentQuickSaleOrder.length === 0) { alert("Hızlı satış sepeti boş."); return; }
     showLoading("Hızlı satış tamamlanıyor...");
     const finalTotal = appState.currentOrderDiscountAmount > 0 ? (appState.currentOrderOriginalTotal - appState.currentOrderDiscountAmount) : appState.currentOrderOriginalTotal;
-    sendMessageToServer('complete_quick_sale', {
-        items: appState.currentQuickSaleOrder,
-        cashierUsername: appState.user.username,
-        // İndirim bilgilerini de sunucuya gönderebilirsiniz, loglama için
-        originalTotal: appState.currentOrderOriginalTotal,
-        discountAmount: appState.currentOrderDiscountAmount,
-        finalTotal: finalTotal
-    });
-    // Fişi göster (sunucudan success mesajı bekleyebilir veya hemen gösterebilir)
+    sendMessageToServer('complete_quick_sale', { items: appState.currentQuickSaleOrder, cashierUsername: appState.user.username, originalTotal: appState.currentOrderOriginalTotal, discountAmount: appState.currentOrderDiscountAmount, finalTotal: finalTotal });
     prepareAndShowReceipt(appState.currentQuickSaleOrder, "Hızlı Satış", appState.user.username, appState.currentOrderOriginalTotal, finalTotal);
 }
-
 function prepareAndShowReceipt(orderItems, tableName, waiterName, originalTotal, finalTotalWithDiscount) {
-    receiptDate.textContent = getCurrentFormattedDate();
-    receiptTableName.textContent = tableName;
-    receiptWaiterName.textContent = waiterName || (appState.user ? appState.user.username : "Bilinmiyor");
+    receiptDate.textContent = getCurrentFormattedDate(); receiptTableName.textContent = tableName; receiptWaiterName.textContent = waiterName || (appState.user ? appState.user.username : "Bilinmiyor");
     receiptItems.innerHTML = '';
-
     orderItems.forEach(item => {
-        let itemName = item.name || 'Bilinmeyen Ürün';
-        let itemPrice = parseFloat(item.priceAtOrder) || 0;
-        const productDetails = appState.products.find(p => String(p.id) === String(item.productId));
-        if(productDetails && !item.name) itemName = productDetails.name;
-
+        let itemName = item.name || 'Bilinmeyen Ürün'; let itemPrice = parseFloat(item.priceAtOrder) || 0;
+        const productDetails = appState.products.find(p => String(p.id) === String(item.productId)); if(productDetails && !item.name) itemName = productDetails.name;
         let descriptionHTML = item.description ? `<span class="item-description">(${item.description})</span>` : '';
         let itemWaiterHTML = item.waiterUsername && tableName !== "Hızlı Satış" ? `<span class="item-waiter">Ekleyen: ${item.waiterUsername} (${formatTimestamp(item.timestamp)})</span>` : '';
-        const itemDiv = document.createElement('div');
-        itemDiv.innerHTML = `
-            <span class="item-details">${item.quantity}x ${itemName} ${descriptionHTML} ${itemWaiterHTML}</span>
-            <span class="item-price">${formatPrice(item.quantity * itemPrice)}</span>`;
+        const itemDiv = document.createElement('div'); itemDiv.innerHTML = `<span class="item-details">${item.quantity}x ${itemName} ${descriptionHTML} ${itemWaiterHTML}</span><span class="item-price">${formatPrice(item.quantity * itemPrice)}</span>`;
         receiptItems.appendChild(itemDiv);
     });
-
     if (finalTotalWithDiscount < originalTotal && originalTotal > 0) {
-        receiptSubtotal.textContent = formatPrice(originalTotal);
-        receiptDiscountAmount.textContent = formatPrice(originalTotal - finalTotalWithDiscount);
-        receiptGrandTotal.textContent = formatPrice(finalTotalWithDiscount);
-        receiptDiscountInfo.classList.remove('hidden');
-    } else {
-        receiptGrandTotal.textContent = formatPrice(originalTotal);
-        receiptDiscountInfo.classList.add('hidden');
-    }
+        receiptSubtotal.textContent = formatPrice(originalTotal); receiptDiscountAmount.textContent = formatPrice(originalTotal - finalTotalWithDiscount); receiptGrandTotal.textContent = formatPrice(finalTotalWithDiscount); receiptDiscountInfo.classList.remove('hidden');
+    } else { receiptGrandTotal.textContent = formatPrice(originalTotal); receiptDiscountInfo.classList.add('hidden'); }
     receiptModal.classList.add('active');
 }
-
 function handlePrintReceipt() { window.print(); }
-
-function openSalesReport() {
-    if (appState.user && appState.user.role === 'cashier') {
-        showLoading("Satış raporu yükleniyor...");
-        sendMessageToServer('get_sales_report', {});
-        salesReportModal.classList.add('active');
-    } else { alert("Bu özelliği kullanma yetkiniz yok."); }
-}
+function openSalesReport() { if (appState.user && appState.user.role === 'cashier') { showLoading("Satış raporu yükleniyor..."); sendMessageToServer('get_sales_report', {}); salesReportModal.classList.add('active'); } else { alert("Bu özelliği kullanma yetkiniz yok."); } }
 function printSalesReport() { window.print(); }
-
-function openActivityLogModal() {
-    if (appState.user && appState.user.role === 'cashier') {
-        showLoading("Aktivite logları yükleniyor...");
-        sendMessageToServer('get_activity_log', {});
-        activityLogModal.classList.add('active');
-    } else { alert("Bu özelliği kullanma yetkiniz yok."); }
-}
-
+function openActivityLogModal() { if (appState.user && appState.user.role === 'cashier') { showLoading("Aktivite logları yükleniyor..."); sendMessageToServer('get_activity_log', {}); activityLogModal.classList.add('active'); } else { alert("Bu özelliği kullanma yetkiniz yok."); } }
 function closeReceiptModalOnly() {
-    receiptModal.classList.remove('active');
-    const isQuickSaleReceipt = receiptTableName.textContent === "Hızlı Satış";
+    receiptModal.classList.remove('active'); const isQuickSaleReceipt = receiptTableName.textContent === "Hızlı Satış";
     const currentTable = appState.tables.find(t => t.id === appState.currentTableId);
-
-    if (isQuickSaleReceipt) { // Hızlı satış fişinden sonra sepeti temizle ve ana ekrana dön
-        appState.currentQuickSaleOrder = [];
-        resetCurrentOrderDiscount();
-        quickSaleModal.classList.remove('active'); // Hızlı satış modalını da kapat
-        showTablesView();
-    } else if (currentTable && currentTable.status === 'boş') { // Masa kapatıldıysa ana ekrana dön
-        resetCurrentOrderDiscount();
-        showTablesView();
-    }
-    // Diğer durumlarda (sadece fiş gösterildiyse) sipariş sayfasında kal
+    if (isQuickSaleReceipt) { appState.currentQuickSaleOrder = []; resetCurrentOrderDiscount(); quickSaleModal.classList.remove('active'); showTablesView(); }
+    else if (currentTable && currentTable.status === 'boş') { resetCurrentOrderDiscount(); showTablesView(); }
 }
-
-// Menüye Ürün Ekleme Modalını Açma
-function openAddProductToMenuModal() {
-    if (appState.user && appState.user.role === 'cashier') {
-        addProductToMenuModal.classList.add('active');
-        populateNewProductCategorySelect();
-        [newProductNameInput, newProductPriceInput, newProductCategoryInput].forEach(el => el.value = '');
-        newProductCategorySelect.value = '';
-        newProductCategoryInput.classList.add('hidden');
-    } else { alert("Bu özelliği kullanma yetkiniz yok."); }
-}
+function openAddProductToMenuModal() { if (appState.user && appState.user.role === 'cashier') { addProductToMenuModal.classList.add('active'); populateNewProductCategorySelect(); [newProductNameInput, newProductPriceInput, newProductCategoryInput].forEach(el => el.value = ''); newProductCategorySelect.value = ''; newProductCategoryInput.classList.add('hidden'); } else { alert("Bu özelliği kullanma yetkiniz yok."); } }
 function handleSaveNewProduct() {
-    const name = newProductNameInput.value.trim();
-    const price = parseFloat(newProductPriceInput.value);
-    let category = newProductCategorySelect.value;
-    const newCategoryName = newProductCategoryInput.value.trim().toUpperCase();
-
-    if (category === 'YENI') {
-        if (!newCategoryName) { alert("Lütfen yeni kategori adını girin."); return; }
-        category = newCategoryName;
-    }
-    if (!name || isNaN(price) || price < 0 || !category) {
-        alert("Lütfen geçerli ürün adı, fiyat ve kategori girin/seçin."); return;
-    }
-    showLoading("Yeni ürün menüye ekleniyor...");
-    sendMessageToServer('add_product_to_main_menu', { name: name, price: price, category: category });
-    addProductToMenuModal.classList.remove('active'); // İşlem sonrası modalı kapat
+    const name = newProductNameInput.value.trim(); const price = parseFloat(newProductPriceInput.value); let category = newProductCategorySelect.value; const newCategoryName = newProductCategoryInput.value.trim().toUpperCase();
+    if (category === 'YENI') { if (!newCategoryName) { alert("Lütfen yeni kategori adını girin."); return; } category = newCategoryName; }
+    if (!name || isNaN(price) || price < 0 || !category) { alert("Lütfen geçerli ürün adı, fiyat ve kategori girin/seçin."); return; }
+    showLoading("Yeni ürün menüye ekleniyor..."); sendMessageToServer('add_product_to_main_menu', { name: name, price: price, category: category }); addProductToMenuModal.classList.remove('active');
 }
-
-// Ürün Düzenleme Modalını Açma
-function openEditProductModal() {
-    if (appState.user && appState.user.role === 'cashier') {
-        populateSelectProductToEdit();
-        editProductFormDiv.classList.add('hidden'); // Formu başlangıçta gizle
-        editProductModal.classList.add('active');
-    } else { alert("Bu özelliği kullanma yetkiniz yok."); }
-}
+function openEditProductModal() { if (appState.user && appState.user.role === 'cashier') { populateSelectProductToEdit(); editProductFormDiv.classList.add('hidden'); editProductModal.classList.add('active'); } else { alert("Bu özelliği kullanma yetkiniz yok."); } }
 function populateSelectProductToEdit() {
     selectProductToEdit.innerHTML = '<option value="">-- Düzenlenecek Ürünü Seçin --</option>';
-    appState.products.sort((a,b) => a.name.localeCompare(b.name, 'tr')).forEach(product => {
-        const option = document.createElement('option');
-        option.value = product.id;
-        option.textContent = `${product.name} (${product.category || 'Kategorisiz'}) - ${formatPrice(product.price)}`;
-        selectProductToEdit.appendChild(option);
-    });
+    appState.products.sort((a,b) => a.name.localeCompare(b.name, 'tr')).forEach(product => { const option = document.createElement('option'); option.value = product.id; option.textContent = `${product.name} (${product.category || 'Kategorisiz'}) - ${formatPrice(product.price)}`; selectProductToEdit.appendChild(option); });
 }
 selectProductToEdit.addEventListener('change', () => {
     const productId = parseInt(selectProductToEdit.value);
     if (productId) {
         const product = appState.products.find(p => p.id === productId);
         if (product) {
-            editingProductIdInput.value = product.id;
-            editProductNameInput.value = product.name;
-            editProductPriceInput.value = product.price.toFixed(2);
-            populateEditProductCategorySelect(); // Kategori select'i doldur
-            editProductCategorySelect.value = product.category || '';
+            editingProductIdInput.value = product.id; editProductNameInput.value = product.name; editProductPriceInput.value = product.price.toFixed(2);
+            populateEditProductCategorySelect(); editProductCategorySelect.value = product.category || '';
             editProductCategoryInput.classList.toggle('hidden', product.category && editProductCategorySelect.querySelector(`option[value="${product.category}"]`));
-            if (!editProductCategorySelect.value && product.category) { // Eğer kategori select'te yoksa yeni olarak göster
-                editProductCategorySelect.value = "YENI_EDIT";
-                editProductCategoryInput.value = product.category;
-                editProductCategoryInput.classList.remove('hidden');
-            } else {
-                editProductCategoryInput.value = '';
-                editProductCategoryInput.classList.add('hidden');
-            }
+            if (!editProductCategorySelect.value && product.category) { editProductCategorySelect.value = "YENI_EDIT"; editProductCategoryInput.value = product.category; editProductCategoryInput.classList.remove('hidden'); }
+            else { editProductCategoryInput.value = ''; editProductCategoryInput.classList.add('hidden'); }
             editProductFormDiv.classList.remove('hidden');
         }
-    } else {
-        editProductFormDiv.classList.add('hidden');
-    }
+    } else { editProductFormDiv.classList.add('hidden'); }
 });
 function handleSaveEditedProduct() {
-    const productId = parseInt(editingProductIdInput.value);
-    const name = editProductNameInput.value.trim();
-    const price = parseFloat(editProductPriceInput.value);
-    let category = editProductCategorySelect.value;
-    const newCategoryName = editProductCategoryInput.value.trim().toUpperCase();
-
-    if (category === 'YENI_EDIT') {
-        if (!newCategoryName) { alert("Lütfen yeni kategori adını girin."); return; }
-        category = newCategoryName;
-    }
-    if (!productId || !name || isNaN(price) || price < 0 || !category) {
-        alert("Lütfen tüm alanları doğru bir şekilde doldurun."); return;
-    }
-    showLoading("Ürün güncelleniyor...");
-    sendMessageToServer('update_main_menu_product', { id: productId, name: name, price: price, category: category });
-    editProductModal.classList.remove('active');
+    const productId = parseInt(editingProductIdInput.value); const name = editProductNameInput.value.trim(); const price = parseFloat(editProductPriceInput.value); let category = editProductCategorySelect.value; const newCategoryName = editProductCategoryInput.value.trim().toUpperCase();
+    if (category === 'YENI_EDIT') { if (!newCategoryName) { alert("Lütfen yeni kategori adını girin."); return; } category = newCategoryName; }
+    if (!productId || !name || isNaN(price) || price < 0 || !category) { alert("Lütfen tüm alanları doğru bir şekilde doldurun."); return; }
+    showLoading("Ürün güncelleniyor..."); sendMessageToServer('update_main_menu_product', { id: productId, name: name, price: price, category: category }); editProductModal.classList.remove('active');
 }
-
-// Masa Yönetimi
-function openManageTablesModal() {
-    if (appState.user && appState.user.role === 'cashier') {
-        populateTableSelectsForManagement();
-        manageTablesModal.classList.add('active');
-    } else { alert("Bu özelliği kullanma yetkiniz yok."); }
-}
+function openManageTablesModal() { if (appState.user && appState.user.role === 'cashier') { populateTableSelectsForManagement(); manageTablesModal.classList.add('active'); } else { alert("Bu özelliği kullanma yetkiniz yok."); } }
 function populateTableSelectsForManagement() {
-    [selectTableToEditName, selectTableToDelete].forEach(select => {
-        select.innerHTML = `<option value="">-- ${select === selectTableToEditName ? 'Düzenlenecek' : 'Silinecek'} Masayı Seçin --</option>`;
-        appState.tables.sort((a,b)=> a.name.localeCompare(b.name, 'tr')).forEach(table => {
-            const option = document.createElement('option');
-            option.value = table.id; option.textContent = table.name;
-            select.appendChild(option.cloneNode(true));
-        });
-    });
+    [selectTableToEditName, selectTableToDelete].forEach(select => { select.innerHTML = `<option value="">-- ${select === selectTableToEditName ? 'Düzenlenecek' : 'Silinecek'} Masayı Seçin --</option>`; appState.tables.sort((a,b)=> a.name.localeCompare(b.name, 'tr')).forEach(table => { const option = document.createElement('option'); option.value = table.id; option.textContent = table.name; select.appendChild(option.cloneNode(true)); }); });
     editTableNameInput.value = ''; newTableNameInput.value = '';
 }
-function handleAddNewTable() {
-    const newName = newTableNameInput.value.trim();
-    if (!newName) { alert("Lütfen yeni masa adı girin."); return; }
-    showLoading("Yeni masa ekleniyor...");
-    sendMessageToServer('add_table', { name: newName });
-    newTableNameInput.value = ''; // Input'u temizle
-}
-function handleUpdateTableName() {
-    const tableId = selectTableToEditName.value;
-    const newName = editTableNameInput.value.trim();
-    if (!tableId) { alert("Lütfen düzenlenecek masayı seçin."); return; }
-    if (!newName) { alert("Lütfen yeni masa adını girin."); return; }
-    showLoading("Masa adı güncelleniyor...");
-    sendMessageToServer('edit_table_name', { tableId: tableId, newName: newName });
-}
-function handleDeleteTable() {
-    const tableId = selectTableToDelete.value;
-    if (!tableId) { alert("Lütfen silinecek masayı seçin."); return; }
-    const table = appState.tables.find(t => t.id === tableId);
-    if (table) {
-        tableNameToDeleteSpan.textContent = table.name;
-        confirmDeleteTableModal.classList.add('active');
-    }
-}
-
-// Garson Yönetimi
-function openManageWaitersModal() {
-    if (appState.user && appState.user.role === 'cashier') {
-        sendMessageToServer('get_waiters_list', {}); // Sunucudan güncel listeyi iste
-        manageWaitersModal.classList.add('active');
-    } else { alert("Bu özelliği kullanma yetkiniz yok."); }
-}
+function handleAddNewTable() { const newName = newTableNameInput.value.trim(); if (!newName) { alert("Lütfen yeni masa adı girin."); return; } showLoading("Yeni masa ekleniyor..."); sendMessageToServer('add_table', { name: newName }); newTableNameInput.value = ''; }
+function handleUpdateTableName() { const tableId = selectTableToEditName.value; const newName = editTableNameInput.value.trim(); if (!tableId) { alert("Lütfen düzenlenecek masayı seçin."); return; } if (!newName) { alert("Lütfen yeni masa adını girin."); return; } showLoading("Masa adı güncelleniyor..."); sendMessageToServer('edit_table_name', { tableId: tableId, newName: newName }); }
+function handleDeleteTable() { const tableId = selectTableToDelete.value; if (!tableId) { alert("Lütfen silinecek masayı seçin."); return; } const table = appState.tables.find(t => t.id === tableId); if (table) { tableNameToDeleteSpan.textContent = table.name; confirmDeleteTableModal.classList.add('active'); } }
+function openManageWaitersModal() { if (appState.user && appState.user.role === 'cashier') { sendMessageToServer('get_waiters_list', {}); manageWaitersModal.classList.add('active'); } else { alert("Bu özelliği kullanma yetkiniz yok."); } }
 function populateWaiterSelectsForManagement() {
-    [selectWaiterToEditPassword, selectWaiterToDelete].forEach(select => {
-        select.innerHTML = `<option value="">-- ${select === selectWaiterToEditPassword ? 'Düzenlenecek' : 'Silinecek'} Garsonu Seçin --</option>`;
-        appState.waiters.sort((a,b)=> a.username.localeCompare(b.username, 'tr')).forEach(waiter => {
-            const option = document.createElement('option');
-            option.value = waiter.id; option.textContent = waiter.username;
-            select.appendChild(option.cloneNode(true));
-        });
-    });
+    [selectWaiterToEditPassword, selectWaiterToDelete].forEach(select => { select.innerHTML = `<option value="">-- ${select === selectWaiterToEditPassword ? 'Düzenlenecek' : 'Silinecek'} Garsonu Seçin --</option>`; appState.waiters.sort((a,b)=> a.username.localeCompare(b.username, 'tr')).forEach(waiter => { const option = document.createElement('option'); option.value = waiter.id; option.textContent = waiter.username; select.appendChild(option.cloneNode(true)); }); });
     [newWaiterUsernameInput, newWaiterPasswordInput, editWaiterPasswordInput].forEach(el => el.value = '');
 }
-function handleAddNewWaiter() {
-    const username = newWaiterUsernameInput.value.trim();
-    const password = newWaiterPasswordInput.value.trim();
-    if (!username || !password) { alert("Lütfen garson kullanıcı adı ve şifresini girin."); return; }
-    showLoading("Yeni garson ekleniyor...");
-    sendMessageToServer('add_waiter', { username, password });
-}
-function handleUpdateWaiterPassword() {
-    const waiterId = selectWaiterToEditPassword.value;
-    const newPassword = editWaiterPasswordInput.value.trim();
-    if (!waiterId) { alert("Lütfen şifresi düzenlenecek garsonu seçin."); return; }
-    if (!newPassword) { alert("Lütfen yeni şifreyi girin."); return; }
-    showLoading("Garson şifresi güncelleniyor...");
-    sendMessageToServer('edit_waiter_password', { userId: parseInt(waiterId), newPassword: newPassword });
-}
-let waiterIdToDelete = null; // Silinecek garson ID'sini saklamak için
-function handleDeleteWaiter() {
-    const selectedWaiterId = selectWaiterToDelete.value;
-    if (!selectedWaiterId) { alert("Lütfen silinecek garsonu seçin."); return; }
-    const waiter = appState.waiters.find(w => String(w.id) === String(selectedWaiterId));
-    if (waiter) {
-        waiterIdToDelete = waiter.id; // ID'yi sakla
-        waiterNameToDeleteSpan.textContent = waiter.username;
-        confirmDeleteWaiterModal.classList.add('active');
-    }
-}
+function handleAddNewWaiter() { const username = newWaiterUsernameInput.value.trim(); const password = newWaiterPasswordInput.value.trim(); if (!username || !password) { alert("Lütfen garson kullanıcı adı ve şifresini girin."); return; } showLoading("Yeni garson ekleniyor..."); sendMessageToServer('add_waiter', { username, password }); }
+function handleUpdateWaiterPassword() { const waiterId = selectWaiterToEditPassword.value; const newPassword = editWaiterPasswordInput.value.trim(); if (!waiterId) { alert("Lütfen şifresi düzenlenecek garsonu seçin."); return; } if (!newPassword) { alert("Lütfen yeni şifreyi girin."); return; } showLoading("Garson şifresi güncelleniyor..."); sendMessageToServer('edit_waiter_password', { userId: parseInt(waiterId), newPassword: newPassword }); }
+let waiterIdToDelete = null;
+function handleDeleteWaiter() { const selectedWaiterId = selectWaiterToDelete.value; if (!selectedWaiterId) { alert("Lütfen silinecek garsonu seçin."); return; } const waiter = appState.waiters.find(w => String(w.id) === String(selectedWaiterId)); if (waiter) { waiterIdToDelete = waiter.id; waiterNameToDeleteSpan.textContent = waiter.username; confirmDeleteWaiterModal.classList.add('active'); } }
 
-// --- Event Listeners ---
 loginButton.addEventListener('click', handleLogin);
 passwordInput.addEventListener('keypress', (event) => { if (event.key === 'Enter') handleLogin(); });
 logoutButton.addEventListener('click', handleLogout);
-
-confirmExitAppYesButton.addEventListener('click', () => {
-    performLogout();
-    confirmExitAppModal.classList.remove('active');
-});
+confirmExitAppYesButton.addEventListener('click', () => { performLogout(); confirmExitAppModal.classList.remove('active'); });
 confirmExitAppNoButton.addEventListener('click', () => confirmExitAppModal.classList.remove('active'));
-
 salesReportButton.addEventListener('click', openSalesReport);
-activityLogButton.addEventListener('click', openActivityLogModal); // Aktivite logları butonu
+activityLogButton.addEventListener('click', openActivityLogModal);
 quickSaleEntryButton.addEventListener('click', openQuickSaleModal);
 addProductToMenuButton.addEventListener('click', openAddProductToMenuModal);
 editProductMenuButton.addEventListener('click', openEditProductModal);
 manageTablesButton.addEventListener('click', openManageTablesModal);
 manageWaitersButton.addEventListener('click', openManageWaitersModal);
-
 closeAddProductToMenuModalButton.addEventListener('click', () => addProductToMenuModal.classList.remove('active'));
 saveNewProductButton.addEventListener('click', handleSaveNewProduct);
 closeEditProductModalButton.addEventListener('click', () => editProductModal.classList.remove('active'));
 saveEditedProductButton.addEventListener('click', handleSaveEditedProduct);
-
 closeManageTablesModalButton.addEventListener('click', () => manageTablesModal.classList.remove('active'));
 addNewTableButton.addEventListener('click', handleAddNewTable);
 updateTableNameButton.addEventListener('click', handleUpdateTableName);
 deleteTableButton.addEventListener('click', handleDeleteTable);
-confirmDeleteTableYesButton.addEventListener('click', () => {
-    const tableId = selectTableToDelete.value; // Silinecek masanın ID'sini al
-    if (tableId) {
-        showLoading("Masa siliniyor...");
-        sendMessageToServer('delete_table', { tableId: tableId });
-    }
-    confirmDeleteTableModal.classList.remove('active');
-});
+confirmDeleteTableYesButton.addEventListener('click', () => { const tableId = selectTableToDelete.value; if (tableId) { showLoading("Masa siliniyor..."); sendMessageToServer('delete_table', { tableId: tableId }); } confirmDeleteTableModal.classList.remove('active'); });
 confirmDeleteTableNoButton.addEventListener('click', () => confirmDeleteTableModal.classList.remove('active'));
-
 closeManageWaitersModalButton.addEventListener('click', () => manageWaitersModal.classList.remove('active'));
 addNewWaiterButton.addEventListener('click', handleAddNewWaiter);
 updateWaiterPasswordButton.addEventListener('click', handleUpdateWaiterPassword);
 deleteWaiterButton.addEventListener('click', handleDeleteWaiter);
-confirmDeleteWaiterYesButton.addEventListener('click', () => {
-    if (waiterIdToDelete) { // Saklanan ID'yi kullan
-        showLoading("Garson siliniyor...");
-        sendMessageToServer('delete_waiter', { userId: waiterIdToDelete });
-        waiterIdToDelete = null; // ID'yi sıfırla
-    }
-    confirmDeleteWaiterModal.classList.remove('active');
-});
-confirmDeleteWaiterNoButton.addEventListener('click', () => {
-    waiterIdToDelete = null; // ID'yi sıfırla
-    confirmDeleteWaiterModal.classList.remove('active');
-});
-
-closeQuickSaleModalButton.addEventListener('click', () => {
-    quickSaleModal.classList.remove('active');
-    resetCurrentOrderDiscount();
-    showTablesView(); // Hızlı satıştan sonra ana ekrana dön
-});
+confirmDeleteWaiterYesButton.addEventListener('click', () => { if (waiterIdToDelete) { showLoading("Garson siliniyor..."); sendMessageToServer('delete_waiter', { userId: waiterIdToDelete }); waiterIdToDelete = null; } confirmDeleteWaiterModal.classList.remove('active'); });
+confirmDeleteWaiterNoButton.addEventListener('click', () => { waiterIdToDelete = null; confirmDeleteWaiterModal.classList.remove('active'); });
+closeQuickSaleModalButton.addEventListener('click', () => { quickSaleModal.classList.remove('active'); resetCurrentOrderDiscount(); showTablesView(); });
 completeQuickSaleButton.addEventListener('click', completeQuickSale);
 applyQuickSaleDiscountButton.addEventListener('click', () => handleApplyDiscount(true));
-
 backToTablesButton.addEventListener('click', showTablesView);
 addManualProductButton.addEventListener('click', addManualProduct);
 showReceiptButton.addEventListener('click', handleShowReceipt);
 finalizeAndCloseTableButton.addEventListener('click', handleFinalizeAndCloseTable);
 applyDiscountButton.addEventListener('click', () => handleApplyDiscount(false));
-
 printReceiptButton.addEventListener('click', handlePrintReceipt);
 closeReceiptModalOnlyButton.addEventListener('click', closeReceiptModalOnly);
-
-confirmCloseTableYesButton.addEventListener('click', () => {
-    if (appState.currentTableId && appState.user && appState.user.role === 'cashier') {
-        showLoading("Masa kapatılıyor ve hesap tamamlanıyor...");
-        sendMessageToServer('close_table', { tableId: appState.currentTableId });
-        resetCurrentOrderDiscount(); // İndirimi sıfırla
-    }
-    confirmCloseTableModal.classList.remove('active');
-});
+confirmCloseTableYesButton.addEventListener('click', () => { if (appState.currentTableId && appState.user && appState.user.role === 'cashier') { showLoading("Masa kapatılıyor ve hesap tamamlanıyor..."); sendMessageToServer('close_table', { tableId: appState.currentTableId }); resetCurrentOrderDiscount(); } confirmCloseTableModal.classList.remove('active'); });
 confirmCloseTableNoButton.addEventListener('click', () => confirmCloseTableModal.classList.remove('active'));
-
 confirmDiscountYesButton.addEventListener('click', () => {
-    let originalTotalForDiscount = appState.currentOrderOriginalTotal; // Bu zaten doğru set edilmiş olmalı
+    let originalTotalForDiscount = appState.currentOrderOriginalTotal;
     let targetDiscountInfoDiv = quickSaleModal.classList.contains('active') ? quickSaleDiscountInfo : discountInfoDiv;
     let targetTotalDisplayElement = quickSaleModal.classList.contains('active') ? quickSaleTotal : orderPageCurrentOrderTotal;
-
     if (originalTotalForDiscount > 0 && targetTotalDisplayElement) {
-        const discountAmount = originalTotalForDiscount * 0.30; // %30 indirim
-        appState.currentOrderDiscountAmount = discountAmount;
+        const discountAmount = originalTotalForDiscount * 0.30; appState.currentOrderDiscountAmount = discountAmount;
         const discountedTotal = originalTotalForDiscount - discountAmount;
-
         targetTotalDisplayElement.textContent = `Toplam: ${formatPrice(discountedTotal)} (İndirimli)`;
-        if(targetDiscountInfoDiv) {
-            targetDiscountInfoDiv.textContent = `İndirim Uygulandı: -${formatPrice(discountAmount)}`;
-            targetDiscountInfoDiv.classList.remove('hidden');
-        }
+        if(targetDiscountInfoDiv) { targetDiscountInfoDiv.textContent = `İndirim Uygulandı: -${formatPrice(discountAmount)}`; targetDiscountInfoDiv.classList.remove('hidden'); }
         console.log("Personel indirimi uygulandı. Yeni toplam:", discountedTotal);
     }
     confirmDiscountModal.classList.remove('active');
 });
 confirmDiscountNoButton.addEventListener('click', () => confirmDiscountModal.classList.remove('active'));
-
 closeSalesReportModalButton.addEventListener('click', () => salesReportModal.classList.remove('active'));
-refreshSalesReportButton.addEventListener('click', () => {
-    showLoading("Satış raporu güncelleniyor...");
-    sendMessageToServer('get_sales_report', {});
-});
+refreshSalesReportButton.addEventListener('click', () => { showLoading("Satış raporu güncelleniyor..."); sendMessageToServer('get_sales_report', {}); });
 printSalesReportButton.addEventListener('click', printSalesReport);
-
-// Aktivite Logları Modal Butonları
 closeActivityLogModalButton.addEventListener('click', () => activityLogModal.classList.remove('active'));
-refreshActivityLogButton.addEventListener('click', () => {
-    showLoading("Aktivite logları güncelleniyor...");
-    sendMessageToServer('get_activity_log', {});
-});
+refreshActivityLogButton.addEventListener('click', () => { showLoading("Aktivite logları güncelleniyor..."); sendMessageToServer('get_activity_log', {}); });
 
-// Başlangıçta WebSocket bağlantısını kur
 document.addEventListener('DOMContentLoaded', () => {
     connectWebSocket();
+    // Sabit kodlu verilerle ilk render'ı DOMContentLoaded içinde yapabiliriz,
+    // WebSocket bağlantısı kurulmasını beklemeden temel UI'ı göstermek için.
+    renderInitialDataIfNeeded();
+    renderTables();
 });
+
 </script>
 </body>
 </html>
