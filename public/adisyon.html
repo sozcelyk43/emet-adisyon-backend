@@ -1038,32 +1038,36 @@ function formatTimestamp(timestampInput) {
             }
         };
 
-        socket.onmessage = (event) => {
+     socket.onmessage = (event) => {
+    console.log("RAW Sunucudan mesaj alındı:", event.data);
+    let message;
+    try {
+        message = JSON.parse(event.data);
+    } catch (error) {
+        console.error("JSON.parse BAŞARISIZ!", "Hata:", error, "Alınan Veri:", event.data);
+        return;
+    }
 
+    // 👇 Bu switch yapısı eksikse eklemelisin
+    switch (message.type) {
+        case 'products_list':
+            const container = document.getElementById('productItems');
+            if (!container) return;
+            const products = message.payload.products;
+            container.innerHTML = products.map(p => `
+                <div class="border p-2 rounded bg-gray-50">
+                    <div><strong>${p.name}</strong> <span class="text-sm text-gray-600">(${p.category})</span></div>
+                    <div class="text-sm text-green-600">${p.price} ₺</div>
+                </div>
+            `).join('');
+            break;
 
-case 'products_list':
-        const container = document.getElementById('productItems');
-        if (!container) return;
-        const products = msg.payload.products;
-        container.innerHTML = products.map(p => `
-            <div class="border p-2 rounded bg-gray-50">
-                <div><strong>${p.name}</strong> <span class="text-sm text-gray-600">(${p.category})</span></div>
-                <div class="text-sm text-green-600">${p.price} ₺</div>
-            </div>
-        `).join('');
-        break;
+        // Diğer case'ler buraya
+        default:
+            console.log("Bilinmeyen mesaj tipi:", message.type, "Payload:", message.payload);
+    }
+};
 
-            
-            console.log("RAW Sunucudan mesaj alındı:", event.data);
-            let message;
-            try {
-                message = JSON.parse(event.data);
-            } catch (error) {
-                console.error("JSON.parse BAŞARISIZ!", "Hata:", error, "Alınan Veri:", event.data);
-                return;
-            }
-            handleServerMessage(message);
-        };
 
         socket.onerror = (error) => {
             console.error("WebSocket hatası:", error);
