@@ -571,6 +571,10 @@
                     <button id="updateTableNameButton" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold p-3 rounded-md transition duration-150">Adı Güncelle</button>
                 </div>
                 <div class="space-y-4">
+                    <div id="productList" class="p-4 bg-white border rounded shadow-sm mt-6">
+  <h2 class="text-lg font-semibold mb-2">Menü Ürünleri</h2>
+  <div id="productItems" class="space-y-2"></div>
+</div>
                     <h3 class="text-lg font-medium text-gray-700">Masa Sil</h3>
                     <select id="selectTableToDelete" class="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500">
                         <option value="">Silinecek Masayı Seçin</option>
@@ -1001,6 +1005,9 @@ function formatTimestamp(timestampInput) {
         socket = new WebSocket(WEBSOCKET_URL);
 
         socket.onopen = () => {
+
+            socket.send(JSON.stringify({ type: 'get_products' }));
+
             console.log("WebSocket bağlantısı kuruldu.");
             hideLoading();
             // Oturum kontrolü
@@ -1032,6 +1039,21 @@ function formatTimestamp(timestampInput) {
         };
 
         socket.onmessage = (event) => {
+
+
+case 'products_list':
+        const container = document.getElementById('productItems');
+        if (!container) return;
+        const products = msg.payload.products;
+        container.innerHTML = products.map(p => `
+            <div class="border p-2 rounded bg-gray-50">
+                <div><strong>${p.name}</strong> <span class="text-sm text-gray-600">(${p.category})</span></div>
+                <div class="text-sm text-green-600">${p.price} ₺</div>
+            </div>
+        `).join('');
+        break;
+
+            
             console.log("RAW Sunucudan mesaj alındı:", event.data);
             let message;
             try {
