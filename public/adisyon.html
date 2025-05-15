@@ -1179,7 +1179,7 @@ function formatTimestamp(timestampInput) {
             }
             break;
 
-        case 'products_list':
+       case 'products_list': // Bu case, aşağıdaki products_update'e düşer (fall-through)
         case 'products_update':
             if (message.payload && Array.isArray(message.payload.products)) {
                 appState.products = message.payload.products;
@@ -1202,7 +1202,7 @@ function formatTimestamp(timestampInput) {
             } else {
                 console.warn(`'${message.type}' mesajı alındı ancak payload.products eksik veya array değil.`, message.payload);
             }
-            break;
+            break; // Bu break ifadesi çok önemli!
 
         case 'main_menu_product_added':
             alert(message.payload.message || "Yeni ürün menüye eklendi!");
