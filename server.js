@@ -63,8 +63,8 @@ console.log(`WebSocket sunucusu da bu HTTP sunucusu üzerinden çalışıyor.`);
 // GÜNCELLENMİŞ KULLANICI LİSTESİ
 let users = [
     // Kasiyerler
-    { id: 1, username: 'onkasa', password: 'onkasa12', role: 'cashier' },
-    { id: 2, username: 'arkakasa', password: 'arkakasa12', role: 'cashier' },
+    { id: 1, username: 'hamza', password: 'ham.za', role: 'cashier' },
+    { id: 2, username: 'bilal', password: 'bil.al', role: 'cashier' },
     // Garsonlar
     { id: 3, username: 'aykut', password: 'ay.kut', role: 'waiter' },
     { id: 4, username: 'osman', password: 'os.man', role: 'waiter' },
