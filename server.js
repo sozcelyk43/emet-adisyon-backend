@@ -227,12 +227,18 @@ wss.on('connection', (ws) => {
                 break;
 
                 
-    case 'get_products': // Bu blok products_list gönderiyordu
+   case 'get_products':
     try {
-        const dbProducts = await fetchProductsFromDB(); // Ürünleri DB'den çeken yardımcı fonksiyonunuzu kullanın
-        // MESAJ TİPİNİ 'products_update' OLARAK DEĞİŞTİRİN:
+        // fetchProductsFromDB, ürünleri veritabanından çeken yardımcı fonksiyonunuz olmalı.
+        // Eğer bu fonksiyon yoksa, doğrudan pool.query kullanabilirsiniz:
+        // const result = await pool.query('SELECT * FROM products ORDER BY category, name');
+        // const dbProducts = result.rows;
+        const dbProducts = await fetchProductsFromDB(); // Bu fonksiyonun tanımlı olduğundan emin olun
+
+        // ESKİ HALİ: ws.send(JSON.stringify({ type: 'products_list', payload: { products: dbProducts } }));
+        // YENİ HALİ (MESAJ TİPİNİ DEĞİŞTİRİN):
         ws.send(JSON.stringify({ type: 'products_update', payload: { products: dbProducts } }));
-        console.log('Sunucu: get_products isteğine products_update olarak yanıt verildi.'); // Eklendi: Loglama
+        console.log('Sunucu: get_products isteğine products_update mesaj tipiyle yanıt verildi.');
     } catch (err) {
         console.error('Ürünler (get_products) alınırken hata:', err);
         ws.send(JSON.stringify({ type: 'error', payload: { message: 'Ürünler getirilemedi.' } }));
