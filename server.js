@@ -235,6 +235,21 @@ wss.on('connection', (ws) => {
                 break;
 
 
+case 'get_users':
+                if (!currentUserInfo || currentUserInfo.role !== 'cashier') {
+                    ws.send(JSON.stringify({ type: 'error', payload: { message: 'Yetkiniz yok.' } }));
+                    return;
+                }
+                try {
+                    const result = await pool.query('SELECT id, username, role FROM users ORDER BY id');
+                    ws.send(JSON.stringify({ type: 'users_list', payload: { users: result.rows } }));
+                } catch (err) {
+                    console.error('Kullanıcılar alınırken hata:', err);
+                    ws.send(JSON.stringify({ type: 'error', payload: { message: 'Kullanıcılar getirilemedi.' } }));
+                }
+                break;
+
+                
             case 'add_order_item': // Siparişi bellekteki masanın order dizisine ekler
                 if (!currentUserInfo) { ws.send(JSON.stringify({ type: 'error', payload: { message: 'Giriş yapmalısınız.' } })); return; }
                 const tableToAdd = tables.find(t => t.id === payload.tableId);
@@ -412,7 +427,7 @@ wss.on('connection', (ws) => {
                 break;
 
 
-            case 'export_completed_orders':
+           case 'export_completed_orders':
                 if (currentUserInfo && currentUserInfo.role === 'cashier') {
                     try {
                         const exportResult = await pool.query(
@@ -674,7 +689,7 @@ wss.on('connection', (ws) => {
                 }
                 break;
 
-            case 'update_main_menu_product':
+           case 'update_main_menu_product':
                 if (!currentUserInfo || currentUserInfo.role !== 'cashier') {
                     ws.send(JSON.stringify({ type: 'error', payload: { message: 'Yetkiniz yok.' } }));
                     return;
@@ -700,6 +715,20 @@ wss.on('connection', (ws) => {
                     ws.send(JSON.stringify({ type: 'error', payload: { message: 'Eksik ürün bilgisi.' } }));
                 }
                 break;
+
+
+case 'get_tables':
+                try {
+                    const result = await pool.query('SELECT * FROM tables ORDER BY id');
+                    ws.send(JSON.stringify({ type: 'tables_list', payload: { tables: result.rows } }));
+                } catch (err) {
+                    console.error('Masalar alınırken hata:', err);
+                    ws.send(JSON.stringify({ type: 'error', payload: { message: 'Masalar getirilemedi.' } }));
+                }
+                break;
+
+                
+                
              case 'add_table':
                 if (!currentUserInfo || currentUserInfo.role !== 'cashier') { ws.send(JSON.stringify({ type: 'error', payload: { message: 'Bu işlem için yetkiniz yok.' } })); return; }
                 if (payload && payload.name && payload.name.trim() !== "") {
