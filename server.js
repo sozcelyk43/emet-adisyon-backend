@@ -224,9 +224,16 @@ wss.on('connection', (ws) => {
                  } else { ws.send(JSON.stringify({ type: 'error', payload: { message: 'Eksik oturum bilgisi.' } }));}
                 break;
 
-            case 'get_products': // Bellekten çalışır
-                ws.send(JSON.stringify({ type: 'products_update', payload: { products: products } }));
+           case 'get_products':
+                try {
+                    const result = await pool.query('SELECT * FROM products ORDER BY id');
+                    ws.send(JSON.stringify({ type: 'products_list', payload: { products: result.rows } }));
+                } catch (err) {
+                    console.error('Ürünler alınırken hata:', err);
+                    ws.send(JSON.stringify({ type: 'error', payload: { message: 'Ürünler getirilemedi.' } }));
+                }
                 break;
+
 
             case 'add_order_item': // Siparişi bellekteki masanın order dizisine ekler
                 if (!currentUserInfo) { ws.send(JSON.stringify({ type: 'error', payload: { message: 'Giriş yapmalısınız.' } })); return; }
@@ -386,26 +393,26 @@ wss.on('connection', (ws) => {
                 }
                 break;
 
-            case 'get_sales_report': // RAPORU VERİTABANINDAN ÇEKER
-                 if (!currentUserInfo || currentUserInfo.role !== 'cashier') {
+             case 'get_sales_report':
+                if (!currentUserInfo || currentUserInfo.role !== 'cashier') {
                     ws.send(JSON.stringify({ type: 'error', payload: { message: 'Rapor görüntüleme yetkiniz yok.' } }));
                     return;
-                 }
-                 try {
+                }
+                try {
                     const reportResult = await pool.query(
                         `SELECT id, item_name, item_price, quantity, total_item_price, category, description,
                                 waiter_username, table_name, TO_CHAR(sale_timestamp, 'DD.MM.YYYY HH24:MI:SS') as sale_timestamp
                          FROM sales_log ORDER BY sale_timestamp DESC`
                     );
                     ws.send(JSON.stringify({ type: 'sales_report_data', payload: { sales: reportResult.rows } }));
-                    console.log(`${currentUserInfo.username} için satış raporu (sales_log) gönderildi.`);
                 } catch (error) {
-                    console.error("Satış raporu (sales_log) DB'den alınırken hata:", error);
+                    console.error("Satış raporu alınırken hata:", error);
                     ws.send(JSON.stringify({ type: 'error', payload: { message: 'Rapor alınırken bir veritabanı sorunu oluştu.' } }));
                 }
                 break;
 
-            case 'export_completed_orders': // DIŞA AKTARMA İÇİN VERİTABANINDAN ÇEKER
+
+            case 'export_completed_orders':
                 if (currentUserInfo && currentUserInfo.role === 'cashier') {
                     try {
                         const exportResult = await pool.query(
@@ -413,16 +420,16 @@ wss.on('connection', (ws) => {
                                     waiter_username, table_name, TO_CHAR(sale_timestamp, 'DD.MM.YYYY HH24:MI:SS') as sale_timestamp
                              FROM sales_log ORDER BY sale_timestamp DESC`
                         );
-                        console.log(`[export_completed_orders] ${exportResult.rows.length} satış kaydı dışa aktarılmak üzere gönderiliyor.`);
                         ws.send(JSON.stringify({ type: 'exported_data', payload: { completedOrders: exportResult.rows } }));
                     } catch (error) {
-                        console.error("Dışa aktarma için satış logu DB'den alınırken hata:", error);
+                        console.error("Dışa aktarım hatası:", error);
                         ws.send(JSON.stringify({ type: 'error', payload: { message: 'Veriler dışa aktarılırken bir sorun oluştu.' } }));
                     }
                 } else {
                     ws.send(JSON.stringify({ type: 'error', payload: { message: 'Bu işlem için yetkiniz yok.' } }));
                 }
                 break;
+
 
             case 'logout':
                 if (clients.has(ws)) {
@@ -645,29 +652,53 @@ wss.on('connection', (ws) => {
             // GitHub'daki orijinal server.js dosyanızdan bu kısımları alıp buraya ekleyebilirsiniz.
             // Örnek birkaç tanesi:
             case 'add_product_to_main_menu':
-                if (!currentUserInfo || currentUserInfo.role !== 'cashier') { ws.send(JSON.stringify({ type: 'error', payload: { message: 'Yetkiniz yok.' } })); return; }
+                if (!currentUserInfo || currentUserInfo.role !== 'cashier') {
+                    ws.send(JSON.stringify({ type: 'error', payload: { message: 'Yetkiniz yok.' } }));
+                    return;
+                }
                 if (payload && payload.name && typeof payload.price === 'number' && payload.price >= 0 && payload.category) {
-                    const maxId = products.reduce((max, p) => p.id > max ? p.id : max, 0);
-                    const newProductId = maxId < 7000 ? 7001 : maxId + 1;
-                    const newProduct = { id: newProductId, name: payload.name.toUpperCase(), price: parseFloat(payload.price), category: payload.category.toUpperCase() };
-                    products.push(newProduct);
-                    console.log(`Yeni ürün (bellek): ${newProduct.name}`);
-                    broadcastProductsUpdate();
-                    ws.send(JSON.stringify({ type: 'main_menu_product_added', payload: { product: newProduct, message: `${newProduct.name} menüye eklendi.` } }));
-                } else { ws.send(JSON.stringify({ type: 'error', payload: { message: 'Eksik ürün bilgisi.' } }));}
+                    try {
+                        const result = await pool.query(
+                            'INSERT INTO products (name, price, category) VALUES ($1, $2, $3) RETURNING *',
+                            [payload.name.toUpperCase(), parseFloat(payload.price), payload.category.toUpperCase()]
+                        );
+                        const updated = await pool.query('SELECT * FROM products ORDER BY id');
+                        ws.send(JSON.stringify({ type: 'main_menu_product_added', payload: { product: result.rows[0] } }));
+                        ws.send(JSON.stringify({ type: 'products_list', payload: { products: updated.rows } }));
+                    } catch (err) {
+                        console.error("Ürün eklenirken hata:", err);
+                        ws.send(JSON.stringify({ type: 'error', payload: { message: 'Ürün eklenemedi.' } }));
+                    }
+                } else {
+                    ws.send(JSON.stringify({ type: 'error', payload: { message: 'Eksik ürün bilgisi.' } }));
+                }
                 break;
+
             case 'update_main_menu_product':
-                if (!currentUserInfo || currentUserInfo.role !== 'cashier') { ws.send(JSON.stringify({ type: 'error', payload: { message: 'Yetkiniz yok.' } })); return; }
+                if (!currentUserInfo || currentUserInfo.role !== 'cashier') {
+                    ws.send(JSON.stringify({ type: 'error', payload: { message: 'Yetkiniz yok.' } }));
+                    return;
+                }
                 if (payload && payload.id && payload.name && typeof payload.price === 'number' && payload.price >= 0 && payload.category) {
-                    const productIndex = products.findIndex(p => p.id === parseInt(payload.id));
-                    if (productIndex > -1) {
-                        products[productIndex].name = payload.name.toUpperCase();
-                        products[productIndex].price = parseFloat(payload.price);
-                        products[productIndex].category = payload.category.toUpperCase();
-                        broadcastProductsUpdate();
-                        ws.send(JSON.stringify({ type: 'main_menu_product_updated', payload: { product: products[productIndex], message: `${products[productIndex].name} güncellendi.` } }));
-                    } else { ws.send(JSON.stringify({ type: 'error', payload: { message: 'Ürün bulunamadı.' } }));}
-                } else { ws.send(JSON.stringify({ type: 'error', payload: { message: 'Eksik ürün bilgisi.' } }));}
+                    try {
+                        const result = await pool.query(
+                            'UPDATE products SET name = $1, price = $2, category = $3 WHERE id = $4 RETURNING *',
+                            [payload.name.toUpperCase(), parseFloat(payload.price), payload.category.toUpperCase(), payload.id]
+                        );
+                        if (result.rowCount === 0) {
+                            ws.send(JSON.stringify({ type: 'error', payload: { message: 'Ürün bulunamadı.' } }));
+                        } else {
+                            const updated = await pool.query('SELECT * FROM products ORDER BY id');
+                            ws.send(JSON.stringify({ type: 'main_menu_product_updated', payload: { product: result.rows[0] } }));
+                            ws.send(JSON.stringify({ type: 'products_list', payload: { products: updated.rows } }));
+                        }
+                    } catch (err) {
+                        console.error("Ürün güncellenirken hata:", err);
+                        ws.send(JSON.stringify({ type: 'error', payload: { message: 'Ürün güncellenemedi.' } }));
+                    }
+                } else {
+                    ws.send(JSON.stringify({ type: 'error', payload: { message: 'Eksik ürün bilgisi.' } }));
+                }
                 break;
              case 'add_table':
                 if (!currentUserInfo || currentUserInfo.role !== 'cashier') { ws.send(JSON.stringify({ type: 'error', payload: { message: 'Bu işlem için yetkiniz yok.' } })); return; }
