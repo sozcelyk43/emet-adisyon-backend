@@ -430,56 +430,62 @@ wss.on('connection', (ws, req) => {
                 break;
 
             case 'remove_order_item':
-                 if (!currentUserInfo || isHamzaRestricted) { ws.send(JSON.stringify({ type: 'error', payload: { message: 'Bu işlem için yetkiniz yok.' } })); return; }
+                 if (!currentUserInfo) { 
+                     ws.send(JSON.stringify({ type: 'error', payload: { message: 'Giriş yapmalısınız.' } })); 
+                     return; 
+                 }
+                 const isHamzaRestrictedServerRemove = currentUserInfo && currentUserInfo.username === 'hamza';
+                 if (isHamzaRestrictedServerRemove) { // Hamza bu işlemi yapamaz (hızlı satış hariç)
+                    ws.send(JSON.stringify({ type: 'error', payload: { message: 'Bu işlem için yetkiniz yok (hamza).' } }));
+                    return;
+                 }
+                
                 const tableToRemoveFrom = tables.find(t => t.id === payload.tableId);
                 if (tableToRemoveFrom) {
-                    const productIdToRemove = payload.productId; 
-                    const nameToRemove = payload.name; 
-                    const descriptionToRemove = payload.description || '';
+                    const pNameFromPayload = payload.name;    // İstemciden gelen tam ürün adı (örn: "ET DÖNER - KG (250 gr)")
+                    const pDescriptionFromPayload = payload.description === undefined ? '' : payload.description;
                     let removedItemDetails = null;
 
-                    console.log(`[SERVER remove_order_item] Silme isteği: pId='${productIdToRemove}', name='${nameToRemove}', desc='${descriptionToRemove}'`);
-                    // console.log(`[SERVER remove_order_item] Masadaki Siparişler:`, JSON.stringify(tableToRemoveFrom.order.map(i => ({name: i.name, productId: i.productId, originalProductId: i.originalProductId, description: i.description || '', isCustom: i.isCustomItem, isByWeight: i.isByWeightEntry})), null, 2));
-
+                    console.log(`[SERVER remove_order_item] Silme isteği: tableId='${payload.tableId}', name='${pNameFromPayload}', desc='${pDescriptionFromPayload}'`);
+                    
                     const itemIndex = tableToRemoveFrom.order.findIndex(item => {
                         const itemDesc = item.description || '';
-                        // İsim ve açıklama ile tam eşleşme (ağırlıklı ve manuel ürünler için öncelikli)
-                        if (item.name === nameToRemove && itemDesc === descriptionToRemove) {
-                            // Eğer productId de geldiyse ve item'ın bir productId'si varsa (örn: KG ürününün orijinal ID'si)
-                            // bu kontrolü de yapabiliriz, ama isim (gramaj dahil) zaten benzersiz olmalı.
-                            // Şimdilik isim ve açıklama eşleşmesi yeterli.
-                            return true;
+                        // Eşleşme için ürünün tam adını ve açıklamasını kullan
+                        const match = item.name === pNameFromPayload && itemDesc === pDescriptionFromPayload;
+                        
+                        if (match) {
+                            removedItemDetails = { ...item };
                         }
-                        // Standart ürünler için (payload.name null gelebilir, productId ve description ile eşleşir)
-                        if ((nameToRemove === null || nameToRemove === undefined) && 
-                            productIdToRemove && productIdToRemove !== 'manual' && 
-                            item.productId === parseInt(productIdToRemove) && 
-                            itemDesc === descriptionToRemove && 
-                            !item.isCustomItem && !item.isByWeightEntry) {
-                            return true;
-                        }
-                        return false;
+                        return match;
                     });
 
                     if (itemIndex > -1) {
-                        removedItemDetails = { ...tableToRemoveFrom.order[itemIndex] };
                         tableToRemoveFrom.order.splice(itemIndex, 1);
                         tableToRemoveFrom.total = calculateTableTotal(tableToRemoveFrom.order);
                         if (tableToRemoveFrom.order.length === 0) {
-                            tableToRemoveFrom.status = 'boş'; tableToRemoveFrom.waiterId = null; tableToRemoveFrom.waiterUsername = null;
+                            tableToRemoveFrom.status = 'boş'; 
+                            tableToRemoveFrom.waiterId = null; 
+                            tableToRemoveFrom.waiterUsername = null;
                         }
                         broadcastTableUpdates();
-                        if (removedItemDetails) {
+                        if (removedItemDetails && currentUserInfo) {
                             await logActivity(currentUserInfo.username, 'SIPARIS_URUN_SILINDI',
                                 { masa: tableToRemoveFrom.name, silinen_urun: removedItemDetails },
-                                'Order', tableToRemoveFrom.id, currentUserInfo.ip);
+                                'Order', 
+                                tableToRemoveFrom.id, 
+                                currentUserInfo.ip
+                            );
                         }
                         console.log("[SERVER remove_order_item] Öğe başarıyla silindi.");
+                        // Başarı mesajı gönderilebilir (opsiyonel)
+                        // ws.send(JSON.stringify({ type: 'order_item_removed_success', payload: { message: 'Öğe siparişten silindi.'} }));
                     } else { 
-                        console.log("[SERVER remove_order_item] Silinecek öğe bulunamadı.");
-                        ws.send(JSON.stringify({ type: 'order_update_fail', payload: { error: 'Silinecek öğe bulunamadı. Açıklama ve ürün adı/ID eşleşmiyor olabilir.' } }));
+                        console.log("[SERVER remove_order_item] Silinecek öğe bulunamadı. İsim ve açıklama eşleşmedi.");
+                        ws.send(JSON.stringify({ type: 'order_update_fail', payload: { error: 'Silinecek öğe bulunamadı. Açıklama ve ürün adı eşleşmiyor olabilir.' } }));
                     }
-                } else { ws.send(JSON.stringify({ type: 'order_update_fail', payload: { error: 'Masa bulunamadı.' } }));}
+                } else { 
+                    ws.send(JSON.stringify({ type: 'order_update_fail', payload: { error: 'Masa bulunamadı.' } }));
+                }
                 break;
 
             case 'close_table':
