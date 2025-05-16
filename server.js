@@ -429,29 +429,56 @@ wss.on('connection', (ws, req) => {
                 } else { ws.send(JSON.stringify({ type: 'manual_order_update_fail', payload: { error: 'Geçersiz manuel ürün bilgileri.' } }));}
                 break;
 
-            case 'remove_order_item':
+           case 'remove_order_item':
                  if (!currentUserInfo) { 
                      ws.send(JSON.stringify({ type: 'error', payload: { message: 'Giriş yapmalısınız.' } })); 
                      return; 
                  }
                  const isHamzaRestrictedServerRemove = currentUserInfo && currentUserInfo.username === 'hamza';
-                 if (isHamzaRestrictedServerRemove) { // Hamza bu işlemi yapamaz (hızlı satış hariç)
+                 if (isHamzaRestrictedServerRemove) {
                     ws.send(JSON.stringify({ type: 'error', payload: { message: 'Bu işlem için yetkiniz yok (hamza).' } }));
                     return;
                  }
                 
                 const tableToRemoveFrom = tables.find(t => t.id === payload.tableId);
                 if (tableToRemoveFrom) {
-                    const pNameFromPayload = payload.name;    // İstemciden gelen tam ürün adı (örn: "ET DÖNER - KG (250 gr)")
+                    const pIdFromPayloadString = payload.productId; 
+                    const pNameFromPayload = payload.name; 
                     const pDescriptionFromPayload = payload.description === undefined ? '' : payload.description;
                     let removedItemDetails = null;
 
-                    console.log(`[SERVER remove_order_item] Silme isteği: tableId='${payload.tableId}', name='${pNameFromPayload}', desc='${pDescriptionFromPayload}'`);
+                    console.log(`[SERVER remove_order_item] Silme isteği: tableId='${payload.tableId}', pId='${pIdFromPayloadString}', name='${pNameFromPayload}', desc='${pDescriptionFromPayload}'`);
                     
                     const itemIndex = tableToRemoveFrom.order.findIndex(item => {
                         const itemDesc = item.description || '';
-                        // Eşleşme için ürünün tam adını ve açıklamasını kullan
-                        const match = item.name === pNameFromPayload && itemDesc === pDescriptionFromPayload;
+                        let match = false;
+
+                        // 1. İstemci tam ürün adını (gramaj dahil olabilir) ve açıklamayı gönderdiyse
+                        if (pNameFromPayload && item.name === pNameFromPayload && itemDesc === pDescriptionFromPayload) {
+                            match = true;
+                        }
+                        // 2. İstemci name=null gönderdi ama productId gönderdi
+                        else if ((pNameFromPayload === null || pNameFromPayload === undefined) && 
+                                 pIdFromPayloadString && pIdFromPayloadString !== 'manual') {
+                            const pIdNum = parseInt(pIdFromPayloadString, 10);
+                            if (!isNaN(pIdNum)) {
+                                // Standart ürün eşleşmesi: productId ve description
+                                if (!item.isCustomItem && !item.isByWeightEntry && item.productId === pIdNum && itemDesc === pDescriptionFromPayload) {
+                                    match = true;
+                                }
+                                // Ağırlıklı ürün eşleşmesi: originalProductId ve description
+                                // Bu, istemci name:null gönderdiğinde ağırlıklı ürünleri silmek için.
+                                else if ((item.isCustomItem || item.isByWeightEntry) && item.originalProductId === pIdNum && itemDesc === pDescriptionFromPayload) {
+                                    match = true;
+                                }
+                            }
+                        }
+                        // 3. Tamamen manuel ürün (productId='manual', name dolu)
+                        else if (pIdFromPayloadString === 'manual' && pNameFromPayload && 
+                                 item.name === pNameFromPayload && itemDesc === pDescriptionFromPayload && 
+                                 !item.productId && item.isCustomItem && !item.isByWeightEntry) {
+                            match = true;
+                        }
                         
                         if (match) {
                             removedItemDetails = { ...item };
@@ -477,16 +504,15 @@ wss.on('connection', (ws, req) => {
                             );
                         }
                         console.log("[SERVER remove_order_item] Öğe başarıyla silindi.");
-                        // Başarı mesajı gönderilebilir (opsiyonel)
-                        // ws.send(JSON.stringify({ type: 'order_item_removed_success', payload: { message: 'Öğe siparişten silindi.'} }));
                     } else { 
-                        console.log("[SERVER remove_order_item] Silinecek öğe bulunamadı. İsim ve açıklama eşleşmedi.");
-                        ws.send(JSON.stringify({ type: 'order_update_fail', payload: { error: 'Silinecek öğe bulunamadı. Açıklama ve ürün adı eşleşmiyor olabilir.' } }));
+                        console.log("[SERVER remove_order_item] Silinecek öğe bulunamadı. Eşleşme sağlanamadı.");
+                        ws.send(JSON.stringify({ type: 'order_update_fail', payload: { error: 'Silinecek öğe bulunamadı. Açıklama ve ürün adı/ID eşleşmiyor olabilir.' } }));
                     }
                 } else { 
                     ws.send(JSON.stringify({ type: 'order_update_fail', payload: { error: 'Masa bulunamadı.' } }));
                 }
                 break;
+
 
             case 'close_table':
                 if (!currentUserInfo || currentUserInfo.role !== 'cashier' || isHamzaRestricted) { ws.send(JSON.stringify({ type: 'error', payload: { message: 'Bu işlem için yetkiniz yok.' } })); return; }
