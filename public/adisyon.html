@@ -448,6 +448,7 @@
                 <div id="quickSaleDiscountInfo" class="text-right text-sm text-red-600 mt-1 hidden"></div>
                 <div class="mt-4 space-y-2">
                     <button id="applyQuickSaleDiscountButton" class="w-full bg-yellow-500 hover:bg-yellow-600 text-black font-semibold p-2 rounded-md transition duration-150">Personel İndirimi (%30)</button>
+                    <div class="my-2"><label for="quickSaleCustomerName" class="block text-sm font-medium text-gray-700 mb-1">Müşteri Adı (Fiş için):</label> <input type="text" id="quickSaleCustomerName" placeholder="Müşteri Adı (isteğe bağlı)" class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500"></div>
                     <button id="completeQuickSaleButton" class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold p-3 rounded-md transition duration-150">Satışı Tamamla ve Fiş Kes</button>
                 </div>
             </section>
@@ -810,6 +811,8 @@ const appState = {
     const manageWaitersButton = document.getElementById('manageWaitersButton');
     const tablesGrid = document.getElementById('tablesGrid');
     const productsListRef = document.getElementById('productsListRef');
+    const quickSaleCustomerNameInput = document.getElementById('quickSaleCustomerName'); // Yeni eklendi
+
 
     const orderPageContainer = document.getElementById('orderPageContainer');
     const orderPageTableName = document.getElementById('orderPageTableName');
@@ -1570,21 +1573,28 @@ function renderProductGrid(targetGridElement, forQuickSale = false) {
     }
 
     const categories = {};
+    // Kategori renkleri (Bunların CSS'de tanımlı olduğundan emin olun)
     const categorySectionColors = {
-        "ET - TAVUK": "category-section-bg-ET-TAVUK", "ATIŞTIRMALIK": "category-section-bg-ATIŞTIRMALIK",
-        "TATLI": "category-section-bg-TATLI", "İÇECEK": "category-section-bg-İÇECEK",
-        "ÇORBA": "category-section-bg-ÇORBA", "DİĞER": "category-section-bg-DİĞER"
+        "ET - TAVUK": "category-section-bg-ET-TAVUK",
+        "ATIŞTIRMALIK": "category-section-bg-ATIŞTIRMALIK",
+        "TATLI": "category-section-bg-TATLI",
+        "İÇECEK": "category-section-bg-İÇECEK",
+        "ÇORBA": "category-section-bg-ÇORBA",
+        "DİĞER": "category-section-bg-DİĞER" // DİĞER için de bir renk tanımlayabilirsiniz
     };
     const productCardColors = {
-        "ET - TAVUK": "product-card-bg-ET-TAVUK", "ATIŞTIRMALIK": "product-card-bg-ATIŞTIRMALIK",
-        "TATLI": "product-card-bg-TATLI", "İÇECEK": "product-card-bg-İÇECEK",
-        "ÇORBA": "product-card-bg-ÇORBA", "DİĞER": "product-card-bg-DİĞER"
+        "ET - TAVUK": "product-card-bg-ET-TAVUK",
+        "ATIŞTIRMALIK": "product-card-bg-ATIŞTIRMALIK",
+        "TATLI": "product-card-bg-TATLI",
+        "İÇECEK": "product-card-bg-İÇECEK",
+        "ÇORBA": "product-card-bg-ÇORBA",
+        "DİĞER": "product-card-bg-DİĞER"
     };
-    const defaultSectionColor = "category-section-bg-default";
-    const defaultCardColor = "product-card-bg-default";
+    const defaultSectionColor = "category-section-bg-default"; // Varsayılan renk
+    const defaultCardColor = "product-card-bg-default";     // Varsayılan renk
 
     appState.products.forEach(product => {
-        const categoryKey = product.category || 'DİĞER';
+        const categoryKey = product.category || 'DİĞER'; // Kategorisiz ürünler DİĞER'e
         if (!categories[categoryKey]) categories[categoryKey] = [];
         categories[categoryKey].push(product);
     });
@@ -1599,30 +1609,35 @@ function renderProductGrid(targetGridElement, forQuickSale = false) {
 
     sortedCategoryNames.forEach(category => {
         const categorySection = document.createElement('div');
-        const sectionBgColorClass = categorySectionColors[sanitizeCategoryForCSS(category)] || defaultSectionColor;
+        // sanitizeCategoryForCSS fonksiyonunuzun doğru çalıştığından emin olun.
+        // Veya doğrudan kategori adını kullanın eğer CSS sınıflarınız Türkçe karakterleri destekliyorsa.
+        // Bu örnekte, sanitize edilmiş halini kullanıyoruz.
+        const sanitizedCategory = sanitizeCategoryForCSS(category);
+        const sectionBgColorClass = categorySectionColors[sanitizedCategory] || defaultSectionColor;
         categorySection.className = `mb-6 p-4 rounded-lg ${sectionBgColorClass}`;
+
         const categoryTitle = document.createElement('h4');
         categoryTitle.className = 'text-lg font-semibold mb-3 text-gray-700 border-b border-gray-400 pb-1';
         categoryTitle.textContent = category;
         categorySection.appendChild(categoryTitle);
+
         const productGridDiv = document.createElement('div');
-        productGridDiv.className = forQuickSale ? 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2' : 'grid grid-cols-2 md:grid-cols-3 gap-3'; // Hızlı satış için daha fazla sütun
+        productGridDiv.className = forQuickSale ? 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2' : 'grid grid-cols-2 md:grid-cols-3 gap-3';
 
         categories[category].sort((a, b) => a.name.localeCompare(b.name, 'tr')).forEach(product => {
             const card = document.createElement('div');
-            const cardBgColorClass = productCardColors[sanitizeCategoryForCSS(category)] || defaultCardColor;
-            // Hızlı satış kartları için daha küçük padding ve min-height
+            const cardBgColorClass = productCardColors[sanitizedCategory] || defaultCardColor;
             card.className = `product-card ${cardBgColorClass} ${forQuickSale ? 'p-2 min-h-[100px]' : 'p-3 min-h-[120px]'}`;
             card.dataset.productId = product.id;
             card.dataset.productName = product.name;
-            card.dataset.productPrice = product.price;
+            card.dataset.productPrice = product.price; // Orijinal birim/kg fiyatı
             card.dataset.productCategory = product.category || 'DİĞER';
             if (product.isByWeight) {
                 card.dataset.isByWeight = "true";
-                card.dataset.unitPrice = product.unitPrice;
+                card.dataset.unitPrice = product.unitPrice; // Gram başına fiyat
             }
 
-            if (product.isByWeight) { // Hem normal sipariş hem hızlı satış için ağırlıklı ürün UI'ı
+            if (product.isByWeight) {
                 card.innerHTML = `
                     <div>
                         <h5 class="${forQuickSale ? 'text-xs' : 'text-sm'}">${product.name}</h5>
@@ -1636,7 +1651,7 @@ function renderProductGrid(targetGridElement, forQuickSale = false) {
                         Gramajlı Ekle
                     </button>
                 `;
-            } else { // Standart ürünler
+            } else {
                 card.innerHTML = `
                     <div>
                         <h5 class="${forQuickSale ? 'text-sm' : ''}">${product.name}</h5>
@@ -1664,6 +1679,7 @@ function renderProductGrid(targetGridElement, forQuickSale = false) {
     });
     addProductCardEventListeners(targetGridElement, forQuickSale);
 }
+
 
     // Ürün kartlarındaki butonlara event listener ekler
 function addProductCardEventListeners(targetGridElement, forQuickSale) {
@@ -1809,44 +1825,37 @@ function addProductCardEventListeners(targetGridElement, forQuickSale) {
 
 function addProductToOrder(productId, quantity, description, isCustomItem = false, customName = null, customPrice = null, customCategory = null, originalProdId = null) {
     if (!appState.currentTableId) {
-        alert("Lütfen önce bir masa seçin.");
-        return;
+        alert("Lütfen önce bir masa seçin."); return;
     }
-
     const product = appState.products.find(p => String(p.id) === String(productId));
-
     if (!isCustomItem && !product) {
-        alert("Ürün bulunamadı veya geçersiz ürün ID'si.");
-        return;
+        alert("Ürün bulunamadı veya geçersiz ürün ID'si."); return;
     }
     if (quantity <= 0) {
-        alert("Miktar 0'dan büyük olmalıdır.");
-        return;
+        alert("Miktar 0'dan büyük olmalıdır."); return;
     }
 
     const payload = {
         tableId: appState.currentTableId,
-        quantity: quantity, // Standart ürün için adet, ağırlıklı için gramaj
+        quantity: quantity, // Standart için adet, ağırlıklı için gramaj
         description: description,
-        isCustomItem: isCustomItem // Ağırlıklı veya manuel ürünse true
+        isCustomItem: isCustomItem,
+        isByWeightEntry: isCustomItem && product && product.isByWeight // Ağırlıklı ürün girişi mi?
     };
 
-    if (isCustomItem) {
-        payload.name = customName;
-        payload.priceAtOrder = customPrice; // Hesaplanmış fiyat
+    if (isCustomItem) { // Ağırlıklı veya manuel fiyatlı ürün
+        payload.name = customName;         // örn: "ET DÖNER - KG (250 gr)"
+        payload.priceAtOrder = customPrice;  // Hesaplanmış TOPLAM fiyat
         payload.category = customCategory || (product ? product.category : 'DİĞER');
-        payload.productId = originalProdId; // Sunucuya orijinal ürün ID'sini gönderiyoruz.
-        payload.originalProductId = originalProdId; // Orijinal KG ürününün ID'si
-        payload.isByWeightEntry = true; // Bu bir ağırlıklı ürün girişi olduğunu belirtir
+        payload.originalProductId = originalProdId || (product ? product.id : null); // Orijinal KG ürününün ID'si
+        payload.productId = payload.originalProductId; // Sunucuda productId olarak orijinalini kullanabiliriz
     } else if (product) { // Standart ürün
         payload.productId = parseInt(product.id);
         payload.name = product.name;
-        payload.priceAtOrder = product.price;
+        payload.priceAtOrder = product.price; // Standart ürünün BİRİM fiyatı
         payload.category = product.category;
-        payload.isByWeightEntry = false;
     } else {
-        alert("Siparişe eklenecek ürün bilgisi bulunamadı.");
-        return;
+        alert("Siparişe eklenecek ürün bilgisi bulunamadı."); return;
     }
     
     showLoading("Sipariş ekleniyor...");
@@ -1857,85 +1866,50 @@ function addProductToOrder(productId, quantity, description, isCustomItem = fals
 
 
 
-
     
     // Hızlı satış sepetine ürün ekleme
-    function addProductToQuickSale(productId, quantity, description, isCustomItem = false, customName = null, customPrice = null, customCategory = null, originalProdId = null) {
+function addProductToQuickSale(productId, quantity, description, isCustomItem = false, customName = null, customPrice = null, customCategory = null, originalProdId = null) {
     const product = appState.products.find(p => String(p.id) === String(productId));
-
     if (!isCustomItem && !product) {
-        alert("Ürün hızlı satış sepetine eklenirken bir hata oluştu (ürün bulunamadı).");
-        return;
+        alert("Ürün hızlı satış sepetine eklenirken bir hata oluştu (ürün bulunamadı)."); return;
     }
     if (quantity <= 0) {
-        alert("Miktar 0'dan büyük olmalıdır.");
-        return;
+        alert("Miktar 0'dan büyük olmalıdır."); return;
     }
 
-    let nameForQuickSale = customName;
-    let priceForQuickSale = customPrice;
-    let categoryForQuickSale = customCategory;
-    let actualProductId = originalProdId; // Loglama ve referans için orijinal ürün ID'si
+    let nameForQuickSale, priceForQuickSale, categoryForQuickSale, actualProductId;
 
-    if (!isCustomItem && product) { // Standart ürün
+    if (isCustomItem) { // Ağırlıklı ürün
+        nameForQuickSale = customName;
+        priceForQuickSale = customPrice; // Bu zaten hesaplanmış toplam fiyat
+        categoryForQuickSale = customCategory || (product ? product.category : 'DİĞER');
+        actualProductId = originalProdId || (product ? product.id : null);
+    } else if (product) { // Standart ürün
         nameForQuickSale = product.name;
-        priceForQuickSale = product.price;
+        priceForQuickSale = product.price * quantity; // Standart ürün için toplam fiyatı hesapla
         categoryForQuickSale = product.category;
         actualProductId = parseInt(product.id);
-    } else if (isCustomItem && product) { // Ağırlıklı ürün, product bilgisi KG ürününe ait
-        categoryForQuickSale = categoryForQuickSale || product.category; // Eğer customCategory gelmediyse KG ürününün kategorisini kullan
-        actualProductId = parseInt(product.id); // Orijinal KG ürününün ID'si
-    } else if (isCustomItem && !product && originalProdId) { // Orijinal ürün bilgisi yok ama ID'si var (nadiren olmalı)
-         actualProductId = parseInt(originalProdId);
-    }
-
-
-    // Hızlı satışta aynı özel isimli (örn: "ET DÖNER - KG (250 gr)") ürünleri birleştirme
-    const existingItem = appState.currentQuickSaleOrder.find(item =>
-        item.name === nameForQuickSale && // İsim (ağırlık dahil) ve açıklama ile birleştir
-        item.description === description &&
-        item.priceAtOrder === priceForQuickSale // Fiyatı da aynı olmalı (farklı gramajlar farklı satır olur)
-    );
-
-    if (existingItem) {
-        // Hızlı satışta ağırlıklı ürünler genellikle birleştirilmez, her biri ayrı satır olur.
-        // Eğer birleştirme isteniyorsa, quantity (gramaj) toplanır.
-        // Bu örnekte, aynı gramaj ve fiyattaysa adedi artırıyoruz (bu pek mantıklı değil ağırlıklı için)
-        // Daha iyisi: her ağırlıklı eklemeyi yeni bir kalem olarak eklemek.
-        // Şimdilik, eğer isim ve fiyat tam olarak aynıysa birleştirme yapalım (bu, aynı gramajda ikinci kez eklenirse olur)
-        existingItem.quantity += quantity; // Bu satır, eğer ağırlıklı ürünler birleştirilmeyecekse kaldırılmalı.
-                                          // Veya quantity burada adet anlamına geliyorsa (örn: 2 tane 250gr), o zaman kalabilir.
-                                          // Mevcut mantıkla, quantity gramaj olduğu için bu satır hatalı olabilir.
-                                          // Her ağırlıklı eklemeyi YENİ BİR SATIR olarak ekleyelim:
-         appState.currentQuickSaleOrder.push({
-            productId: actualProductId, // Orijinal KG ürününün ID'si
-            name: nameForQuickSale,
-            priceAtOrder: priceForQuickSale,
-            quantity: quantity, // Gramaj
-            description: description,
-            category: categoryForQuickSale || 'DİĞER',
-            waiterUsername: appState.user.username,
-            timestamp: Date.now(),
-            isCustomItem: isCustomItem,
-            originalProductId: originalProdId
-        });
-
     } else {
-        appState.currentQuickSaleOrder.push({
-            productId: actualProductId, // Orijinal KG ürününün ID'si
-            name: nameForQuickSale,
-            priceAtOrder: priceForQuickSale,
-            quantity: quantity, // Gramaj veya adet
-            description: description,
-            category: categoryForQuickSale || 'DİĞER',
-            waiterUsername: appState.user.username,
-            timestamp: Date.now(),
-            isCustomItem: isCustomItem,
-            originalProductId: originalProdId
-        });
+        alert("Hızlı satışa eklenecek ürün bilgisi bulunamadı."); return;
     }
+
+    // Hızlı satışta her eklemeyi yeni bir satır olarak düşünelim, birleştirme yapmayalım
+    appState.currentQuickSaleOrder.push({
+        productId: actualProductId, // Standart için kendi ID'si, ağırlıklı için KG ürününün ID'si
+        name: nameForQuickSale,
+        priceAtOrder: priceForQuickSale, // Bu satırın TOPLAM fiyatı
+        quantity: quantity, // Standart için adet, ağırlıklı için gramaj
+        description: description,
+        category: categoryForQuickSale,
+        waiterUsername: appState.user.username,
+        timestamp: Date.now(),
+        isCustomItem: isCustomItem,
+        isByWeightEntry: isCustomItem && product && product.isByWeight,
+        originalProductId: originalProdId
+    });
+    
     resetCurrentOrderDiscount();
-    renderQuickSaleOrder();
+    renderQuickSaleOrder(); // Sepeti güncelle
 }
 
     // Manuel ürün ekleme için kategori seçeneklerini doldurur
@@ -2038,9 +2012,8 @@ function addProductToOrder(productId, quantity, description, isCustomItem = fals
     // Sipariş sayfasındaki mevcut siparişleri render eder
 function renderOrderPageForTable(table) {
     orderPageCurrentOrderItems.innerHTML = '';
-    appState.currentOrderOriginalTotal = 0; // Her render'da siparişin genel toplamını sıfırla
+    appState.currentOrderOriginalTotal = 0;
 
-    // Garson bilgisini ayarla (mevcut kodunuzdaki gibi)
     if (table.status === 'dolu' && table.waiterUsername) {
         orderPageWaiterInfo.textContent = `Bu Siparişi Alan Garson: ${table.waiterUsername}`;
     } else if (table.status === 'dolu' && !table.waiterUsername && appState.user && appState.user.role === 'cashier') {
@@ -2051,24 +2024,20 @@ function renderOrderPageForTable(table) {
 
     if (!table || !table.order || table.order.length === 0) {
         orderPageCurrentOrderItems.innerHTML = '<p class="text-gray-500 py-4 text-center">Sipariş boş.</p>';
-        // appState.currentOrderOriginalTotal zaten 0 olarak ayarlandı.
     } else {
-        let currentOrderGrandTotal = 0; // Siparişin genel toplamını hesaplamak için
+        let currentOrderGrandTotal = 0;
         table.order.forEach((item) => {
-            const itemNameString = item.name || 'Bilinmeyen Ürün'; // Bu, "ET DÖNER - KG (500 gr)" gibi olabilir
-            const itemPriceAtOrder = parseFloat(item.priceAtOrder) || 0; // Bu, ağırlıklı için hesaplanmış toplam, standart için birim fiyat
-            const itemQuantity = parseFloat(item.quantity) || 0; // Bu, ağırlıklı için gramaj, standart için adet
+            const itemNameString = item.name; // Sunucudan gelen isim (örn: ET DÖNER - KG (500 gr))
+            const itemPriceAtOrder = parseFloat(item.priceAtOrder) || 0; // Sunucudan gelen fiyat (ağırlıklı için toplam, standart için birim)
+            const itemQuantity = parseFloat(item.quantity) || 0; // Sunucudan gelen miktar (ağırlıklı için gramaj, standart için adet)
             const itemDescription = item.description || '';
 
             let lineItemDisplayTotal;
             let quantityDisplayString;
 
-            // Sunucudan gelen item objesinde isCustomItem veya isByWeightEntry gibi bir flag olmalı.
-            // server_js_dynamic_weight_menu'deki add_order_item case'i isCustomItem ve isByWeightEntry ekliyordu.
-            // Bu flag'lerden birini kontrol edelim.
-            if (item.isCustomItem || item.isByWeightEntry) { // Ağırlıklı veya manuel olarak fiyatı belirlenmiş ürün
+            if (item.isCustomItem || item.isByWeightEntry) { // Ağırlıklı veya manuel fiyatlı ürün
                 lineItemDisplayTotal = itemPriceAtOrder; // priceAtOrder zaten bu satırın toplam fiyatı
-                quantityDisplayString = `(${itemQuantity} gr)`; // Miktar gram olarak gösterilir
+                quantityDisplayString = `(${itemQuantity} gr)`;
             } else { // Standart, adetli ürün
                 lineItemDisplayTotal = itemPriceAtOrder * itemQuantity;
                 quantityDisplayString = `(${itemQuantity} x ${formatPrice(itemPriceAtOrder)})`;
@@ -2078,7 +2047,6 @@ function renderOrderPageForTable(table) {
 
             const orderItemDiv = document.createElement('div');
             orderItemDiv.className = 'flex justify-between items-start p-3 bg-gray-50 rounded-md shadow';
-
             let descriptionHTML = itemDescription ? `<p class="text-xs text-gray-500 italic ml-2 mt-1">(${itemDescription})</p>` : '';
             let waiterNameHTML = item.waiterUsername ? `<p class="text-xs text-blue-600 ml-2 mt-1">Ekleyen: ${item.waiterUsername} (${formatTimestamp(item.timestamp)})</p>` : '';
 
@@ -2091,7 +2059,7 @@ function renderOrderPageForTable(table) {
                 </div>
                 <div class="flex items-center ml-2">
                     <span class="font-semibold mr-3">${formatPrice(lineItemDisplayTotal)}</span>
-                    <button data-product-id="${item.productId || (item.isCustomItem ? 'manual' : '')}" 
+                    <button data-product-id="${item.originalProductId || item.productId || 'manual'}" 
                             data-item-name="${itemNameString}" 
                             data-item-description="${itemDescription}" 
                             class="remove-item-btn-orderpage text-red-500 hover:text-red-700 text-lg font-bold p-1 rounded-full hover:bg-red-100 transition-colors">&times;</button>
@@ -2099,10 +2067,9 @@ function renderOrderPageForTable(table) {
             `;
             orderPageCurrentOrderItems.appendChild(orderItemDiv);
         });
-        appState.currentOrderOriginalTotal = currentOrderGrandTotal; // Siparişin genel toplamını state'e ata
+        appState.currentOrderOriginalTotal = currentOrderGrandTotal;
     }
 
-    // İndirim ve genel toplamı gösteren kısım (mevcut kodunuzdaki gibi)
     if (appState.currentOrderDiscountAmount > 0 && appState.currentOrderOriginalTotal > 0) {
         const discounted = appState.currentOrderOriginalTotal - appState.currentOrderDiscountAmount;
         orderPageCurrentOrderTotal.textContent = `Toplam: ${formatPrice(discounted)} (İndirimli)`;
@@ -2113,19 +2080,17 @@ function renderOrderPageForTable(table) {
         discountInfoDiv.classList.add('hidden');
     }
 
-    // Kasiyer butonlarının görünürlüğü (mevcut kodunuzdaki gibi)
     const isCashier = appState.user && appState.user.role === 'cashier';
     showReceiptButton.classList.toggle('hidden', !isCashier && (!table || !table.order || table.order.length === 0));
     finalizeAndCloseTableButton.classList.toggle('hidden', !isCashier);
     applyDiscountButton.classList.toggle('hidden', !isCashier);
 
-    // Silme butonlarına event listener ekle (mevcut kodunuzdaki gibi)
     orderPageCurrentOrderItems.querySelectorAll('.remove-item-btn-orderpage').forEach(button => {
         button.addEventListener('click', (e) => {
             const btnElement = e.target.closest('button');
             const productIdToRemove = btnElement.dataset.productId;
-            const descriptionToRemove = btnElement.dataset.itemDescription; // data-item-description olarak güncellendi
-            const nameToRemove = btnElement.dataset.itemName; // data-item-name olarak güncellendi
+            const descriptionToRemove = btnElement.dataset.itemDescription;
+            const nameToRemove = btnElement.dataset.itemName; // Bu isim "ET DÖNER - KG (500 gr)" gibi olacak
             removeItemFromOrderPage(productIdToRemove, descriptionToRemove, nameToRemove);
         });
     });
@@ -2482,74 +2447,90 @@ function openQuickSaleModal() {
 }
 
     // Hızlı Satışı Tamamlama
-    function completeQuickSale() {
-        if (appState.currentQuickSaleOrder.length === 0) {
-            alert("Hızlı satış sepeti boş.");
-            return;
-        }
-        showLoading("Hızlı satış tamamlanıyor...");
-        sendMessageToServer('complete_quick_sale', {
-            items: appState.currentQuickSaleOrder,
-            cashierUsername: appState.user.username
-        });
-        const finalTotal = appState.currentOrderDiscountAmount > 0 ? (appState.currentOrderOriginalTotal - appState.currentOrderDiscountAmount) : appState.currentOrderOriginalTotal;
-        prepareAndShowReceipt(appState.currentQuickSaleOrder, "Hızlı Satış", appState.user.username, appState.currentOrderOriginalTotal, appState.currentOrderDiscountAmount > 0 ? finalTotal : null);
+   function completeQuickSale() {
+    if (appState.currentQuickSaleOrder.length === 0) {
+        alert("Hızlı satış sepeti boş."); return;
     }
+    const customerName = quickSaleCustomerNameInput.value.trim(); // Müşteri adını input'tan al
+
+    showLoading("Hızlı satış tamamlanıyor...");
+    const finalTotal = appState.currentOrderDiscountAmount > 0 ? (appState.currentOrderOriginalTotal - appState.currentOrderDiscountAmount) : appState.currentOrderOriginalTotal;
+    
+    sendMessageToServer('complete_quick_sale', {
+        items: appState.currentQuickSaleOrder,
+        cashierUsername: appState.user.username,
+        customerName: customerName, // Müşteri adını payload'a ekle
+        originalTotal: appState.currentOrderOriginalTotal,
+        discountAmount: appState.currentOrderDiscountAmount,
+        finalTotal: finalTotal
+    });
+    prepareAndShowReceipt(appState.currentQuickSaleOrder, "Hızlı Satış", appState.user.username, appState.currentOrderOriginalTotal, finalTotal, customerName);
+    quickSaleCustomerNameInput.value = ''; // Müşteri adı alanını temizle
+}
 
 
     // Ortak fiş hazırlama fonksiyonu (indirimli toplamı alacak şekilde güncellendi)
-    function prepareAndShowReceipt(orderItems, tableName, waiterName, originalTotal, discountedTotalValue) {
-        receiptDate.textContent = getCurrentFormattedDate();
-        receiptTableName.textContent = tableName;
+  function prepareAndShowReceipt(orderItems, tableName, waiterName, originalTotal, finalTotalWithDiscount, customerName = null) {
+    receiptDate.textContent = getCurrentFormattedDate();
+    receiptTableName.textContent = tableName;
+    receiptWaiterName.textContent = waiterName || (appState.user ? appState.user.username : "Bilinmiyor");
+    receiptItems.innerHTML = '';
 
-        if (waiterName) {
-            receiptWaiterName.textContent = waiterName;
-        } else if (appState.user && appState.user.username) {
-            receiptWaiterName.textContent = appState.user.username;
-        } else {
-            receiptWaiterName.textContent = "Bilinmiyor";
-        }
-
-        receiptItems.innerHTML = '';
-
-        orderItems.forEach(item => {
-            let itemName = item.name || 'Bilinmeyen Ürün';
-            let itemPrice = item.priceAtOrder || 0;
-            const productDetails = appState.products.find(p => p.id === item.productId);
-            if(productDetails && !item.name) {
-                itemName = productDetails.name;
-            }
-
-            let descriptionHTML = '';
-            if (item.description && item.description.trim() !== '') {
-                descriptionHTML = `<span class="item-description">(${item.description})</span>`;
-            }
-
-            let itemWaiterHTML = '';
-            if (item.waiterUsername && tableName !== "Hızlı Satış") {
-                 itemWaiterHTML = `<span class="item-waiter">Ekleyen: ${item.waiterUsername} (${formatTimestamp(item.timestamp)})</span>`;
-            }
-
-            const itemDiv = document.createElement('div');
-            itemDiv.innerHTML = `
-                <span class="item-details">${item.quantity}x ${itemName} ${descriptionHTML} ${itemWaiterHTML}</span>
-                <span class="item-price">${formatPrice(item.quantity * itemPrice)}</span>`;
-            receiptItems.appendChild(itemDiv);
-        });
-
-        if (discountedTotalValue !== null && discountedTotalValue < originalTotal) {
-            receiptSubtotal.textContent = formatPrice(originalTotal);
-            receiptDiscountAmount.textContent = formatPrice(originalTotal - discountedTotalValue);
-            receiptGrandTotal.textContent = formatPrice(discountedTotalValue);
-            receiptDiscountInfo.classList.remove('hidden');
-        } else {
-            receiptGrandTotal.textContent = formatPrice(originalTotal);
-            receiptDiscountInfo.classList.add('hidden');
-        }
-
-        receiptModal.classList.add('active');
+    // Müşteri adı için bir yer (fişin başında veya sonunda olabilir)
+    const customerNameDiv = document.createElement('div');
+    customerNameDiv.id = 'receiptCustomerName';
+    customerNameDiv.className = 'text-sm mb-1';
+    if (customerName) {
+        customerNameDiv.innerHTML = `<span class="font-semibold">Müşteri:</span> ${customerName}`;
+    }
+    // Fiş içeriğine müşteri adını ekle (örneğin, masa bilgisinden sonra)
+    const receiptHeaderInfo = receiptModalContent.querySelector('.mb-2'); // Masa ve garson bilgisinin olduğu div
+    if (receiptHeaderInfo) {
+        // Önce varsa eski müşteri adı div'ini kaldır
+        const existingCustomerNameDiv = receiptModalContent.querySelector('#receiptCustomerName');
+        if (existingCustomerNameDiv) existingCustomerNameDiv.remove();
+        
+        if(customerName) receiptHeaderInfo.appendChild(customerNameDiv);
     }
 
+
+    orderItems.forEach(item => {
+        let itemName = item.name; // Sunucudan gelen isim (örn: ET DÖNER - KG (500 gr))
+        let itemPriceAtOrder = parseFloat(item.priceAtOrder) || 0; // Ağırlıklı için toplam, standart için birim
+        let itemQuantity = parseFloat(item.quantity) || 0; // Ağırlıklı için gramaj, standart için adet
+
+        let displayLineTotal;
+        let quantityDisplay;
+
+        if (item.isCustomItem || item.isByWeightEntry) {
+            displayLineTotal = itemPriceAtOrder; // Bu zaten o satırın toplam fiyatı
+            quantityDisplay = `(${itemQuantity} gr)`;
+        } else {
+            displayLineTotal = itemPriceAtOrder * itemQuantity;
+            quantityDisplay = `(${itemQuantity} x ${formatPrice(itemPriceAtOrder)})`;
+        }
+
+        let descriptionHTML = item.description ? `<span class="item-description">(${item.description})</span>` : '';
+        let itemWaiterHTML = item.waiterUsername && tableName !== "Hızlı Satış" ? `<span class="item-waiter">Ekleyen: ${item.waiterUsername} (${formatTimestamp(item.timestamp)})</span>` : '';
+        
+        const itemDiv = document.createElement('div');
+        itemDiv.innerHTML = `
+            <span class="item-details">${itemName} ${quantityDisplay} ${descriptionHTML} ${itemWaiterHTML}</span>
+            <span class="item-price">${formatPrice(displayLineTotal)}</span>`;
+        receiptItems.appendChild(itemDiv);
+    });
+
+    if (finalTotalWithDiscount < originalTotal && originalTotal > 0) {
+        receiptSubtotal.textContent = formatPrice(originalTotal);
+        receiptDiscountAmount.textContent = formatPrice(originalTotal - finalTotalWithDiscount);
+        receiptGrandTotal.textContent = formatPrice(finalTotalWithDiscount);
+        receiptDiscountInfo.classList.remove('hidden');
+    } else {
+        receiptGrandTotal.textContent = formatPrice(originalTotal);
+        receiptDiscountInfo.classList.add('hidden');
+    }
+    receiptModal.classList.add('active');
+}
 
     function handlePrintReceipt() {
         window.print();
