@@ -1133,7 +1133,7 @@ function handleServerMessage(message) {
 
     switch (message.type) {
         case 'login_success':
-            const userDataFromServer = message.payload.user; // Sunucu 'user' gönderiyor
+            const userDataFromServer = message.payload.user;
             if (message.payload && userDataFromServer && typeof userDataFromServer === 'object') {
                 appState.user = userDataFromServer;
                 appState.tables = (message.payload.tables && Array.isArray(message.payload.tables)) ? message.payload.tables : [];
@@ -1154,14 +1154,14 @@ function handleServerMessage(message) {
                 console.log("Giriş başarılı ve UI güncellendi:", appState.user.username);
             } else {
                 showLoginError("Sunucudan eksik veya hatalı giriş yanıtı alındı (login_success).");
-                // ... (hata durumunda UI'ı login ekranına döndür)
+                performLogout(false); showLoginScreen();
             }
             break;
 
-        case 'reauth_success': // YENİ CASE: Yeniden kimlik doğrulama başarılı
+        case 'reauth_success': // SUNUCUDAN BU MESAJ GELECEK
             if (message.payload && message.payload.user) {
-                appState.user = message.payload.user; // Sunucudan gelen güncel kullanıcı bilgisi
-                localStorage.setItem('adisyonUser', JSON.stringify(appState.user)); // localStorage'ı da güncelle
+                appState.user = message.payload.user;
+                localStorage.setItem('adisyonUser', JSON.stringify(appState.user));
 
                 activeUserNameSpan.textContent = appState.user.username;
                 activeUserRoleSpan.textContent = appState.user.role;
@@ -1170,16 +1170,14 @@ function handleServerMessage(message) {
                 appContainer.classList.remove('hidden');
                 orderPageContainer.classList.remove('active');
                 loginError.textContent = '';
-
-                // tables_update ve products_update mesajları zaten gelecek ve UI'ı güncelleyecek.
-                // Ancak UI rolünü hemen ayarlayabiliriz.
                 updateUIForRole();
                 console.log("Oturum başarıyla sürdürüldü ve UI güncellendi:", appState.user.username);
-                // renderInitialDataIfNeeded ve renderTables çağrıları,
-                // tables_update ve products_update case'leri tarafından zaten yapılacak.
+                // tables_update ve products_update mesajları zaten ayrıca gelecek ve ilgili render fonksiyonlarını tetikleyecek.
+                // renderInitialDataIfNeeded(); // Bu çağrılar products_update ile tetiklenir
+                // renderTables(); // Bu çağrı tables_update ile tetiklenir
             } else {
                  showLoginError("Oturum sürdürülürken eksik bilgi alındı.");
-                 performLogout(false); // Güvenli çıkış yap
+                 performLogout(false);
                  showLoginScreen();
             }
             break;
@@ -1197,7 +1195,7 @@ function handleServerMessage(message) {
         case 'tables_update':
             if (message.payload && Array.isArray(message.payload.tables)) {
                 appState.tables = message.payload.tables;
-                renderTables();
+                renderTables(); // Bu fonksiyonun tanımlı olduğundan emin olun
                 console.log("Masalar sunucudan güncellendi.");
                 if (orderPageContainer.classList.contains('active') && appState.currentTableId) {
                     const updatedTable = appState.tables.find(t => t.id === appState.currentTableId);
@@ -1208,33 +1206,33 @@ function handleServerMessage(message) {
                     }
                 }
                 if (manageTablesModal.classList.contains('active')) {
-                    populateTableSelectsForManagement();
+                    populateTableSelectsForManagement(); // Bu fonksiyonun tanımlı olduğundan emin olun
                 }
             }
             break;
 
-        case 'products_list': // Bu case'i de products_update gibi işleyebiliriz
+        case 'products_list': // Sunucu artık bunu göndermemeli, ama yedek olarak kalabilir
         case 'products_update':
             if (message.payload && Array.isArray(message.payload.products)) {
                 appState.products = message.payload.products;
                 console.log(`Ana ürün listesi sunucudan güncellendi (tip: ${message.type}).`);
                 initialDataRendered = false;
-                renderInitialDataIfNeeded();
+                renderInitialDataIfNeeded(); // Bu fonksiyonun tanımlı olduğundan emin olun
                 if (orderPageContainer.classList.contains('active') && appState.currentTableId) {
                     const currentTable = appState.tables.find(t => t.id === appState.currentTableId);
                     if (currentTable) renderOrderPageForTable(currentTable);
                 }
                 if (quickSaleModal.classList.contains('active')) renderProductGrid(quickSaleProductGrid, true);
-                if (editProductModal.classList.contains('active')) populateSelectProductToEdit();
+                if (editProductModal.classList.contains('active')) populateSelectProductToEdit(); // Bu fonksiyonun tanımlı olduğundan emin olun
             }
             break;
 
         case 'initial_user_status': // Sunucudan ilk kullanıcı durumları geldiğinde
-        case 'all_users_and_active_status_data': // BU CASE EKLENDİ
+        case 'all_users_and_active_status_data': // BU CASE EKLENDİ/GÜNCELLENDİ
             if (message.payload) {
                 appState.allUsers = message.payload.allUsers || [];
                 appState.activeUsernames = message.payload.activeUsernames || [];
-                renderUserLoginStatus(); // Login ekranındaki göstergeleri güncelle
+                renderUserLoginStatus(); // Bu fonksiyonun tanımlı olduğundan emin olun
             }
             break;
 
@@ -1248,11 +1246,11 @@ function handleServerMessage(message) {
         
         case 'force_logout':
             alert(message.payload.message || 'Bu hesap başka bir yerden giriş yaptığı için oturumunuz sonlandırıldı.');
-            performLogout(false); // Uygulamayı kapatmadan sadece çıkış yap
+            performLogout(false);
             showLoginScreen();
             break;
 
-        // ... (Diğer tüm mevcut case'leriniz: main_menu_product_added, sales_report_data vb.)
+        // ... (Diğer tüm mevcut case'leriniz)
         case 'main_menu_product_added':
             alert(message.payload.message || "Yeni ürün menüye eklendi!");
             break;
@@ -1294,6 +1292,7 @@ function handleServerMessage(message) {
             break;
         case 'quick_sale_success':
             console.log("Hızlı satış sunucuda tamamlandı.");
+            // Fiş gösterildikten sonra sepet temizlenir (closeReceiptModalOnly içinde)
             break;
         case 'quick_sale_fail':
             alert(`Hızlı satış tamamlanamadı: ${message.payload.error}`);
@@ -1304,7 +1303,6 @@ function handleServerMessage(message) {
             break;
     }
 }
-
     function showLoginError(message) {
         loginError.textContent = message;
         passwordInput.value = '';
@@ -2366,6 +2364,74 @@ function renderOrderPageForTable(table) {
         }
     }
 
+
+function renderQuickSaleOrder() {
+    if (!quickSaleCurrentItems || !quickSaleTotal) {
+        console.error("Hızlı satış DOM elementleri bulunamadı!");
+        return;
+    }
+    quickSaleCurrentItems.innerHTML = '';
+    let originalTotal = 0;
+
+    if (!appState.currentQuickSaleOrder || appState.currentQuickSaleOrder.length === 0) {
+        quickSaleCurrentItems.innerHTML = '<p class="text-gray-500 text-center py-4">Sepet boş.</p>';
+    } else {
+        appState.currentQuickSaleOrder.forEach((item, index) => {
+            const itemPrice = parseFloat(item.priceAtOrder) || 0;
+            const itemQuantity = item.isCustomItem ? (parseFloat(item.quantity) || 0) : (parseInt(item.quantity, 10) || 0); // Ağırlıklı için float, adetli için int
+            const itemTotal = itemPrice * (item.isCustomItem ? 1 : itemQuantity); // Ağırlıklı ürünlerin fiyatı zaten hesaplanmış geliyor (priceAtOrder)
+
+            originalTotal += item.isCustomItem ? itemPrice : itemTotal; // Ağırlıklı ürünün fiyatı zaten toplamdır
+
+            const itemDiv = document.createElement('div');
+            itemDiv.className = 'flex justify-between items-start p-2 bg-white rounded-md text-sm shadow';
+            let descriptionHTML = item.description ? `<p class="text-xs text-gray-500 italic ml-2">(${item.description})</p>` : '';
+            
+            // Ağırlıklı ürünse adı zaten gramajı içerir, adet göstermeye gerek yok.
+            const quantityDisplay = item.isCustomItem ? '' : ` (${itemQuantity} x ${formatPrice(item.priceAtOrder)})`;
+
+            itemDiv.innerHTML = `
+                <div class="flex-grow">
+                    <span class="font-medium">${item.name}</span>
+                    <span class="text-xs text-gray-600">${quantityDisplay}</span>
+                    ${descriptionHTML}
+                </div>
+                <div class="flex items-center">
+                    <span class="font-semibold mr-2">${formatPrice(item.isCustomItem ? itemPrice : itemTotal)}</span>
+                    <button data-index="${index}" class="remove-item-quick-sale-btn text-red-500 hover:text-red-700 font-bold p-1 rounded-full hover:bg-red-100 transition-colors">&times;</button>
+                </div>
+            `;
+            quickSaleCurrentItems.appendChild(itemDiv);
+        });
+    }
+    appState.currentOrderOriginalTotal = originalTotal;
+
+    if (appState.currentOrderDiscountAmount > 0 && originalTotal > 0) {
+        const discountedTotal = originalTotal - appState.currentOrderDiscountAmount;
+        quickSaleTotal.textContent = `Toplam: ${formatPrice(discountedTotal)} (İndirimli)`;
+        if (quickSaleDiscountInfo) {
+            quickSaleDiscountInfo.textContent = `İndirim Uygulandı: -${formatPrice(appState.currentOrderDiscountAmount)}`;
+            quickSaleDiscountInfo.classList.remove('hidden');
+        }
+    } else {
+        quickSaleTotal.textContent = `Toplam: ${formatPrice(originalTotal)}`;
+        if (quickSaleDiscountInfo) quickSaleDiscountInfo.classList.add('hidden');
+    }
+
+    quickSaleCurrentItems.querySelectorAll('.remove-item-quick-sale-btn').forEach(button => {
+        button.addEventListener('click', (e) => {
+            const itemIndex = parseInt(e.target.closest('button').dataset.index);
+            appState.currentQuickSaleOrder.splice(itemIndex, 1);
+            resetCurrentOrderDiscount();
+            renderQuickSaleOrder();
+        });
+    });
+}
+
+
+
+    
+
     // Personel İndirimi Uygulama Fonksiyonu (Hızlı Satış için)
     function handleApplyQuickSaleDiscount() {
         if (appState.user && appState.user.role === 'cashier') {
@@ -2401,19 +2467,20 @@ function renderOrderPageForTable(table) {
 
 
     // Hızlı Satış Modalını Açma
-    function openQuickSaleModal() {
-        if (appState.user && appState.user.role === 'cashier') {
-            appState.currentQuickSaleOrder = [];
-            resetCurrentOrderDiscount();
-            renderQuickSaleOrder();
-            renderProductGrid(quickSaleProductGrid, true);
-            quickSaleModal.classList.add('active');
-            appContainer.classList.add('hidden');
-            orderPageContainer.classList.remove('active');
-        } else {
-            alert("Bu özelliği kullanma yetkiniz yok.");
-        }
+function openQuickSaleModal() {
+    if (appState.user && appState.user.role === 'cashier') {
+        appState.currentQuickSaleOrder = []; // Sepeti her açılışta sıfırla
+        resetCurrentOrderDiscount();       // İndirimi sıfırla
+        renderQuickSaleOrder();            // Sepeti ve toplamı render et (BOŞ OLARAK)
+        renderProductGrid(quickSaleProductGrid, true); // Ürünleri render et
+        
+        quickSaleModal.classList.add('active');
+        appContainer.classList.add('hidden');
+        orderPageContainer.classList.remove('active');
+    } else {
+        alert("Bu özelliği kullanma yetkiniz yok.");
     }
+}
 
     // Hızlı Satışı Tamamlama
     function completeQuickSale() {
