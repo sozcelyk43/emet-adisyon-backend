@@ -1745,16 +1745,30 @@ function renderOrderPageForTable(table) {
     if(manualProductSection) manualProductSection.classList.toggle('hidden', !isCashier || isHamza);
 
 
-    orderPageCurrentOrderItems.querySelectorAll('.remove-item-btn-orderpage').forEach(button => {
+     orderPageCurrentOrderItems.querySelectorAll('.remove-item-btn-orderpage').forEach(button => {
         button.addEventListener('click', (e) => {
-            if (isHamza && appState.user.role === 'cashier') { // Hamza ise ve rolü kasiyerse (ekstra kontrol)
+            const isHamza = appState.user && appState.user.username === 'hamza';
+            if (isHamza && appState.user.role === 'cashier') {
                 alert("Bu işlem için yetkiniz yok (hamza).");
                 return;
             }
             const btnElement = e.target.closest('button');
-            const productIdToRemove = btnElement.dataset.productId;
+            const productIdToRemove = btnElement.dataset.productId; // Bu, originalProductId veya normal productId olabilir
+            const nameToRemove = btnElement.dataset.itemName;       // Bu, "ET DÖNER - KG (500gr)" gibi tam isim olmalı
             const descriptionToRemove = btnElement.dataset.itemDescription;
-            const nameToRemove = btnElement.dataset.itemName;
+
+            // KONTROL LOGLARI (İsteğe bağlı, hata ayıklama için)
+            console.log("CLIENT remove button clicked. Payload to be constructed with:");
+            console.log(" - productIdToRemove (from data-product-id):", productIdToRemove);
+            console.log(" - nameToRemove (from data-item-name):", nameToRemove);
+            console.log(" - descriptionToRemove (from data-item-description):", descriptionToRemove);
+
+            if (!nameToRemove) { // Eğer bir şekilde nameToRemove null veya boşsa, bu bir sorundur.
+                console.error("HATA: Silinecek ürünün adı (nameToRemove) alınamadı. Butonun data-item-name attribute'unu kontrol edin.");
+                alert("Ürün silinirken bir hata oluştu (ürün adı eksik). Lütfen tekrar deneyin.");
+                return;
+            }
+
             removeItemFromOrderPage(productIdToRemove, descriptionToRemove, nameToRemove);
         });
     });
