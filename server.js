@@ -73,11 +73,14 @@ let users = [
     { id: 9, username: 'garson', password: 'gar.son', role: 'waiter' },
 ];
 
-let currentProductId = 1000;
+let currentProductId = 1000; // ID'leri başlatmak için
 let products = [
+    // ÇORBA
     { id: ++currentProductId, name: "KELLE PAÇA ÇORBA", price: 60.00, category: "ÇORBA" },
     { id: ++currentProductId, name: "TARHANA ÇORBA", price: 50.00, category: "ÇORBA" },
+    // ET - TAVUK
     { id: ++currentProductId, name: "YAPRAK D. EKMEK ARASI", price: 200.00, category: "ET - TAVUK" },
+    { id: ++currentProductId, name: "YAPRAK D. PORS.", price: 250.00, category: "ET - TAVUK" }, // Sıralama güncellendi
     { id: ++currentProductId, name: "ET DÖNER EKMEK ARASI", price: 150.00, category: "ET - TAVUK" },
     { id: ++currentProductId, name: "ET DÖNER PORSİYON", price: 175.00, category: "ET - TAVUK" },
     { id: ++currentProductId, name: "TAVUK DÖNER EKMEK ARASI", price: 130.00, category: "ET - TAVUK" },
@@ -89,11 +92,11 @@ let products = [
     { id: ++currentProductId, name: "PİRZOLA - 4 ADET", price: 250.00, category: "ET - TAVUK" },
     { id: ++currentProductId, name: "TAVUK FAJİTA", price: 200.00, category: "ET - TAVUK" },
     { id: ++currentProductId, name: "TAVUK (PİLİÇ) ÇEVİRME", price: 250.00, category: "ET - TAVUK" },
-    { id: ++currentProductId, name: "ET DÖNER - KG", price: 1300.00, category: "ET - TAVUK" },
-    { id: ++currentProductId, name: "ET DÖNER - 500 GR", price: 650.00, category: "ET - TAVUK" },
-    { id: ++currentProductId, name: "TAVUK DÖNER - KG", price: 800.00, category: "ET - TAVUK" },
-    { id: ++currentProductId, name: "TAVUK DÖNER - 500 GR", price: 400.00, category: "ET - TAVUK" },
-    { id: ++currentProductId, name: "YAPRAK D. PORS.", price: 250.00, category: "ET - TAVUK" },
+    { id: ++currentProductId, name: "ET DÖNER - KG", price: 1300.00, category: "ET - TAVUK", isByWeight: true, unitPrice: 1.30 }, // Fiyat KG başına, unitPrice gram başına
+    { id: ++currentProductId, name: "ET DÖNER - 500 GR", price: 650.00, category: "ET - TAVUK" }, // Sabit porsiyon olarak kalabilir
+    { id: ++currentProductId, name: "TAVUK DÖNER - KG", price: 800.00, category: "ET - TAVUK", isByWeight: true, unitPrice: 0.80 }, // Fiyat KG başına, unitPrice gram başına
+    { id: ++currentProductId, name: "TAVUK DÖNER - 500 GR", price: 400.00, category: "ET - TAVUK" }, // Sabit porsiyon olarak kalabilir
+    // ATIŞTIRMALIK
     { id: ++currentProductId, name: "AYVALIK TOSTU", price: 120.00, category: "ATIŞTIRMALIK" },
     { id: ++currentProductId, name: "HAMBURGER", price: 150.00, category: "ATIŞTIRMALIK" },
     { id: ++currentProductId, name: "BALIK BURGER", price: 150.00, category: "ATIŞTIRMALIK" },
@@ -101,9 +104,10 @@ let products = [
     { id: ++currentProductId, name: "PİZZA KARIŞIK (ORTA BOY)", price: 150.00, category: "ATIŞTIRMALIK" },
     { id: ++currentProductId, name: "PİZZA KARIŞIK (BÜYÜK BOY)", price: 200.00, category: "ATIŞTIRMALIK" },
     { id: ++currentProductId, name: "LAHMACUN", price: 75.00, category: "ATIŞTIRMALIK" },
-    { id: ++currentProductId, name: "ÇİĞ KÖFTE KG (MARUL-LİMON)", price: 300.00, category: "ATIŞTIRMALIK" },
+    { id: ++currentProductId, name: "ÇİĞ KÖFTE KG (MARUL-LİMON)", price: 300.00, category: "ATIŞTIRMALIK" }, // Bu da isByWeight olabilir
     { id: ++currentProductId, name: "YAĞLI GÖZLEME", price: 50.00, category: "ATIŞTIRMALIK" },
     { id: ++currentProductId, name: "İÇLİ GÖZLEME", price: 60.00, category: "ATIŞTIRMALIK" },
+    // İÇECEK
     { id: ++currentProductId, name: "OSMANLI ŞERBETİ - 1 LT", price: 75.00, category: "İÇECEK" },
     { id: ++currentProductId, name: "LİMONATA - 1 LT", price: 75.00, category: "İÇECEK" },
     { id: ++currentProductId, name: "AYRAN", price: 10.00, category: "İÇECEK" },
@@ -120,7 +124,8 @@ let products = [
     { id: ++currentProductId, name: "TROPİKAL - NAR-I ŞAHANE", price: 75.00, category: "İÇECEK" },
     { id: ++currentProductId, name: "TROPİKAL - MAVİ TURUNÇ", price: 75.00, category: "İÇECEK" },
     { id: ++currentProductId, name: "TROPİKAL - ELMA RÜYASI", price: 75.00, category: "İÇECEK" },
-    { id: ++currentProductId, name: "EV BAKLAVASI - KG", price: 400.00, category: "TATLI" },
+    // TATLI
+    { id: ++currentProductId, name: "EV BAKLAVASI - KG", price: 400.00, category: "TATLI", isByWeight: true, unitPrice: 0.40 },
     { id: ++currentProductId, name: "EV BAKLAVASI - 500 GR", price: 200.00, category: "TATLI" },
     { id: ++currentProductId, name: "EV BAKLAVASI - PORSİYON", price: 75.00, category: "TATLI" },
     { id: ++currentProductId, name: "AŞURE - 500 GRAM", price: 100.00, category: "TATLI" },
@@ -350,20 +355,53 @@ wss.on('connection', (ws, req) => {
                 if (!currentUserInfo) { ws.send(JSON.stringify({ type: 'error', payload: { message: 'Giriş yapmalısınız.' } })); return; }
                 const tableToAdd = tables.find(t => t.id === payload.tableId);
                 const receivedProductId = parseInt(payload.productId, 10);
-                if (isNaN(receivedProductId)) { ws.send(JSON.stringify({ type: 'order_update_fail', payload: { error: 'Geçersiz ürün IDsi.' } })); return; }
-                const currentProductsList = fetchProductsFromDB();
-                const productToAdd = currentProductsList.find(p => p.id === receivedProductId);
+                if (isNaN(receivedProductId) && !payload.isCustomItem) { // isCustomItem gibi bir flag ile manuel/ağırlıklı ürünleri ayırt et
+                    ws.send(JSON.stringify({ type: 'order_update_fail', payload: { error: 'Geçersiz ürün IDsi.' } })); return;
+                }
+                
+                let productToAdd;
+                let priceAtOrder = payload.priceAtOrder; // İstemciden gelen fiyatı kullan (ağırlıklı ürünler için)
+                let nameForOrder = payload.name; // İstemciden gelen ismi kullan (ağırlıklı ürünler için)
+                let categoryForOrder = payload.category;
+
+                if (!payload.isCustomItem) { // Normal ürün
+                    const currentProductsList = fetchProductsFromDB();
+                    productToAdd = currentProductsList.find(p => p.id === receivedProductId);
+                    if (productToAdd) {
+                        priceAtOrder = productToAdd.price;
+                        nameForOrder = productToAdd.name;
+                        categoryForOrder = productToAdd.category;
+                    }
+                } else { // Ağırlıklı veya manuel ürün, bilgiler payload'dan geliyor
+                    productToAdd = { id: receivedProductId, name: nameForOrder, price: priceAtOrder, category: categoryForOrder }; // Sanal bir ürün objesi
+                }
+
+
                 if (tableToAdd && productToAdd && typeof payload.quantity === 'number' && payload.quantity > 0) {
-                    const existingItem = tableToAdd.order.find(item => item.productId === receivedProductId && item.description === (payload.description || ''));
+                    // Aynı ürün ve aynı açıklama ile birleştirme mantığı korunabilir veya değiştirilebilir.
+                    // Ağırlıklı ürünler için her ekleme yeni bir satır olabilir.
+                    const existingItem = (!payload.isByWeight && !payload.isCustomItem) ? tableToAdd.order.find(item =>
+                        item.productId === receivedProductId &&
+                        item.description === (payload.description || '') &&
+                        !item.isCustomItem // Sadece standart ürünleri birleştir
+                    ) : null;
+
                     if (existingItem) {
                         existingItem.quantity += payload.quantity;
                         existingItem.waiterUsername = currentUserInfo.username;
                         existingItem.timestamp = Date.now();
                     } else {
                         tableToAdd.order.push({
-                            productId: receivedProductId, name: productToAdd.name, category: productToAdd.category,
-                            quantity: payload.quantity, priceAtOrder: productToAdd.price, description: payload.description || '',
-                            waiterUsername: currentUserInfo.username, timestamp: Date.now()
+                            productId: receivedProductId, // Orijinal ID veya özel bir işaretleyici
+                            name: nameForOrder,
+                            category: categoryForOrder,
+                            quantity: payload.quantity,
+                            priceAtOrder: priceAtOrder,
+                            description: payload.description || '',
+                            waiterUsername: currentUserInfo.username,
+                            timestamp: Date.now(),
+                            isCustomItem: !!payload.isCustomItem, // Eğer özel/ağırlıklı ürünse işaretle
+                            originalProductId: payload.isCustomItem ? payload.originalProductId : null // Ağırlıklı ürünün orijinal ID'si
                         });
                     }
                     tableToAdd.total = calculateTableTotal(tableToAdd.order);
@@ -371,19 +409,21 @@ wss.on('connection', (ws, req) => {
                     tableToAdd.waiterId = currentUserInfo.id; tableToAdd.waiterUsername = currentUserInfo.username;
                     broadcastTableUpdates();
                      await logActivity(currentUserInfo.username, 'SIPARIS_URUN_EKLENDI',
-                         { masa: tableToAdd.name, urun_id: productToAdd.id, urun_adi: productToAdd.name, adet: payload.quantity, fiyat: productToAdd.price, aciklama: payload.description || '' },
+                         { masa: tableToAdd.name, urun_id: productToAdd.id, urun_adi: nameForOrder, adet: payload.quantity, fiyat: priceAtOrder, aciklama: payload.description || '' },
                          'Order', tableToAdd.id, currentUserInfo.ip);
                 } else { ws.send(JSON.stringify({ type: 'order_update_fail', payload: { error: 'Geçersiz masa, ürün veya adet.' } })); }
                 break;
 
-            case 'add_manual_order_item':
+            case 'add_manual_order_item': // Bu case, yukarıdaki add_order_item'a entegre edilebilir 'isCustomItem' ile
                  if (!currentUserInfo || currentUserInfo.role !== 'cashier') { ws.send(JSON.stringify({ type: 'error', payload: { message: 'Yetkiniz yok.' } })); return; }
                 const tableForManual = tables.find(t => t.id === payload.tableId);
                 if (tableForManual && payload.name && typeof payload.price === 'number' && payload.price >= 0 && typeof payload.quantity === 'number' && payload.quantity > 0) {
                      tableForManual.order.push({
+                         // productId: null, // Manuel ürünler için null veya özel bir ID
                          name: payload.name, category: payload.category || 'Diğer', quantity: payload.quantity,
                          priceAtOrder: payload.price, description: payload.description || '',
-                         waiterUsername: currentUserInfo.username, timestamp: Date.now()
+                         waiterUsername: currentUserInfo.username, timestamp: Date.now(),
+                         isCustomItem: true // Manuel ürün olduğunu belirt
                      });
                     tableForManual.total = calculateTableTotal(tableForManual.order);
                     tableForManual.status = 'dolu';
@@ -399,11 +439,22 @@ wss.on('connection', (ws, req) => {
                  if (!currentUserInfo) { ws.send(JSON.stringify({ type: 'error', payload: { message: 'Giriş yapmalısınız.' } })); return; }
                 const tableToRemoveFrom = tables.find(t => t.id === payload.tableId);
                 if (tableToRemoveFrom) {
+                    // Silme mantığı, ürünün nasıl eklendiğine (isCustomItem, productId, name) göre daha dikkatli olmalı.
+                    // Şimdilik basit bir eşleşme varsayalım.
                     const productIdNum = payload.productId === null || payload.productId === 'manual' ? null : parseInt(payload.productId, 10);
                     let removedItemDetails = null;
                     const itemIndex = tableToRemoveFrom.order.findIndex(item => {
-                        const match = ( (productIdNum !== null && item.productId === productIdNum) || (productIdNum === null && item.name === payload.name) ) &&
-                        item.description === (payload.description || '');
+                        // Eşleşme koşulu: Eğer productId varsa ve custom değilse productId ve description ile eşleş.
+                        // Eğer custom item ise (veya productId yoksa) name ve description ile eşleş.
+                        let idMatch = false;
+                        if (item.isCustomItem || (productIdNum === null || isNaN(productIdNum))) { // Manuel veya ağırlıklı (ID'si null/NaN olabilir)
+                            idMatch = item.name === payload.name;
+                        } else { // Standart ürün
+                            idMatch = item.productId === productIdNum;
+                        }
+                        const descriptionMatch = item.description === (payload.description || '');
+                        const match = idMatch && descriptionMatch;
+
                         if (match) { removedItemDetails = { ...item }; }
                         return match;
                     });
@@ -419,7 +470,7 @@ wss.on('connection', (ws, req) => {
                                 { masa: tableToRemoveFrom.name, silinen_urun: removedItemDetails },
                                 'Order', tableToRemoveFrom.id, currentUserInfo.ip);
                         }
-                    } else { ws.send(JSON.stringify({ type: 'order_update_fail', payload: { error: 'Öğe bulunamadı.' } }));}
+                    } else { ws.send(JSON.stringify({ type: 'order_update_fail', payload: { error: 'Silinecek öğe bulunamadı. Açıklama ve ürün adı eşleşmiyor olabilir.' } }));}
                 } else { ws.send(JSON.stringify({ type: 'order_update_fail', payload: { error: 'Masa bulunamadı.' } }));}
                 break;
 
@@ -477,7 +528,7 @@ wss.on('connection', (ws, req) => {
                             const itemQuantity = parseInt(item.quantity, 10) || 0;
                             const totalItemPrice = itemPrice * itemQuantity;
                             totalQuickSaleAmount += totalItemPrice;
-                            const productDetails = currentProductsListQuickSale.find(p => p.id === item.productId);
+                            const productDetails = currentProductsListQuickSale.find(p => p.id === item.productId); // productId null olabilir (manuel ürün)
                             const category = item.category || (productDetails ? productDetails.category : 'Hızlı Satış');
                             await clientQuickSaleDB.query(
                                 `INSERT INTO sales_log (item_name, item_price, quantity, total_item_price, category, description, waiter_username, table_name, sale_timestamp)
@@ -543,6 +594,7 @@ wss.on('connection', (ws, req) => {
                         name: payload.name.toUpperCase(),
                         price: parseFloat(payload.price),
                         category: payload.category.toUpperCase()
+                        // isByWeight ve unitPrice gibi alanlar da eklenebilir
                     };
                     products.push(newProduct); 
                     await logActivity(
@@ -568,14 +620,16 @@ wss.on('connection', (ws, req) => {
                         ...products[productIndex],
                         name: payload.name.toUpperCase(),
                         price: parseFloat(payload.price),
-                        category: payload.category.toUpperCase()
+                        category: payload.category.toUpperCase(),
+                        isByWeight: payload.isByWeight, // isByWeight ve unitPrice'ı da güncelle
+                        unitPrice: payload.unitPrice
                     };
                     const updatedProduct = products[productIndex];
                     await logActivity(
                         currentUserInfo.username, 'URUN_GUNCELLEME_MENU (Bellek)',
                         { urun_id: updatedProduct.id, urun_adi: updatedProduct.name,
-                          eski_degerler: { name: oldProduct.name, price: oldProduct.price, category: oldProduct.category },
-                          yeni_degerler: { name: updatedProduct.name, price: updatedProduct.price, category: updatedProduct.category } },
+                          eski_degerler: { name: oldProduct.name, price: oldProduct.price, category: oldProduct.category, isByWeight: oldProduct.isByWeight, unitPrice: oldProduct.unitPrice },
+                          yeni_degerler: { name: updatedProduct.name, price: updatedProduct.price, category: updatedProduct.category, isByWeight: updatedProduct.isByWeight, unitPrice: updatedProduct.unitPrice } },
                         'ProductInMemory', updatedProduct.id, currentUserInfo.ip
                     );
                     await broadcastProductsUpdate();
