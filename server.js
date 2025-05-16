@@ -429,7 +429,7 @@ wss.on('connection', (ws, req) => {
                 } else { ws.send(JSON.stringify({ type: 'manual_order_update_fail', payload: { error: 'Geçersiz manuel ürün bilgileri.' } }));}
                 break;
 
-           case 'remove_order_item':
+          case 'remove_order_item':
                  if (!currentUserInfo) { 
                      ws.send(JSON.stringify({ type: 'error', payload: { message: 'Giriş yapmalısınız.' } })); 
                      return; 
@@ -442,33 +442,37 @@ wss.on('connection', (ws, req) => {
                 
                 const tableToRemoveFrom = tables.find(t => t.id === payload.tableId);
                 if (tableToRemoveFrom) {
-                    const pIdFromPayloadString = payload.productId; 
-                    const pNameFromPayload = payload.name; 
+                    const pIdFromPayloadString = payload.productId; // Bu 'manual', null veya sayısal bir ID string'i olabilir
+                    const pNameFromPayload = payload.name;    // İstemciden gelen tam ürün adı (örn: "ET DÖNER - KG (250 gr)") veya null
                     const pDescriptionFromPayload = payload.description === undefined ? '' : payload.description;
                     let removedItemDetails = null;
 
-                    console.log(`[SERVER remove_order_item] Silme isteği: tableId='${payload.tableId}', pId='${pIdFromPayloadString}', name='${pNameFromPayload}', desc='${pDescriptionFromPayload}'`);
-                    
+                    console.log(`[SERVER remove_order_item] Silme isteği: tableId='${payload.tableId}', pIdString='${pIdFromPayloadString}', name='${pNameFromPayload}', desc='${pDescriptionFromPayload}'`);
+                    // console.log(`[SERVER remove_order_item] Masadaki Siparişler:`, JSON.stringify(tableToRemoveFrom.order.map(i => ({name: i.name, productId: i.productId, originalProductId: i.originalProductId, description: i.description || '', isCustom: i.isCustomItem, isByWeight: i.isByWeightEntry})), null, 2));
+
                     const itemIndex = tableToRemoveFrom.order.findIndex(item => {
                         const itemDesc = item.description || '';
                         let match = false;
 
-                        // 1. İstemci tam ürün adını (gramaj dahil olabilir) ve açıklamayı gönderdiyse
+                        // 1. İstemci tam ürün adını (gramaj dahil) ve açıklamayı gönderdiyse (Ağırlıklı/Özel ürünler için birincil yöntem)
                         if (pNameFromPayload && item.name === pNameFromPayload && itemDesc === pDescriptionFromPayload) {
+                            console.log(`[SERVER remove_order_item] Eşleşme Yöntem 1: Tam Ad ve Açıklama. Item: ${item.name}, Payload: ${pNameFromPayload}`);
                             match = true;
                         }
-                        // 2. İstemci name=null gönderdi ama productId gönderdi
+                        // 2. İstemci name=null veya tanımsız gönderdi ama productId gönderdi (Standart ürünler veya ağırlıklı ürünler için fallback)
                         else if ((pNameFromPayload === null || pNameFromPayload === undefined) && 
                                  pIdFromPayloadString && pIdFromPayloadString !== 'manual') {
                             const pIdNum = parseInt(pIdFromPayloadString, 10);
                             if (!isNaN(pIdNum)) {
-                                // Standart ürün eşleşmesi: productId ve description
+                                // Standart ürün eşleşmesi: item.productId ve item.description ile
                                 if (!item.isCustomItem && !item.isByWeightEntry && item.productId === pIdNum && itemDesc === pDescriptionFromPayload) {
+                                    console.log(`[SERVER remove_order_item] Eşleşme Yöntem 2a: Standart Ürün (ID: ${pIdNum}, Açıklama: '${pDescriptionFromPayload}')`);
                                     match = true;
                                 }
-                                // Ağırlıklı ürün eşleşmesi: originalProductId ve description
-                                // Bu, istemci name:null gönderdiğinde ağırlıklı ürünleri silmek için.
+                                // Ağırlıklı ürün için fallback eşleşmesi: item.originalProductId ve item.description ile
+                                // Bu, istemcinin ağırlıklı ürün için tam adı göndermediği (name:null) durumlarda işe yarar.
                                 else if ((item.isCustomItem || item.isByWeightEntry) && item.originalProductId === pIdNum && itemDesc === pDescriptionFromPayload) {
+                                    console.log(`[SERVER remove_order_item] Eşleşme Yöntem 2b: Ağırlıklı/Custom Ürün Fallback (originalPId: ${pIdNum}, Açıklama: '${pDescriptionFromPayload}')`);
                                     match = true;
                                 }
                             }
@@ -477,6 +481,7 @@ wss.on('connection', (ws, req) => {
                         else if (pIdFromPayloadString === 'manual' && pNameFromPayload && 
                                  item.name === pNameFromPayload && itemDesc === pDescriptionFromPayload && 
                                  !item.productId && item.isCustomItem && !item.isByWeightEntry) {
+                            console.log(`[SERVER remove_order_item] Eşleşme Yöntem 3: Manuel Ürün (Ad: ${pNameFromPayload}, Açıklama: '${pDescriptionFromPayload}')`);
                             match = true;
                         }
                         
