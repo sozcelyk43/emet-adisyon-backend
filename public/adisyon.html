@@ -1127,171 +1127,183 @@ function formatTimestamp(timestampInput) {
         }
     }
 
-    function handleServerMessage(message) {
-        hideLoading();
-        switch (message.type) {
-            case 'login_success':
-                console.log("LOGIN_SUCCESS işleniyor. Payload:", message.payload);
-                const userDataFromServer = message.payload.user || message.payload.waiter;
-                if (message.payload && typeof message.payload === 'object' && userDataFromServer && typeof userDataFromServer === 'object') {
-                    appState.user = userDataFromServer;
-                    appState.tables = message.payload.tables || [];
-                    if (message.payload.products) {
-                        appState.products = message.payload.products;
-                    }
-                    if (appState.user && typeof appState.user.username !== 'undefined' && typeof appState.user.role !== 'undefined') {
-                        localStorage.setItem('adisyonUser', JSON.stringify(appState.user));
+function handleServerMessage(message) {
+    hideLoading();
+    // console.log("CLIENT: İşlenecek Mesaj Tipi:", message.type, "Payload:", message.payload);
 
-                        activeUserNameSpan.textContent = appState.user.username;
-                        activeUserRoleSpan.textContent = appState.user.role;
-                        loginModal.classList.remove('active');
-                        appContainer.classList.remove('hidden');
-                        orderPageContainer.classList.remove('active');
-                        loginError.textContent = '';
-                        renderInitialData();
-                        updateUIForRole();
-                        console.log("Giriş başarılı ve kaydedildi:", appState.user.username, "Rol:", appState.user.role);
+    switch (message.type) {
+        case 'login_success':
+            const userDataFromServer = message.payload.user; // Sunucu 'user' gönderiyor
+            if (message.payload && userDataFromServer && typeof userDataFromServer === 'object') {
+                appState.user = userDataFromServer;
+                appState.tables = (message.payload.tables && Array.isArray(message.payload.tables)) ? message.payload.tables : [];
+                appState.products = (message.payload.products && Array.isArray(message.payload.products)) ? message.payload.products : [];
+                
+                localStorage.setItem('adisyonUser', JSON.stringify(appState.user));
+                activeUserNameSpan.textContent = appState.user.username;
+                activeUserRoleSpan.textContent = appState.user.role;
+                
+                loginModal.classList.remove('active');
+                appContainer.classList.remove('hidden');
+                orderPageContainer.classList.remove('active');
+                loginError.textContent = '';
+                
+                renderInitialDataIfNeeded();
+                renderTables();
+                updateUIForRole();
+                console.log("Giriş başarılı ve UI güncellendi:", appState.user.username);
+            } else {
+                showLoginError("Sunucudan eksik veya hatalı giriş yanıtı alındı (login_success).");
+                // ... (hata durumunda UI'ı login ekranına döndür)
+            }
+            break;
+
+        case 'reauth_success': // YENİ CASE: Yeniden kimlik doğrulama başarılı
+            if (message.payload && message.payload.user) {
+                appState.user = message.payload.user; // Sunucudan gelen güncel kullanıcı bilgisi
+                localStorage.setItem('adisyonUser', JSON.stringify(appState.user)); // localStorage'ı da güncelle
+
+                activeUserNameSpan.textContent = appState.user.username;
+                activeUserRoleSpan.textContent = appState.user.role;
+
+                loginModal.classList.remove('active');
+                appContainer.classList.remove('hidden');
+                orderPageContainer.classList.remove('active');
+                loginError.textContent = '';
+
+                // tables_update ve products_update mesajları zaten gelecek ve UI'ı güncelleyecek.
+                // Ancak UI rolünü hemen ayarlayabiliriz.
+                updateUIForRole();
+                console.log("Oturum başarıyla sürdürüldü ve UI güncellendi:", appState.user.username);
+                // renderInitialDataIfNeeded ve renderTables çağrıları,
+                // tables_update ve products_update case'leri tarafından zaten yapılacak.
+            } else {
+                 showLoginError("Oturum sürdürülürken eksik bilgi alındı.");
+                 performLogout(false); // Güvenli çıkış yap
+                 showLoginScreen();
+            }
+            break;
+
+        case 'login_fail':
+            showLoginError(message.payload.error || "Kullanıcı adı veya şifre hatalı.");
+            localStorage.removeItem('adisyonUser');
+            break;
+
+        case 'error':
+            alert(`Sunucu Hatası: ${message.payload.message || 'Bilinmeyen bir sunucu hatası oluştu.'}`);
+            console.error("Sunucudan hata mesajı alındı:", message.payload);
+            break;
+
+        case 'tables_update':
+            if (message.payload && Array.isArray(message.payload.tables)) {
+                appState.tables = message.payload.tables;
+                renderTables();
+                console.log("Masalar sunucudan güncellendi.");
+                if (orderPageContainer.classList.contains('active') && appState.currentTableId) {
+                    const updatedTable = appState.tables.find(t => t.id === appState.currentTableId);
+                    if (updatedTable) {
+                        renderOrderPageForTable(updatedTable);
                     } else {
-                        console.error("Login success, ancak kullanıcı verisi (username/role) eksik/hatalı.", "appState.user:", appState.user);
-                        showLoginError("Giriş bilgileri eksik (kod: CL01_V7).");
-                        appState.user = null;
-                        localStorage.removeItem('adisyonUser');
-                        loginModal.classList.add('active');
-                        appContainer.classList.add('hidden');
-                        orderPageContainer.classList.remove('active');
+                        showTablesView();
                     }
-                } else {
-                    console.error("Login success mesajı alındı, ancak payload veya kullanıcı verisi (user/waiter) hatalı/eksik.", "Payload:", message.payload);
-                    showLoginError("Sunucudan geçersiz giriş yanıtı (kod: CL02_V7).");
-                    appState.user = null;
-                    localStorage.removeItem('adisyonUser');
-                    loginModal.classList.add('active');
-                    appContainer.classList.add('hidden');
-                    orderPageContainer.classList.remove('active');
                 }
-                break;
-            case 'login_fail':
-                showLoginError(message.payload.error || "Kullanıcı adı veya şifre hatalı.");
-                localStorage.removeItem('adisyonUser');
-                break;
-            case 'tables_update':
-                if(appState.user){
-                    console.log("[tables_update] Mesaj alındı ve işleniyor. appState.user:", appState.user);
-                    appState.tables = message.payload.tables;
-                    renderTables();
-                    renderInitialDataIfNeeded();
-
-                    if (orderPageContainer.classList.contains('active') && appState.currentTableId) {
-                        const updatedTable = appState.tables.find(t => t.id === appState.currentTableId);
-                        if (updatedTable) {
-                            renderOrderPageForTable(updatedTable);
-                        } else {
-                            console.log(`Güncellenen masa (${appState.currentTableId}) bulunamadı, masalar ekranına dönülüyor.`);
-                            showTablesView();
-                        }
-                    }
-                    if (manageTablesModal.classList.contains('active')) {
-                        populateTableSelectsForManagement();
-                    }
-                } else {
-                    console.log("[tables_update] Kullanıcı bilgisi (appState.user) henüz set edilmemiş, tables_update işlenmedi.");
+                if (manageTablesModal.classList.contains('active')) {
+                    populateTableSelectsForManagement();
                 }
-                break;
+            }
+            break;
 
-case 'initial_user_status': // Sunucudan ilk kullanıcı durumları geldiğinde
+        case 'products_list': // Bu case'i de products_update gibi işleyebiliriz
+        case 'products_update':
+            if (message.payload && Array.isArray(message.payload.products)) {
+                appState.products = message.payload.products;
+                console.log(`Ana ürün listesi sunucudan güncellendi (tip: ${message.type}).`);
+                initialDataRendered = false;
+                renderInitialDataIfNeeded();
+                if (orderPageContainer.classList.contains('active') && appState.currentTableId) {
+                    const currentTable = appState.tables.find(t => t.id === appState.currentTableId);
+                    if (currentTable) renderOrderPageForTable(currentTable);
+                }
+                if (quickSaleModal.classList.contains('active')) renderProductGrid(quickSaleProductGrid, true);
+                if (editProductModal.classList.contains('active')) populateSelectProductToEdit();
+            }
+            break;
+
+        case 'initial_user_status': // Sunucudan ilk kullanıcı durumları geldiğinde
+        case 'all_users_and_active_status_data': // BU CASE EKLENDİ
+            if (message.payload) {
+                appState.allUsers = message.payload.allUsers || [];
+                appState.activeUsernames = message.payload.activeUsernames || [];
+                renderUserLoginStatus(); // Login ekranındaki göstergeleri güncelle
+            }
+            break;
+
+        case 'active_users_update':
             if (message.payload) {
                 appState.allUsers = message.payload.allUsers || [];
                 appState.activeUsernames = message.payload.activeUsernames || [];
                 renderUserLoginStatus();
             }
             break;
-
-        case 'active_users_update': // Aktif kullanıcı listesi güncellendiğinde
-            if (message.payload) {
-                appState.allUsers = message.payload.allUsers || []; // Tüm kullanıcı listesi de güncellenebilir
-                appState.activeUsernames = message.payload.activeUsernames || [];
-                renderUserLoginStatus();
-            }
-            break;
         
-        case 'force_logout': // Sunucu aynı hesaptan başka bir giriş olduğunu bildirdiğinde
+        case 'force_logout':
             alert(message.payload.message || 'Bu hesap başka bir yerden giriş yaptığı için oturumunuz sonlandırıldı.');
             performLogout(false); // Uygulamayı kapatmadan sadece çıkış yap
-            showLoginScreen(); // Login ekranını göster
+            showLoginScreen();
             break;
 
+        // ... (Diğer tüm mevcut case'leriniz: main_menu_product_added, sales_report_data vb.)
+        case 'main_menu_product_added':
+            alert(message.payload.message || "Yeni ürün menüye eklendi!");
+            break;
+         case 'main_menu_product_updated':
+            alert(message.payload.message || "Ürün menüde güncellendi!");
+            break;
+        case 'table_operation_success':
+            alert(message.payload.message || "Masa işlemi başarılı.");
+            break;
+        case 'table_operation_fail':
+            alert(message.payload.error || "Masa işlemi başarısız oldu.");
+            break;
+        case 'waiters_list':
+            if (message.payload && Array.isArray(message.payload.waiters)) {
+                appState.waiters = message.payload.waiters;
+                populateWaiterSelectsForManagement();
+            }
+            break;
+        case 'waiter_operation_success':
+            alert(message.payload.message || "Garson işlemi başarılı.");
+            sendMessageToServer('get_waiters_list', {});
+            break;
+        case 'waiter_operation_fail':
+            alert(message.payload.error || "Garson işlemi başarısız oldu.");
+            break;
+        case 'sales_report_data':
+            appState.salesReport = message.payload.sales || [];
+            renderSalesReport();
+            break;
+        case 'activity_log_data':
+            appState.activityLog = message.payload.logs || [];
+            renderActivityLog();
+            break;
+        case 'order_update_fail':
+            alert(`Sipariş güncellenemedi: ${message.payload.error}`);
+            break;
+        case 'manual_order_update_fail':
+            alert(`Manuel ürün eklenemedi: ${message.payload.error}`);
+            break;
+        case 'quick_sale_success':
+            console.log("Hızlı satış sunucuda tamamlandı.");
+            break;
+        case 'quick_sale_fail':
+            alert(`Hızlı satış tamamlanamadı: ${message.payload.error}`);
+            break;
 
-
-
-
-            case 'products_update':
-                if (message.payload && message.payload.products) {
-                    appState.products = message.payload.products;
-                    console.log("Ana ürün listesi sunucudan güncellendi.");
-                    initialDataRendered = false;
-                    renderInitialDataIfNeeded();
-                    if (orderPageContainer.classList.contains('active') && appState.currentTableId) {
-                        const currentTable = appState.tables.find(t => t.id === appState.currentTableId);
-                        if (currentTable) renderOrderPageForTable(currentTable);
-                    }
-                     if (quickSaleModal.classList.contains('active')) {
-                        renderProductGrid(quickSaleProductGrid, true);
-                    }
-                    if (editProductModal.classList.contains('active')) {
-                        populateSelectProductToEdit();
-                    }
-                }
-                break;
-            case 'main_menu_product_added':
-                alert(message.payload.message || "Yeni ürün menüye eklendi!");
-                break;
-             case 'main_menu_product_updated':
-                alert(message.payload.message || "Ürün menüde güncellendi!");
-                break;
-            case 'table_operation_success':
-                alert(message.payload.message || "Masa işlemi başarılı.");
-                break;
-            case 'table_operation_fail':
-                alert(message.payload.error || "Masa işlemi başarısız oldu.");
-                break;
-            case 'waiters_list':
-                if (message.payload && message.payload.waiters) {
-                    appState.waiters = message.payload.waiters;
-                    populateWaiterSelectsForManagement();
-                }
-                break;
-            case 'waiter_operation_success':
-                alert(message.payload.message || "Garson işlemi başarılı.");
-                sendMessageToServer('get_waiters_list', {});
-                break;
-            case 'waiter_operation_fail':
-                alert(message.payload.error || "Garson işlemi başarısız oldu.");
-                break;
-            case 'sales_report_data':
-                appState.salesReport = message.payload.sales || [];
-                renderSalesReport();
-                break;
-            case 'order_update_fail':
-                alert(`Sipariş güncellenemedi: ${message.payload.error}`);
-                break;
-             case 'manual_order_update_fail':
-                alert(`Manuel ürün eklenemedi: ${message.payload.error}`);
-                break;
-            case 'quick_sale_success':
-                console.log("Hızlı satış sunucuda tamamlandı.");
-                appState.currentQuickSaleOrder = [];
-                renderQuickSaleOrder();
-                break;
-            case 'quick_sale_fail':
-                alert(`Hızlı satış tamamlanamadı: ${message.payload.error}`);
-                break;
-            case 'error':
-                alert(`Sunucu Hatası: ${message.payload.message}`);
-                break;
-            default:
-                console.warn("Bilinmeyen mesaj tipi:", message.type, "Payload:", message.payload);
-        }
+        default:
+            console.warn("handleServerMessage: Bilinmeyen mesaj tipi:", message.type, "Payload:", message.payload);
+            break;
     }
+}
 
     function showLoginError(message) {
         loginError.textContent = message;
