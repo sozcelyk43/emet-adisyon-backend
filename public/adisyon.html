@@ -708,16 +708,12 @@
 </div>
 
 
-<script>
-    // *** YEREL TEST İÇİN URL ***
-    // Render'a yüklerken burayı 'wss://<UYGULAMA_ADINIZ>.onrender.com' olarak değiştirin.
-    let socket;
+<script>   let socket;
 
-    // adisyon.html içindeki <script> bloğunda, appState tanımı:
-
-const appState = {
+    // Uygulama genelindeki durumu tutacak obje
+    const appState = {
         user: null,
-        products: [ // Sunucudaki en son menü ile senkronize edildi (başlangıç/yedek değer)
+        products: [ // Sunucudan veri gelene kadar kullanılacak başlangıç/yedek ürün listesi.
             // ÇORBA
             { id: 1001, name: "KELLE PAÇA ÇORBA", price: 60.00, category: "ÇORBA" },
             { id: 1002, name: "TARHANA ÇORBA", price: 50.00, category: "ÇORBA" },
@@ -784,8 +780,8 @@ const appState = {
         activeUsernames: []
     };
 
-    // --- DOM Elementleri ---
-   const loadingOverlay = document.getElementById('loadingOverlay');
+    // --- DOM Elementleri (Tam Liste) ---
+    const loadingOverlay = document.getElementById('loadingOverlay');
     const loadingMessage = document.getElementById('loadingMessage');
     const loginModal = document.getElementById('loginModal');
     const usernameInput = document.getElementById('usernameInput');
@@ -798,7 +794,7 @@ const appState = {
     const logoutButton = document.getElementById('logoutButton');
 
     const salesReportButton = document.getElementById('salesReportButton');
-    const activityLogButton = document.getElementById('activityLogButton'); // TANIMLANDI
+    const activityLogButton = document.getElementById('activityLogButton');
     const quickSaleEntryButton = document.getElementById('quickSaleEntryButton');
     const quickSaleButtonContainerTop = document.getElementById('quickSaleButtonContainerTop');
     const addProductToMenuButton = document.getElementById('addProductToMenuButton');
@@ -929,10 +925,8 @@ const appState = {
     const activityLogTableContainer = document.getElementById('activityLogTableContainer');
     const refreshActivityLogButton = document.getElementById('refreshActivityLogButton');
 
-
-
     // --- Yardımcı Fonksiyonlar ---
-   function formatPrice(price) {
+    function formatPrice(price) {
         if (typeof price !== 'number' || isNaN(price)) { return '0 ₺'; }
         const formatted = price.toFixed(2).replace('.', ',');
         if (formatted.endsWith(',00')) { return formatted.substring(0, formatted.length - 3) + ' ₺'; }
@@ -971,15 +965,14 @@ const appState = {
     function showLoading(message = "İşleniyor...") { loadingMessage.textContent = message; loadingOverlay.classList.add('active'); }
     function hideLoading() { loadingOverlay.classList.remove('active'); }
 
-    // Kategori adı için CSS sınıfı üreten fonksiyon
-  function sanitizeCategoryForCSS(categoryName) {
+    function sanitizeCategoryForCSS(categoryName) {
         if (!categoryName) return 'default';
         const turkishMap = { 'İ': 'I', 'ı': 'i', 'Ö': 'O', 'ö': 'o', 'Ü': 'U', 'ü': 'u', 'Ş': 'S', 'ş': 's', 'Ğ': 'G', 'ğ': 'g', 'Ç': 'C', 'ç': 'c' };
         return categoryName.replace(/[İıÖöÜüŞşĞğÇç]/g, match => turkishMap[match] || match).replace(/\s-\s/g, '-').replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-]/g, '').toUpperCase();
     }
 
     // --- WebSocket Fonksiyonları ---
-   const WEBSOCKET_URL = 'wss://emet-adisyon.onrender.com';
+    const WEBSOCKET_URL = 'wss://emet-adisyon.onrender.com';
     function connectWebSocket() {
         showLoading("Sunucuya bağlanılıyor...");
         console.log("WebSocket bağlantısı kuruluyor:", WEBSOCKET_URL);
@@ -1034,8 +1027,7 @@ const appState = {
             else { showLoginError("Sunucuya mesaj gönderilemedi. Bağlantı sorunu."); }
         }
     }
-
-    // renderInitialDataIfNeeded fonksiyonu TANIMLANDI
+    
     let initialDataRendered = false;
     function renderInitialDataIfNeeded() {
         if (!initialDataRendered || (appState.products && appState.products.length > 0)) {
@@ -1049,306 +1041,230 @@ const appState = {
             console.log("İlk data render edildi (ürün grid, referans, kategori select).");
         }
     }
-    
 
 
-function handleServerMessage(message) {
-    hideLoading();
-    // console.log("CLIENT: İşlenecek Mesaj Tipi:", message.type, "Payload:", message.payload);
+    function handleServerMessage(message) {
+        hideLoading();
+        // console.log("CLIENT: İşlenecek Mesaj Tipi:", message.type, "Payload:", message.payload);
 
-    switch (message.type) {
-        case 'login_success':
-            const userDataFromServer = message.payload.user;
-            if (message.payload && userDataFromServer && typeof userDataFromServer === 'object') {
-                appState.user = userDataFromServer;
-                appState.tables = (message.payload.tables && Array.isArray(message.payload.tables)) ? message.payload.tables : [];
-                appState.products = (message.payload.products && Array.isArray(message.payload.products)) ? message.payload.products : [];
-                
-                localStorage.setItem('adisyonUser', JSON.stringify(appState.user));
-                activeUserNameSpan.textContent = appState.user.username;
-                activeUserRoleSpan.textContent = appState.user.role;
-                
-                loginModal.classList.remove('active');
-                appContainer.classList.remove('hidden');
-                orderPageContainer.classList.remove('active');
-                loginError.textContent = '';
-                
-                renderInitialDataIfNeeded();
-                renderTables();
-                updateUIForRole();
-                console.log("Giriş başarılı ve UI güncellendi:", appState.user.username);
-            } else {
-                showLoginError("Sunucudan eksik veya hatalı giriş yanıtı alındı (login_success).");
-                performLogout(false); showLoginScreen();
-            }
-            break;
+        switch (message.type) {
+            case 'login_success':
+                const userDataFromServer = message.payload.user;
+                if (message.payload && userDataFromServer && typeof userDataFromServer === 'object') {
+                    appState.user = userDataFromServer;
+                    appState.tables = (message.payload.tables && Array.isArray(message.payload.tables)) ? message.payload.tables : [];
+                    appState.products = (message.payload.products && Array.isArray(message.payload.products)) ? message.payload.products : [];
+                    
+                    localStorage.setItem('adisyonUser', JSON.stringify(appState.user));
+                    activeUserNameSpan.textContent = appState.user.username;
+                    activeUserRoleSpan.textContent = appState.user.role;
+                    
+                    loginModal.classList.remove('active');
+                    appContainer.classList.remove('hidden');
+                    orderPageContainer.classList.remove('active');
+                    loginError.textContent = '';
+                    
+                    renderInitialDataIfNeeded();
+                    renderTables();
+                    updateUIForRole();
+                    console.log("Giriş başarılı ve UI güncellendi:", appState.user.username);
+                } else {
+                    showLoginError("Sunucudan eksik veya hatalı giriş yanıtı alındı (login_success).");
+                    performLogout(false); showLoginScreen();
+                }
+                break;
 
-        case 'reauth_success': // SUNUCUDAN BU MESAJ GELECEK
-            if (message.payload && message.payload.user) {
-                appState.user = message.payload.user;
-                localStorage.setItem('adisyonUser', JSON.stringify(appState.user));
+            case 'reauth_success':
+                if (message.payload && message.payload.user) {
+                    appState.user = message.payload.user;
+                    localStorage.setItem('adisyonUser', JSON.stringify(appState.user));
 
-                activeUserNameSpan.textContent = appState.user.username;
-                activeUserRoleSpan.textContent = appState.user.role;
+                    activeUserNameSpan.textContent = appState.user.username;
+                    activeUserRoleSpan.textContent = appState.user.role;
 
-                loginModal.classList.remove('active');
-                appContainer.classList.remove('hidden');
-                orderPageContainer.classList.remove('active');
-                loginError.textContent = '';
-                updateUIForRole();
-                console.log("Oturum başarıyla sürdürüldü ve UI güncellendi:", appState.user.username);
-                // tables_update ve products_update mesajları zaten ayrıca gelecek ve ilgili render fonksiyonlarını tetikleyecek.
-                // renderInitialDataIfNeeded(); // Bu çağrılar products_update ile tetiklenir
-                // renderTables(); // Bu çağrı tables_update ile tetiklenir
-            } else {
-                 showLoginError("Oturum sürdürülürken eksik bilgi alındı.");
-                 performLogout(false);
-                 showLoginScreen();
-            }
-            break;
+                    loginModal.classList.remove('active');
+                    appContainer.classList.remove('hidden');
+                    orderPageContainer.classList.remove('active');
+                    loginError.textContent = '';
+                    updateUIForRole();
+                    console.log("Oturum başarıyla sürdürüldü ve UI güncellendi:", appState.user.username);
+                } else {
+                     showLoginError("Oturum sürdürülürken eksik bilgi alındı.");
+                     performLogout(false);
+                     showLoginScreen();
+                }
+                break;
 
-        case 'login_fail':
-            showLoginError(message.payload.error || "Kullanıcı adı veya şifre hatalı.");
-            localStorage.removeItem('adisyonUser');
-            break;
+            case 'login_fail':
+                showLoginError(message.payload.error || "Kullanıcı adı veya şifre hatalı.");
+                localStorage.removeItem('adisyonUser');
+                break;
 
-        case 'error':
-            alert(`Sunucu Hatası: ${message.payload.message || 'Bilinmeyen bir sunucu hatası oluştu.'}`);
-            console.error("Sunucudan hata mesajı alındı:", message.payload);
-            break;
+            case 'error':
+                alert(`Sunucu Hatası: ${message.payload.message || 'Bilinmeyen bir sunucu hatası oluştu.'}`);
+                console.error("Sunucudan hata mesajı alındı:", message.payload);
+                break;
 
-        case 'tables_update':
-            if (message.payload && Array.isArray(message.payload.tables)) {
-                appState.tables = message.payload.tables;
-                renderTables(); // Bu fonksiyonun tanımlı olduğundan emin olun
-                console.log("Masalar sunucudan güncellendi.");
-                if (orderPageContainer.classList.contains('active') && appState.currentTableId) {
-                    const updatedTable = appState.tables.find(t => t.id === appState.currentTableId);
-                    if (updatedTable) {
-                        renderOrderPageForTable(updatedTable);
-                    } else {
-                        showTablesView();
+            case 'tables_update':
+                if (message.payload && Array.isArray(message.payload.tables)) {
+                    appState.tables = message.payload.tables;
+                    renderTables();
+                    console.log("Masalar sunucudan güncellendi.");
+                    if (orderPageContainer.classList.contains('active') && appState.currentTableId) {
+                        const updatedTable = appState.tables.find(t => t.id === appState.currentTableId);
+                        if (updatedTable) {
+                            renderOrderPageForTable(updatedTable);
+                        } else {
+                            showTablesView();
+                        }
+                    }
+                    if (manageTablesModal.classList.contains('active')) {
+                        populateTableSelectsForManagement();
                     }
                 }
-                if (manageTablesModal.classList.contains('active')) {
-                    populateTableSelectsForManagement(); // Bu fonksiyonun tanımlı olduğundan emin olun
+                break;
+
+            case 'products_list':
+            case 'products_update':
+                if (message.payload && Array.isArray(message.payload.products)) {
+                    appState.products = message.payload.products;
+                    console.log(`Ana ürün listesi sunucudan güncellendi (tip: ${message.type}).`);
+                    initialDataRendered = false;
+                    renderInitialDataIfNeeded();
+                    if (orderPageContainer.classList.contains('active') && appState.currentTableId) {
+                        const currentTable = appState.tables.find(t => t.id === appState.currentTableId);
+                        if (currentTable) renderOrderPageForTable(currentTable);
+                    }
+                    if (quickSaleModal.classList.contains('active')) renderProductGrid(quickSaleProductGrid, true);
+                    if (editProductModal.classList.contains('active')) populateSelectProductToEdit();
                 }
-            }
-            break;
+                break;
 
-        case 'products_list': // Sunucu artık bunu göndermemeli, ama yedek olarak kalabilir
-        case 'products_update':
-            if (message.payload && Array.isArray(message.payload.products)) {
-                appState.products = message.payload.products;
-                console.log(`Ana ürün listesi sunucudan güncellendi (tip: ${message.type}).`);
-                initialDataRendered = false;
-                renderInitialDataIfNeeded(); // Bu fonksiyonun tanımlı olduğundan emin olun
-                if (orderPageContainer.classList.contains('active') && appState.currentTableId) {
-                    const currentTable = appState.tables.find(t => t.id === appState.currentTableId);
-                    if (currentTable) renderOrderPageForTable(currentTable);
+            case 'initial_user_status':
+            case 'all_users_and_active_status_data':
+                if (message.payload) {
+                    appState.allUsers = message.payload.allUsers || [];
+                    appState.activeUsernames = message.payload.activeUsernames || [];
+                    renderUserLoginStatus();
                 }
-                if (quickSaleModal.classList.contains('active')) renderProductGrid(quickSaleProductGrid, true);
-                if (editProductModal.classList.contains('active')) populateSelectProductToEdit(); // Bu fonksiyonun tanımlı olduğundan emin olun
-            }
-            break;
+                break;
 
-        case 'initial_user_status': // Sunucudan ilk kullanıcı durumları geldiğinde
-        case 'all_users_and_active_status_data': // BU CASE EKLENDİ/GÜNCELLENDİ
-            if (message.payload) {
-                appState.allUsers = message.payload.allUsers || [];
-                appState.activeUsernames = message.payload.activeUsernames || [];
-                renderUserLoginStatus(); // Bu fonksiyonun tanımlı olduğundan emin olun
-            }
-            break;
+            case 'active_users_update':
+                if (message.payload) {
+                    appState.allUsers = message.payload.allUsers || [];
+                    appState.activeUsernames = message.payload.activeUsernames || [];
+                    renderUserLoginStatus();
+                }
+                break;
+            
+            case 'force_logout':
+                alert(message.payload.message || 'Bu hesap başka bir yerden giriş yaptığı için oturumunuz sonlandırıldı.');
+                performLogout(false);
+                showLoginScreen();
+                break;
 
-        case 'active_users_update':
-            if (message.payload) {
-                appState.allUsers = message.payload.allUsers || [];
-                appState.activeUsernames = message.payload.activeUsernames || [];
-                renderUserLoginStatus();
-            }
-            break;
-        
-        case 'force_logout':
-            alert(message.payload.message || 'Bu hesap başka bir yerden giriş yaptığı için oturumunuz sonlandırıldı.');
-            performLogout(false);
-            showLoginScreen();
-            break;
+            case 'main_menu_product_added':
+                alert(message.payload.message || "Yeni ürün menüye eklendi!");
+                break;
+             case 'main_menu_product_updated':
+                alert(message.payload.message || "Ürün menüde güncellendi!");
+                break;
+            case 'table_operation_success':
+                alert(message.payload.message || "Masa işlemi başarılı.");
+                break;
+            case 'table_operation_fail':
+                alert(message.payload.error || "Masa işlemi başarısız oldu.");
+                break;
+            case 'waiters_list':
+                if (message.payload && Array.isArray(message.payload.waiters)) {
+                    appState.waiters = message.payload.waiters;
+                    populateWaiterSelectsForManagement();
+                }
+                break;
+            case 'waiter_operation_success':
+                alert(message.payload.message || "Garson işlemi başarılı.");
+                sendMessageToServer('get_waiters_list', {});
+                break;
+            case 'waiter_operation_fail':
+                alert(message.payload.error || "Garson işlemi başarısız oldu.");
+                break;
+            case 'sales_report_data':
+                appState.salesReport = message.payload.sales || [];
+                renderSalesReport();
+                break;
+            case 'activity_log_data':
+                appState.activityLog = message.payload.logs || [];
+                renderActivityLog();
+                break;
+            case 'order_update_fail':
+                alert(`Sipariş güncellenemedi: ${message.payload.error}`);
+                break;
+            case 'manual_order_update_fail':
+                alert(`Manuel ürün eklenemedi: ${message.payload.error}`);
+                break;
+            case 'quick_sale_success':
+                console.log("Hızlı satış sunucuda tamamlandı.");
+                break;
+            case 'quick_sale_fail':
+                alert(`Hızlı satış tamamlanamadı: ${message.payload.error}`);
+                break;
 
-        // ... (Diğer tüm mevcut case'leriniz)
-        case 'main_menu_product_added':
-            alert(message.payload.message || "Yeni ürün menüye eklendi!");
-            break;
-         case 'main_menu_product_updated':
-            alert(message.payload.message || "Ürün menüde güncellendi!");
-            break;
-        case 'table_operation_success':
-            alert(message.payload.message || "Masa işlemi başarılı.");
-            break;
-        case 'table_operation_fail':
-            alert(message.payload.error || "Masa işlemi başarısız oldu.");
-            break;
-        case 'waiters_list':
-            if (message.payload && Array.isArray(message.payload.waiters)) {
-                appState.waiters = message.payload.waiters;
-                populateWaiterSelectsForManagement();
-            }
-            break;
-        case 'waiter_operation_success':
-            alert(message.payload.message || "Garson işlemi başarılı.");
-            sendMessageToServer('get_waiters_list', {});
-            break;
-        case 'waiter_operation_fail':
-            alert(message.payload.error || "Garson işlemi başarısız oldu.");
-            break;
-        case 'sales_report_data':
-            appState.salesReport = message.payload.sales || [];
-            renderSalesReport();
-            break;
-        case 'activity_log_data':
-            appState.activityLog = message.payload.logs || [];
-            renderActivityLog();
-            break;
-        case 'order_update_fail':
-            alert(`Sipariş güncellenemedi: ${message.payload.error}`);
-            break;
-        case 'manual_order_update_fail':
-            alert(`Manuel ürün eklenemedi: ${message.payload.error}`);
-            break;
-        case 'quick_sale_success':
-            console.log("Hızlı satış sunucuda tamamlandı.");
-            // Fiş gösterildikten sonra sepet temizlenir (closeReceiptModalOnly içinde)
-            break;
-        case 'quick_sale_fail':
-            alert(`Hızlı satış tamamlanamadı: ${message.payload.error}`);
-            break;
-
-        default:
-            console.warn("handleServerMessage: Bilinmeyen mesaj tipi:", message.type, "Payload:", message.payload);
-            break;
+            default:
+                console.warn("handleServerMessage: Bilinmeyen mesaj tipi:", message.type, "Payload:", message.payload);
+                break;
+        }
     }
-}
-    function showLoginError(message) {
-        loginError.textContent = message;
-        passwordInput.value = '';
+    function showLoginScreen() {
+        loginModal.classList.add('active');
+        appContainer.classList.add('hidden');
+        orderPageContainer.classList.remove('active');
+        quickSaleModal.classList.remove('active');
+        addProductToMenuModal.classList.remove('active');
+        editProductModal.classList.remove('active');
+        manageTablesModal.classList.remove('active');
+        manageWaitersModal.classList.remove('active');
+        salesReportModal.classList.remove('active');
+        activityLogModal.classList.remove('active');
+        receiptModal.classList.remove('active');
+        confirmCloseTableModal.classList.remove('active');
+        confirmDiscountModal.classList.remove('active');
+        confirmExitAppModal.classList.remove('active');
+        confirmDeleteTableModal.classList.remove('active');
+        confirmDeleteWaiterModal.classList.remove('active');
+        // renderUserLoginStatus(); // Bu, initial_user_status veya active_users_update ile tetiklenir
     }
 
 
 // Bu fonksiyon Android WebView'ın onBackPressed() metodundan çağrılmak üzere tasarlanmıştır.
-window.handleAndroidBackButton = function() {
-    const isActive = (element) => element && (element.classList.contains('active') || (element.style.display !== 'none' && getComputedStyle(element).display !== 'none'));
 
-    // 1. Öncelikle açık bir "onay" veya "çıkış" modalı var mı kontrol et ve kapat
-    if (isActive(confirmExitAppModal)) {
-        confirmExitAppModal.classList.remove('active');
-        console.log("Geri tuşu: Çıkış onayı kapatıldı.");
-        return; // Olay işlendi, uygulama kapanmasın
-    }
-    if (isActive(confirmCloseTableModal)) {
-        confirmCloseTableModal.classList.remove('active');
-        console.log("Geri tuşu: Masa kapatma onayı kapatıldı.");
-        return; // Olay işlendi
-    }
-    if (isActive(confirmDiscountModal)) {
-        confirmDiscountModal.classList.remove('active');
-        console.log("Geri tuşu: İndirim onayı kapatıldı.");
-        return; // Olay işlendi
-    }
-    if (isActive(confirmDeleteTableModal)) {
-        confirmDeleteTableModal.classList.remove('active');
-        console.log("Geri tuşu: Masa silme onayı kapatıldı.");
-        return; // Olay işlendi
-    }
-    if (isActive(confirmDeleteWaiterModal)) {
-        confirmDeleteWaiterModal.classList.remove('active');
-        console.log("Geri tuşu: Garson silme onayı kapatıldı.");
-        return; // Olay işlendi
-    }
-
-    // 2. Aktif olan ana işlem sayfaları veya modalları kontrol et
-    // Bu sayfalar/modallar açıksa, ana ekrana (masalar görünümüne) dön
-    if (isActive(orderPageContainer)) {
-        console.log("Geri tuşu: Sipariş sayfasından ana ekrana dönülüyor.");
-        showTablesView();
-        return; // Olay işlendi
-    }
-    if (isActive(quickSaleModal)) {
-        console.log("Geri tuşu: Hızlı satış modalından ana ekrana dönülüyor.");
-        // closeQuickSaleModalButton normalde showTablesView çağırıyor.
-        // Direkt showTablesView() çağırmak da aynı işi görür.
-        showTablesView();
-        return; // Olay işlendi
-    }
-    if (isActive(addProductToMenuModal)) {
-        console.log("Geri tuşu: Ürün ekleme modalından ana ekrana dönülüyor.");
-        addProductToMenuModal.classList.remove('active'); // Önce modalı kapat
-        showTablesView(); // Sonra ana sayfayı göster
-        return; // Olay işlendi
-    }
-    if (isActive(editProductModal)) {
-        console.log("Geri tuşu: Ürün düzenleme modalından ana ekrana dönülüyor.");
-        editProductModal.classList.remove('active');
-        showTablesView();
-        return; // Olay işlendi
-    }
-    if (isActive(manageTablesModal)) {
-        console.log("Geri tuşu: Masa yönetimi modalından ana ekrana dönülüyor.");
-        manageTablesModal.classList.remove('active');
-        showTablesView();
-        return; // Olay işlendi
-    }
-    if (isActive(manageWaitersModal)) {
-        console.log("Geri tuşu: Garson yönetimi modalından ana ekrana dönülüyor.");
-        manageWaitersModal.classList.remove('active');
-        showTablesView();
-        return; // Olay işlendi
-    }
-    if (isActive(salesReportModal)) {
-        console.log("Geri tuşu: Satış raporu modalından ana ekrana dönülüyor.");
-        salesReportModal.classList.remove('active');
-        showTablesView();
-        return; // Olay işlendi
-    }
-    if (isActive(receiptModal)) {
-        console.log("Geri tuşu: Fiş modalından çıkılıyor.");
-        closeReceiptModalOnly(); // Bu fonksiyon kendi mantığına göre davranır (ya masalara döner ya da sipariş sayfasında kalır)
-                                 // Eğer her durumda ana ekrana dönmesi isteniyorsa showTablesView() çağrılabilir.
-                                 // Mevcut closeReceiptModalOnly, hızlı satış sonrası veya masa boşsa ana ekrana döner.
-        return; // Olay işlendi
-    }
-
-    // 3. Ana ekranda (masalar görünümü) ise çıkış onayı göster
-    // loginModal'ın aktif olmadığını da kontrol etmeliyiz.
-    if (isActive(appContainer) && !isActive(loginModal)) {
-        console.log("Geri tuşu: Ana ekranda, çıkış onayı gösteriliyor.");
-        confirmExitAppModal.classList.add('active');
-        return; // Olay işlendi (popup açıldı)
-    }
-
-    // 4. Login ekranında ise uygulamayı kapatmasına izin ver (Android tarafı halletmeli)
-    // Veya burada da bir çıkış onayı gösterilebilir. Şimdilik varsayılan davranışa (kapanma) bırakıyoruz.
-    if (isActive(loginModal)) {
-        console.log("Geri tuşu: Login ekranında, uygulama kapanabilir.");
-        // Android tarafına uygulamanın kapanabileceğini bildirmek için:
-        if (window.Android && typeof window.Android.closeApp === 'function') {
-            window.Android.closeApp();
-        } else {
-            // Tarayıcıda veya Android arayüzü yoksa, history.back() ile bir önceki sayfaya gitmeye çalışabilir.
-            // Tek sayfa uygulamada bu genellikle bir işe yaramaz veya istenmeyen davranışa yol açar.
-            // Bu durumda, kullanıcıya bir uyarı verilebilir veya hiçbir şey yapılmayabilir.
-            console.warn("Login ekranında geri tuşuna basıldı, ancak 'window.Android.closeApp' bulunamadı.");
+    window.handleAndroidBackButton = function() {
+        const isActive = (element) => element && (element.classList.contains('active') || (element.style.display !== 'none' && getComputedStyle(element).display !== 'none'));
+        const activeModals = [
+            confirmExitAppModal, confirmCloseTableModal, confirmDiscountModal,
+            confirmDeleteTableModal, confirmDeleteWaiterModal, receiptModal,
+            salesReportModal, activityLogModal, manageWaitersModal, manageTablesModal,
+            editProductModal, addProductToMenuModal, quickSaleModal
+        ];
+        for (const modal of activeModals) {
+            if (isActive(modal)) {
+                if (modal === receiptModal) closeReceiptModalOnly();
+                else if (modal === quickSaleModal) { quickSaleModal.classList.remove('active'); showTablesView(); }
+                else modal.classList.remove('active');
+                console.log("Geri tuşu: Modal kapatıldı -", modal.id); return;
+            }
         }
-        return; // Olay (kapatma isteğiyle) işlendi
-    }
-
-    // 5. Hiçbir koşul eşleşmezse (beklenmedik durum), güvenli çıkış yapmayı dene
-    console.log("Geri tuşu: Tanımlanmayan durum, uygulama kapatılmaya çalışılıyor.");
-    if (window.Android && typeof window.Android.closeApp === 'function') {
-        window.Android.closeApp();
-    } else {
-        console.warn("Tanımlanmayan durumda geri tuşuna basıldı, ancak 'window.Android.closeApp' bulunamadı.");
-    }
-};
+        if (isActive(orderPageContainer)) { console.log("Geri tuşu: Sipariş sayfasından ana ekrana dönülüyor."); showTablesView(); return; }
+        if (isActive(appContainer) && !isActive(loginModal)) { console.log("Geri tuşu: Ana ekranda, çıkış onayı gösteriliyor."); confirmExitAppModal.classList.add('active'); return; }
+        if (isActive(loginModal)) {
+            console.log("Geri tuşu: Login ekranında, uygulama kapanabilir.");
+            if (window.Android && typeof window.Android.closeApp === 'function') { window.Android.closeApp(); }
+            else { console.warn("Login ekranında geri tuşuna basıldı, ancak 'window.Android.closeApp' bulunamadı."); }
+            return;
+        }
+        console.log("Geri tuşu: Tanımlanmayan durum, uygulama kapatılmaya çalışılıyor.");
+        if (window.Android && typeof window.Android.closeApp === 'function') { window.Android.closeApp(); }
+        else { console.warn("Tanımlanmayan durumda geri tuşuna basıldı, ancak 'window.Android.closeApp' bulunamadı."); }
+    };
 
 
 
@@ -1358,60 +1274,48 @@ window.handleAndroidBackButton = function() {
 
     // --- Rol Bazlı UI Güncelleme ---
 function updateUIForRole() {
-    if (!appState.user) return;
-    console.log("UI güncelleniyor. Kullanıcı rolü:", appState.user.role, "Kullanıcı adı:", appState.user.username);
+        if (!appState.user) return;
+        console.log("UI güncelleniyor. Kullanıcı rolü:", appState.user.role, "Kullanıcı adı:", appState.user.username);
+        const isCashier = appState.user.role === 'cashier';
+        const isHamza = appState.user.username === 'hamza';
 
-    const isCashier = appState.user.role === 'cashier';
-    const isHamza = appState.user.username === 'hamza';
-
-    // "hamza" sadece Hızlı Satış ve Çıkış yapabilir.
-    if (isHamza) {
-        // Hamza için görünür olacaklar
-        quickSaleButtonContainerTop.classList.remove('hidden');
-        logoutButton.textContent = "Uygulamadan Çık";
-        logoutButton.classList.remove('hidden'); // Logout her zaman görünür olmalı
-
-        // Hamza için gizlenecekler
-        [salesReportButton, addProductToMenuButton, editProductMenuButton, 
-         manageTablesButton, manageWaitersButton, activityLogButton].forEach(el => {
-            if (el) el.classList.add('hidden');
-        });
-        // Masalar gridi tıklanabilir olmamalı veya farklı görünmeli
-        tablesGrid.querySelectorAll('div[id^="masa-"]').forEach(tableCard => {
-            tableCard.style.pointerEvents = 'none'; // Tıklamayı engelle
-            tableCard.style.opacity = '0.6';    // Soluklaştır
-        });
-
-    } else if (isCashier) { // Diğer kasiyerler (bilal, sinan)
-        [manualProductSection, salesReportButton, quickSaleButtonContainerTop,
-         addProductToMenuButton, editProductMenuButton, manageTablesButton,
-         manageWaitersButton, activityLogButton].forEach(el => {
-            if (el) el.classList.remove('hidden');
-         });
-        logoutButton.textContent = "Uygulamadan Çık";
-        logoutButton.classList.remove('hidden');
-        // Masalar gridi tıklanabilir olmalı
-        tablesGrid.querySelectorAll('div[id^="masa-"]').forEach(tableCard => {
-            tableCard.style.pointerEvents = 'auto';
-            tableCard.style.opacity = '1';
-        });
-    } else { // Garsonlar
-        [manualProductSection, salesReportButton, quickSaleButtonContainerTop,
-         addProductToMenuButton, editProductMenuButton, manageTablesButton,
-         manageWaitersButton, activityLogButton, finalizeAndCloseTableButton, 
-         showReceiptButton, applyDiscountButton, applyQuickSaleDiscountButton].forEach(el => {
-            if (el) el.classList.add('hidden');
-        });
-        logoutButton.textContent = "Uygulamadan Çık";
-        logoutButton.classList.remove('hidden');
-        // Masalar gridi tıklanabilir olmalı
-        tablesGrid.querySelectorAll('div[id^="masa-"]').forEach(tableCard => {
-            tableCard.style.pointerEvents = 'auto';
-            tableCard.style.opacity = '1';
-        });
+        if (isHamza) {
+            quickSaleButtonContainerTop.classList.remove('hidden');
+            logoutButton.textContent = "Uygulamadan Çık";
+            logoutButton.classList.remove('hidden');
+            [salesReportButton, addProductToMenuButton, editProductMenuButton, 
+             manageTablesButton, manageWaitersButton, activityLogButton].forEach(el => {
+                if (el) el.classList.add('hidden');
+            });
+            tablesGrid.querySelectorAll('div[id^="masa-"]').forEach(tableCard => {
+                tableCard.style.pointerEvents = 'none'; tableCard.style.opacity = '0.6';
+            });
+        } else if (isCashier) {
+            [manualProductSection, salesReportButton, quickSaleButtonContainerTop,
+             addProductToMenuButton, editProductMenuButton, manageTablesButton,
+             manageWaitersButton, activityLogButton].forEach(el => {
+                if (el) el.classList.remove('hidden');
+             });
+            logoutButton.textContent = "Uygulamadan Çık";
+            logoutButton.classList.remove('hidden');
+            tablesGrid.querySelectorAll('div[id^="masa-"]').forEach(tableCard => {
+                tableCard.style.pointerEvents = 'auto'; tableCard.style.opacity = '1';
+            });
+        } else { // Garson
+            [manualProductSection, salesReportButton, quickSaleButtonContainerTop,
+             addProductToMenuButton, editProductMenuButton, manageTablesButton,
+             manageWaitersButton, activityLogButton, finalizeAndCloseTableButton, 
+             showReceiptButton, applyDiscountButton, applyQuickSaleDiscountButton].forEach(el => {
+                if (el) el.classList.add('hidden');
+            });
+            logoutButton.textContent = "Uygulamadan Çık";
+            logoutButton.classList.remove('hidden');
+            tablesGrid.querySelectorAll('div[id^="masa-"]').forEach(tableCard => {
+                tableCard.style.pointerEvents = 'auto'; tableCard.style.opacity = '1';
+            });
+        }
+        // Sipariş sayfasındaki butonların yönetimi renderOrderPageForTable içinde yapılıyor.
     }
-    // Sipariş sayfasındaki butonların yönetimi renderOrderPageForTable içinde yapılıyor.
-}
 
 
     // --- Render Fonksiyonları ---
@@ -1423,26 +1327,19 @@ function updateUIForRole() {
         console.log("[renderTables] Fonksiyon çağrıldı. Masa sayısı:", appState.tables ? appState.tables.length : 0);
         tablesGrid.innerHTML = '';
         if (!appState.tables || appState.tables.length === 0) {
-             tablesGrid.innerHTML = '<p class="col-span-full text-center text-gray-500">Masa bilgisi bekleniyor...</p>';
-             return;
+             tablesGrid.innerHTML = '<p class="col-span-full text-center text-gray-500">Masa bilgisi bekleniyor...</p>'; return;
         }
         appState.tables.forEach(table => {
             const tableCard = document.createElement('div');
             const isDolu = table.status === 'dolu' && table.order && table.order.length > 0;
+            let baseColorClass = 'bg-gray-400 hover:bg-gray-500';
+            if (table.type === 'kamelya') baseColorClass = 'bg-yellow-600 hover:bg-yellow-700';
+            else if (table.type === 'bahce') baseColorClass = 'bg-green-400 hover:bg-green-500';
+            else if (table.type === 'özel') baseColorClass = 'bg-purple-500 hover:bg-purple-600';
 
-            let baseColorClass = 'bg-gray-400 hover:bg-gray-500'; // Varsayılan
-            if (table.type === 'kamelya') {
-                baseColorClass = 'bg-yellow-600 hover:bg-yellow-700';
-            } else if (table.type === 'bahce') {
-                baseColorClass = 'bg-green-400 hover:bg-green-500';
-            }
 
             tableCard.className = `p-4 rounded-lg shadow-md cursor-pointer transition-all duration-200 ease-in-out transform hover:scale-105 ${isDolu ? 'bg-red-400 hover:bg-red-500' : baseColorClass}`;
-
-            let waiterInfoHtml = '';
-            if (isDolu && table.waiterUsername) {
-                waiterInfoHtml = `<p class="text-xs text-white text-center mt-1">Garson: ${table.waiterUsername}</p>`;
-            }
+            let waiterInfoHtml = isDolu && table.waiterUsername ? `<p class="text-xs text-white text-center mt-1">Garson: ${table.waiterUsername}</p>` : '';
             tableCard.innerHTML = `
                 <h3 class="text-xl font-semibold text-white text-center">${table.name}</h3>
                 <p class="text-sm text-white text-center capitalize">${isDolu ? 'Dolu' : 'Boş'}</p>
@@ -1454,44 +1351,25 @@ function updateUIForRole() {
         });
     }
 
-function renderUserLoginStatus() {
-    if (!cashierStatusList || !waiterStatusList || !appState.allUsers) return;
-
-    cashierStatusList.innerHTML = '';
-    waiterStatusList.innerHTML = '';
-
-    const allUsers = Array.isArray(appState.allUsers) ? appState.allUsers : [];
-    const activeUsernames = Array.isArray(appState.activeUsernames) ? appState.activeUsernames : [];
-
-    const cashiers = allUsers.filter(user => user.role === 'cashier');
-    const waiters = allUsers.filter(user => user.role === 'waiter');
-
-    const createStatusItem = (user) => {
-        const isActive = activeUsernames.includes(user.username);
-        const itemDiv = document.createElement('div');
-        itemDiv.className = 'user-status-item';
-        itemDiv.innerHTML = `
-            <span class="status-indicator ${isActive ? 'active' : 'inactive'}"></span>
-            <span>${user.username}</span>
-        `;
-        return itemDiv;
-    };
-
-    if (cashiers.length === 0) {
-        cashierStatusList.innerHTML = '<p class="text-xs text-gray-500">Tanımlı kasa hesabı yok.</p>';
-    } else {
-        cashiers.forEach(user => cashierStatusList.appendChild(createStatusItem(user)));
+    function renderUserLoginStatus() {
+        if (!cashierStatusList || !waiterStatusList) return;
+        cashierStatusList.innerHTML = ''; waiterStatusList.innerHTML = '';
+        const allUsers = Array.isArray(appState.allUsers) ? appState.allUsers : [];
+        const activeUsernames = Array.isArray(appState.activeUsernames) ? appState.activeUsernames : [];
+        const cashiers = allUsers.filter(user => user.role === 'cashier');
+        const waiters = allUsers.filter(user => user.role === 'waiter');
+        const createStatusItem = (user) => {
+            const isActive = activeUsernames.includes(user.username);
+            const itemDiv = document.createElement('div');
+            itemDiv.className = 'user-status-item';
+            itemDiv.innerHTML = `<span class="status-indicator ${isActive ? 'active' : 'inactive'}"></span><span>${user.username}</span>`;
+            return itemDiv;
+        };
+        if (cashiers.length === 0) cashierStatusList.innerHTML = '<p class="text-xs text-gray-500">Tanımlı kasa yok.</p>';
+        else cashiers.forEach(user => cashierStatusList.appendChild(createStatusItem(user)));
+        if (waiters.length === 0) waiterStatusList.innerHTML = '<p class="text-xs text-gray-500">Tanımlı garson yok.</p>';
+        else waiters.forEach(user => waiterStatusList.appendChild(createStatusItem(user)));
     }
-
-    if (waiters.length === 0) {
-        waiterStatusList.innerHTML = '<p class="text-xs text-gray-500">Tanımlı garson hesabı yok.</p>';
-    } else {
-        waiters.forEach(user => waiterStatusList.appendChild(createStatusItem(user)));
-    }
-}
-
-
-
 
 
     // Ürün Seçim Gridini Oluşturur (Hem normal sipariş hem hızlı satış için)
