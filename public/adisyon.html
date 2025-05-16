@@ -1564,76 +1564,93 @@ function renderUserLoginStatus() {
 
 
     // Ürün Seçim Gridini Oluşturur (Hem normal sipariş hem hızlı satış için)
-    function renderProductGrid(targetGridElement = orderPageProductGrid, forQuickSale = false) {
-        targetGridElement.innerHTML = '';
-        const categories = {};
-        const categorySectionColors = {
-            "ET - TAVUK": "category-section-bg-ET-TAVUK",
-            "ATIŞTIRMALIK": "category-section-bg-ATIŞTIRMALIK",
-            "TATLI": "category-section-bg-TATLI",
-            "İÇECEK": "category-section-bg-İÇECEK",
-            "ÇORBA": "category-section-bg-ÇORBA",
-        };
-        const productCardColors = {
-            "ET - TAVUK": "product-card-bg-ET-TAVUK",
-            "ATIŞTIRMALIK": "product-card-bg-ATIŞTIRMALIK",
-            "TATLI": "product-card-bg-TATLI",
-            "İÇECEK": "product-card-bg-İÇECEK",
-            "ÇORBA": "product-card-bg-ÇORBA",
-        };
-        const defaultSectionColor = "category-section-bg-default";
-        const defaultCardColor = "product-card-bg-default";
+function renderProductGrid(targetGridElement, forQuickSale = false) {
+    targetGridElement.innerHTML = '';
+    if (!appState.products || appState.products.length === 0) {
+        targetGridElement.innerHTML = '<p class="text-gray-500 text-center py-4">Ürün listesi boş veya yüklenemedi.</p>';
+        return;
+    }
 
+    const categories = {};
+    // Kategori renk tanımlamaları (mevcut kodunuzdaki gibi)
+    const categorySectionColors = {
+        "ET - TAVUK": "category-section-bg-ET-TAVUK", "ATIŞTIRMALIK": "category-section-bg-ATIŞTIRMALIK",
+        "TATLI": "category-section-bg-TATLI", "İÇECEK": "category-section-bg-İÇECEK",
+        "ÇORBA": "category-section-bg-ÇORBA", "DİĞER": "category-section-bg-DİĞER"
+    };
+    const productCardColors = {
+        "ET - TAVUK": "product-card-bg-ET-TAVUK", "ATIŞTIRMALIK": "product-card-bg-ATIŞTIRMALIK",
+        "TATLI": "product-card-bg-TATLI", "İÇECEK": "product-card-bg-İÇECEK",
+        "ÇORBA": "product-card-bg-ÇORBA", "DİĞER": "product-card-bg-DİĞER"
+    };
+    const defaultSectionColor = "category-section-bg-default";
+    const defaultCardColor = "product-card-bg-default";
 
-        appState.products.forEach(product => {
-             const categoryKey = product.category;
-            if (!categories[categoryKey]) {
-                categories[categoryKey] = [];
+    appState.products.forEach(product => {
+        const categoryKey = product.category || 'DİĞER';
+        if (!categories[categoryKey]) categories[categoryKey] = [];
+        categories[categoryKey].push(product);
+    });
+
+    const categoryOrder = ["ÇORBA", "ET - TAVUK", "ATIŞTIRMALIK", "İÇECEK", "TATLI", "DİĞER"];
+    const sortedCategoryNames = Object.keys(categories).sort((a, b) => {
+        const indexA = categoryOrder.indexOf(a); const indexB = categoryOrder.indexOf(b);
+        if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+        if (indexA !== -1) return -1; if (indexB !== -1) return 1;
+        return a.localeCompare(b, 'tr');
+    });
+
+    sortedCategoryNames.forEach(category => {
+        const categorySection = document.createElement('div');
+        const sectionBgColorClass = categorySectionColors[sanitizeCategoryForCSS(category)] || defaultSectionColor;
+        categorySection.className = `mb-6 p-4 rounded-lg ${sectionBgColorClass}`;
+        const categoryTitle = document.createElement('h4');
+        categoryTitle.className = 'text-lg font-semibold mb-3 text-gray-700 border-b border-gray-400 pb-1';
+        categoryTitle.textContent = category;
+        categorySection.appendChild(categoryTitle);
+        const productGridDiv = document.createElement('div');
+        productGridDiv.className = forQuickSale ? 'grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2' : 'grid grid-cols-2 md:grid-cols-3 gap-3';
+
+        categories[category].sort((a, b) => a.name.localeCompare(b.name, 'tr')).forEach(product => {
+            const card = document.createElement('div');
+            const cardBgColorClass = productCardColors[sanitizeCategoryForCSS(category)] || defaultCardColor;
+            card.className = `product-card ${cardBgColorClass} ${forQuickSale ? 'quick-sale-card' : ''}`;
+            card.dataset.productId = product.id;
+            card.dataset.productName = product.name; // Ürün adını da sakla
+            card.dataset.productPrice = product.price; // Orijinal fiyatı sakla
+            card.dataset.productCategory = product.category || 'DİĞER';
+            if (product.isByWeight) {
+                card.dataset.isByWeight = "true";
+                card.dataset.unitPrice = product.unitPrice; // Gram başına fiyat
             }
-            categories[categoryKey].push(product);
-        });
 
-        const categoryOrder = ["ÇORBA", "ET - TAVUK", "ATIŞTIRMALIK", "İÇECEK", "TATLI"];
-        const sortedCategories = Object.keys(categories).sort((a, b) => {
-            const indexA = categoryOrder.indexOf(a);
-            const indexB = categoryOrder.indexOf(b);
-            if (indexA === -1 && indexB === -1) return a.localeCompare(b, 'tr');
-            if (indexA === -1) return 1;
-            if (indexB === -1) return -1;
-            return indexA - indexB;
-        });
-
-        sortedCategories.forEach(category => {
-            if (!categoryOrder.includes(category)) return;
-
-            const categorySection = document.createElement('div');
-            const sectionBgColorClass = categorySectionColors[category] || defaultSectionColor;
-            categorySection.className = `mb-6 p-4 rounded-lg ${sectionBgColorClass}`;
-
-            const categoryTitle = document.createElement('h4');
-            categoryTitle.className = 'text-lg font-semibold mb-3 text-gray-700 border-b border-gray-400 pb-1';
-            categoryTitle.textContent = category;
-            categorySection.appendChild(categoryTitle);
-
-            const productGrid = document.createElement('div');
-            productGrid.className = forQuickSale ? 'grid grid-cols-3 sm:grid-cols-5 gap-2' : 'grid grid-cols-2 md:grid-cols-3 gap-3';
-
-            categories[category].sort((a, b) => a.name.localeCompare(b, 'tr')).forEach(product => {
-                const card = document.createElement('div');
-                const cardBgColorClass = productCardColors[category] || defaultCardColor;
-                card.className = `product-card ${cardBgColorClass} ${forQuickSale ? 'quick-sale-card' : ''}`;
-                card.dataset.productId = product.id;
-
-                if (forQuickSale) {
+            if (forQuickSale) {
+                // Hızlı satışta ağırlıklı ürünler şimdilik desteklenmiyor, normal ekleme gibi davranır
+                // Veya hızlı satışta ağırlıklı ürünler için farklı bir UI/mantık eklenebilir.
+                // Bu örnekte, hızlı satışta ağırlıklı ürünler için özel bir işlem yapılmıyor.
+                card.innerHTML = `
+                    <h5>${product.name}</h5>
+                    ${product.isByWeight ? `<p class="text-xs text-gray-500 text-center">(${formatPrice(product.price)}/KG)</p>` : ''}
+                    <button data-product-id="${product.id}" class="add-item-from-card-btn bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-2 rounded w-full mt-auto">Ekle</button>
+                `;
+            } else { // Normal Sipariş Sayfası
+                if (product.isByWeight) {
                     card.innerHTML = `
-                        <h5 class="font-semibold text-gray-800 text-center">${product.name}</h5>
-                        <button data-for-quick-sale="true" class="add-item-from-card-btn bg-blue-500 hover:bg-blue-600 text-white text-sm font-semibold py-2 px-2 rounded w-full mt-2">Ekle</button>
+                        <div>
+                            <h5>${product.name}</h5>
+                            <p class="product-price text-xs text-gray-600">${formatPrice(product.price)} / KG (Gram Başına: ${formatPrice(product.unitPrice)})</p>
+                        </div>
+                        <div class="mt-2">
+                            <input type="number" placeholder="Gramaj (örn: 250)" class="weight-input border border-gray-300 rounded text-sm p-2 w-full mb-2" min="1">
+                            <input type="text" placeholder="Açıklama..." class="description-input border border-gray-300 rounded text-xs p-1 w-full mb-2">
+                        </div>
+                        <button data-product-id="${product.id}" class="add-weighted-item-btn bg-green-500 hover:bg-green-600 text-white text-xs font-semibold py-1 px-2 rounded w-full mt-2">Gramajlı Ekle</button>
                     `;
                 } else {
                     card.innerHTML = `
                         <div>
-                            <h5 class="font-semibold text-sm text-gray-800">${product.name}</h5>
-                            <p class="product-price text-xs text-gray-600">${formatPrice(product.price)}</p>
+                            <h5>${product.name}</h5>
+                            <p class="product-price">${formatPrice(product.price)}</p>
                         </div>
                         <div class="mt-2">
                             <input type="text" placeholder="Açıklama..." class="description-input border border-gray-300 rounded text-xs p-1 w-full mb-2">
@@ -1643,56 +1660,113 @@ function renderUserLoginStatus() {
                                 <button class="quantity-increase bg-green-200 hover:bg-green-300 text-green-700 font-bold rounded">+</button>
                             </div>
                         </div>
-                        <button data-for-quick-sale="false" class="add-item-from-card-btn bg-blue-500 hover:bg-blue-600 text-white text-xs font-semibold py-1 px-2 rounded w-full mt-2">Ekle</button>
+                        <button data-product-id="${product.id}" class="add-item-from-card-btn bg-blue-500 hover:bg-blue-600 text-white text-xs font-semibold py-1 px-2 rounded w-full mt-2">Siparişe Ekle</button>
                     `;
                 }
-                productGrid.appendChild(card);
-            });
-
-            categorySection.appendChild(productGrid);
-            targetGridElement.appendChild(categorySection);
+            }
+            productGridDiv.appendChild(card);
         });
-        addProductCardEventListeners(forQuickSale);
-    }
+        categorySection.appendChild(productGridDiv);
+        targetGridElement.appendChild(categorySection);
+    });
+    addProductCardEventListeners(targetGridElement, forQuickSale); // Event listener'ları en sonda ata
+}
+
 
     // Ürün kartlarındaki butonlara event listener ekler
-    function addProductCardEventListeners(forQuickSale = false) {
-        const selector = forQuickSale ? '#quickSaleProductGrid .product-card' : '#orderPageProductGrid .product-card';
-        document.querySelectorAll(selector).forEach(card => {
-            const addBtn = card.querySelector('.add-item-from-card-btn');
+   function addProductCardEventListeners(targetGridElement, forQuickSale) {
+    // Standart ürün ekleme butonu
+    targetGridElement.querySelectorAll('.add-item-from-card-btn').forEach(addBtn => {
+        addBtn.addEventListener('click', () => {
+            const card = addBtn.closest('.product-card');
             const productId = card.dataset.productId;
-
             if (forQuickSale) {
-                addBtn.addEventListener('click', () => {
-                    addProductToQuickSale(productId, 1, '');
-                });
+                // Hızlı satışta ağırlıklı ürünler için özel bir mantık yoksa, direkt ekle
+                // Veya burada da bir gramaj sorma popup'ı açılabilir. Şimdilik normal ekleme.
+                const product = appState.products.find(p => String(p.id) === String(productId));
+                if (product && product.isByWeight) {
+                    // Hızlı satışta ağırlıklı ürünler için varsayılan bir miktar (örn: 1 porsiyon = 250gr gibi)
+                    // veya kullanıcıya sorulacak bir prompt eklenebilir.
+                    // Şimdilik KG fiyatıyla 1 adet ekliyor gibi davranacak veya hata verecek.
+                    // Bu kısmın hızlı satış senaryosuna göre daha detaylı düşünülmesi gerekir.
+                    // Bu örnekte, hızlı satışta ağırlıklı ürünler için özel bir işlem yok.
+                    // Normal ürün gibi eklenmeye çalışılacak.
+                    alert("Ağırlıklı ürünler hızlı satışta bu şekilde doğrudan eklenemez. Lütfen normal sipariş ekranını kullanın veya kasiyere danışın.");
+                    return;
+                }
+                addProductToQuickSale(productId, 1, '');
             } else {
                 const quantityInput = card.querySelector('.quantity-input');
-                const decreaseBtn = card.querySelector('.quantity-decrease');
-                const increaseBtn = card.querySelector('.quantity-increase');
                 const descriptionInput = card.querySelector('.description-input');
-
-                decreaseBtn.addEventListener('click', () => {
-                    let currentQuantity = parseInt(quantityInput.value);
-                    if (currentQuantity > 1) {
-                        quantityInput.value = currentQuantity - 1;
-                    }
-                });
-
-                increaseBtn.addEventListener('click', () => {
-                    quantityInput.value = parseInt(quantityInput.value) + 1;
-                });
-
-                addBtn.addEventListener('click', () => {
-                    const descValue = descriptionInput ? descriptionInput.value.trim() : '';
-                    addProductFromCard(productId, parseInt(quantityInput.value), descValue);
-                    quantityInput.value = 1;
-                    if (descriptionInput) descriptionInput.value = '';
-                });
+                const quantity = parseInt(quantityInput.value) || 1;
+                const description = descriptionInput ? descriptionInput.value.trim() : '';
+                addProductToOrder(productId, quantity, description, false); // isCustomItem = false
+                if (quantityInput) quantityInput.value = 1;
+                if (descriptionInput) descriptionInput.value = '';
             }
         });
-    }
+    });
 
+    // Ağırlıklı ürün ekleme butonu (Sadece normal sipariş sayfasında)
+    if (!forQuickSale) {
+        targetGridElement.querySelectorAll('.add-weighted-item-btn').forEach(addBtn => {
+            addBtn.addEventListener('click', () => {
+                const card = addBtn.closest('.product-card');
+                const productId = card.dataset.productId;
+                const unitPrice = parseFloat(card.dataset.unitPrice);
+                const originalProductName = card.dataset.productName;
+                const category = card.dataset.productCategory;
+
+                const weightInput = card.querySelector('.weight-input');
+                const descriptionInput = card.querySelector('.description-input');
+                const weightInGrams = parseInt(weightInput.value);
+                const description = descriptionInput ? descriptionInput.value.trim() : '';
+
+                if (isNaN(weightInGrams) || weightInGrams <= 0) {
+                    alert("Lütfen geçerli bir gramaj girin.");
+                    weightInput.focus();
+                    return;
+                }
+                if (isNaN(unitPrice) || unitPrice <= 0) {
+                    alert("Ürün birim fiyatı hatalı. Lütfen yöneticiye bildirin.");
+                    return;
+                }
+
+                const calculatedPrice = unitPrice * weightInGrams;
+                const itemNameWithWeight = `${originalProductName} (${weightInGrams} gr)`;
+
+                addProductToOrder(
+                    productId,      // Orijinal ürün ID'si
+                    weightInGrams,  // Quantity olarak gramajı gönder
+                    description,
+                    true,           // isCustomItem = true
+                    itemNameWithWeight, // Özel isim
+                    calculatedPrice,    // Hesaplanmış fiyat
+                    category,       // Kategori
+                    productId       // originalProductId
+                );
+
+                weightInput.value = ''; // Gramaj inputunu temizle
+                if (descriptionInput) descriptionInput.value = '';
+            });
+        });
+
+        // Adet artırma/azaltma butonları (sadece standart ürünler için)
+        targetGridElement.querySelectorAll('.quantity-decrease').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const input = btn.nextElementSibling;
+                let val = parseInt(input.value);
+                if (val > 1) input.value = val - 1;
+            });
+        });
+        targetGridElement.querySelectorAll('.quantity-increase').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const input = btn.previousElementSibling;
+                input.value = parseInt(input.value) + 1;
+            });
+        });
+    }
+}
     // Ürün kartından normal sipariş ekleme fonksiyonu
     function addProductFromCard(productId, quantity, description) {
          const product = appState.products.find(p => p.id === parseInt(productId));
@@ -1710,6 +1784,65 @@ function renderUserLoginStatus() {
         resetCurrentOrderDiscount();
     }
 
+function addProductToOrder(productId, quantity, description, isCustomItem = false, customName = null, customPrice = null, customCategory = null, originalProdId = null) {
+    if (!appState.currentTableId) {
+        alert("Lütfen önce bir masa seçin.");
+        return;
+    }
+
+    const product = appState.products.find(p => String(p.id) === String(productId));
+
+    if (!isCustomItem && !product) { // Standart ürün bulunamadıysa
+        alert("Ürün bulunamadı veya geçersiz ürün ID'si.");
+        return;
+    }
+    if (quantity <= 0) {
+        alert("Miktar 0'dan büyük olmalıdır.");
+        return;
+    }
+
+    const payload = {
+        tableId: appState.currentTableId,
+        quantity: quantity,
+        description: description,
+        isCustomItem: isCustomItem
+    };
+
+    if (isCustomItem) {
+        payload.name = customName; // örn: "ET DÖNER - KG (250 gr)"
+        payload.priceAtOrder = customPrice; // Hesaplanmış fiyat
+        payload.category = customCategory || (product ? product.category : 'DİĞER');
+        payload.productId = originalProdId; // Orijinal ürünün ID'si (veya KG ürününün ID'si)
+                                            // Sunucu tarafında bu ID'yi loglama veya referans için kullanabilirsiniz.
+                                            // Eğer bu ID ile bir ürün yoksa, sunucu null veya özel bir ID atayabilir.
+        payload.originalProductId = originalProdId; // Ağırlıklı ürünün orijinal ID'sini sakla
+    } else if (product) { // Standart ürün
+        payload.productId = parseInt(product.id);
+        payload.name = product.name; // Sunucuya standart ismi ve fiyatı gönder
+        payload.priceAtOrder = product.price;
+        payload.category = product.category;
+    } else {
+        alert("Siparişe eklenecek ürün bilgisi bulunamadı.");
+        return;
+    }
+    
+    // Ağırlıklı ürünler için özel bir flag daha eklenebilir (sunucunun bilmesi için)
+    if (product && product.isByWeight && isCustomItem) {
+        payload.isByWeightEntry = true; // Bu bir ağırlıklı ürün girişi olduğunu belirtir
+    }
+
+
+    showLoading("Sipariş ekleniyor...");
+    sendMessageToServer('add_order_item', payload);
+    resetCurrentOrderDiscount();
+}
+
+
+
+
+
+
+    
     // Hızlı satış sepetine ürün ekleme
     function addProductToQuickSale(productId, quantity, description) {
         const product = appState.products.find(p => p.id === parseInt(productId));
