@@ -74,12 +74,9 @@ let users = [
 ];
 
 let currentProductId = 1000;
-// GÜNCELLENMİŞ Ürünler
 let products = [
-    // ÇORBA
     { id: ++currentProductId, name: "KELLE PAÇA ÇORBA", price: 60.00, category: "ÇORBA" },
     { id: ++currentProductId, name: "TARHANA ÇORBA", price: 50.00, category: "ÇORBA" },
-    // ET - TAVUK
     { id: ++currentProductId, name: "YAPRAK D. EKMEK ARASI", price: 200.00, category: "ET - TAVUK" },
     { id: ++currentProductId, name: "YAPRAK D. PORS.", price: 250.00, category: "ET - TAVUK" },
     { id: ++currentProductId, name: "ET DÖNER EKMEK ARASI", price: 150.00, category: "ET - TAVUK" },
@@ -95,7 +92,6 @@ let products = [
     { id: ++currentProductId, name: "TAVUK (PİLİÇ) ÇEVİRME", price: 250.00, category: "ET - TAVUK" },
     { id: ++currentProductId, name: "ET DÖNER - KG", price: 1300.00, category: "ET - TAVUK", isByWeight: true, unitPrice: 1.30 },
     { id: ++currentProductId, name: "TAVUK DÖNER - KG", price: 800.00, category: "ET - TAVUK", isByWeight: true, unitPrice: 0.80 },
-    // ATIŞTIRMALIK
     { id: ++currentProductId, name: "AYVALIK TOSTU", price: 120.00, category: "ATIŞTIRMALIK" },
     { id: ++currentProductId, name: "HAMBURGER", price: 150.00, category: "ATIŞTIRMALIK" },
     { id: ++currentProductId, name: "PİDE ÇEŞİTLERİ", price: 120.00, category: "ATIŞTIRMALIK" },
@@ -105,7 +101,6 @@ let products = [
     { id: ++currentProductId, name: "ÇİĞ KÖFTE KG (MARUL-LİMON)", price: 300.00, category: "ATIŞTIRMALIK", isByWeight: true, unitPrice: 0.30 },
     { id: ++currentProductId, name: "YAĞLI GÖZLEME", price: 50.00, category: "ATIŞTIRMALIK" },
     { id: ++currentProductId, name: "İÇLİ GÖZLEME", price: 60.00, category: "ATIŞTIRMALIK" },
-    // İÇECEK
     { id: ++currentProductId, name: "OSMANLI ŞERBETİ - 1 LT", price: 75.00, category: "İÇECEK" },
     { id: ++currentProductId, name: "LİMONATA - 1 LT", price: 75.00, category: "İÇECEK" },
     { id: ++currentProductId, name: "AYRAN", price: 10.00, category: "İÇECEK" },
@@ -122,7 +117,6 @@ let products = [
     { id: ++currentProductId, name: "TROPİKAL - NAR-I ŞAHANE", price: 75.00, category: "İÇECEK" },
     { id: ++currentProductId, name: "TROPİKAL - MAVİ TURUNÇ", price: 75.00, category: "İÇECEK" },
     { id: ++currentProductId, name: "TROPİKAL - ELMA RÜYASI", price: 75.00, category: "İÇECEK" },
-    // TATLI
     { id: ++currentProductId, name: "EV BAKLAVASI - KG", price: 400.00, category: "TATLI", isByWeight: true, unitPrice: 0.40 },
     { id: ++currentProductId, name: "EV BAKLAVASI - PORSİYON", price: 75.00, category: "TATLI" },
     { id: ++currentProductId, name: "AŞURE - 500 GRAM", price: 100.00, category: "TATLI" },
@@ -212,9 +206,9 @@ function broadcastWaitersList(requestingWs) {
 function calculateTableTotal(order) {
     return order.reduce((sum, item) => {
         const itemPrice = parseFloat(item.priceAtOrder) || 0;
-        if (item.isCustomItem || item.isByWeightEntry) { // Ağırlıklı/custom için priceAtOrder zaten toplam fiyat
+        if (item.isCustomItem || item.isByWeightEntry) {
             return sum + itemPrice;
-        } else { // Standart ürün
+        } else {
             const itemQuantity = parseInt(item.quantity, 10) || 0;
             return sum + (itemPrice * itemQuantity);
         }
@@ -327,7 +321,7 @@ wss.on('connection', (ws, req) => {
                  } else { ws.send(JSON.stringify({ type: 'error', payload: { message: 'Eksik oturum bilgisi.' } }));}
                 break;
 
-            case 'get_all_users_and_active_status':
+            case 'get_all_users_and_active_status': // Bu case artık var
                 const activeUsernames = getActiveUsernames();
                 const allUsersForStatus = users.map(u => ({ username: u.username, role: u.role }));
                 ws.send(JSON.stringify({ type: 'all_users_and_active_status_data', payload: { allUsers: allUsersForStatus, activeUsernames: activeUsernames } }));
@@ -362,28 +356,28 @@ wss.on('connection', (ws, req) => {
 
                 if (payload.isCustomItem) {
                     productToAddDetails = {
-                        id: receivedProductId,
-                        name: payload.name,
-                        price: payload.priceAtOrder, // Bu, istemcide hesaplanmış toplam fiyat olmalı
+                        id: receivedProductId, 
+                        name: payload.name, 
+                        price: payload.priceAtOrder, 
                         category: payload.category,
-                        isByWeight: !!payload.isByWeightEntry
+                        isByWeight: !!payload.isByWeightEntry 
                     };
-                } else {
+                } else { 
                     if (isNaN(receivedProductId)) { ws.send(JSON.stringify({ type: 'order_update_fail', payload: { error: 'Geçersiz ürün IDsi.' } })); return; }
                     productToAddDetails = currentProductsList.find(p => p.id === receivedProductId);
                 }
 
                 if (tableToAdd && productToAddDetails && typeof payload.quantity === 'number' && payload.quantity > 0) {
                     const orderItem = {
-                        productId: productToAddDetails.id,
-                        name: productToAddDetails.name,
+                        productId: productToAddDetails.id, 
+                        name: productToAddDetails.name,    
                         category: productToAddDetails.category,
-                        quantity: payload.quantity, // Standart için adet, ağırlıklı için gramaj
-                        priceAtOrder: productToAddDetails.price, // Ağırlıklı için hesaplanmış toplam fiyat, standart için birim fiyat
+                        quantity: payload.quantity,        
+                        priceAtOrder: productToAddDetails.price, 
                         description: payload.description || '',
                         waiterUsername: currentUserInfo.username,
                         timestamp: Date.now(),
-                        isCustomItem: !!payload.isCustomItem,
+                        isCustomItem: !!payload.isCustomItem, 
                         isByWeightEntry: !!payload.isByWeightEntry,
                         originalProductId: payload.isCustomItem ? payload.originalProductId : null
                     };
@@ -399,8 +393,8 @@ wss.on('connection', (ws, req) => {
 
                     if (existingItemIndex > -1) {
                         tableToAdd.order[existingItemIndex].quantity += orderItem.quantity;
-                        tableToAdd.order[existingItemIndex].waiterUsername = currentUserInfo.username;
-                        tableToAdd.order[existingItemIndex].timestamp = Date.now();
+                        tableToAdd.order[existingItemIndex].waiterUsername = currentUserInfo.username; 
+                        tableToAdd.order[existingItemIndex].timestamp = Date.now(); 
                     } else {
                         tableToAdd.order.push(orderItem);
                     }
@@ -420,11 +414,11 @@ wss.on('connection', (ws, req) => {
                 const tableForManual = tables.find(t => t.id === payload.tableId);
                 if (tableForManual && payload.name && typeof payload.price === 'number' && payload.price >= 0 && typeof payload.quantity === 'number' && payload.quantity > 0) {
                     const manualOrderItem = {
-                         productId: null,
+                         productId: null, 
                          name: payload.name, category: payload.category || 'Diğer', quantity: payload.quantity,
                          priceAtOrder: payload.price, description: payload.description || '',
                          waiterUsername: currentUserInfo.username, timestamp: Date.now(),
-                         isCustomItem: true, isByWeightEntry: false
+                         isCustomItem: true, isByWeightEntry: false 
                      };
                     tableForManual.order.push(manualOrderItem);
                     tableForManual.total = calculateTableTotal(tableForManual.order);
@@ -441,8 +435,8 @@ wss.on('connection', (ws, req) => {
                  if (!currentUserInfo) { ws.send(JSON.stringify({ type: 'error', payload: { message: 'Giriş yapmalısınız.' } })); return; }
                 const tableToRemoveFrom = tables.find(t => t.id === payload.tableId);
                 if (tableToRemoveFrom) {
-                    const productIdToRemove = payload.productId;
-                    const nameToRemove = payload.name;
+                    const productIdToRemove = payload.productId; 
+                    const nameToRemove = payload.name; 
                     const descriptionToRemove = payload.description || '';
                     let removedItemDetails = null;
 
@@ -484,39 +478,32 @@ wss.on('connection', (ws, req) => {
                     const closingTime = new Date();
                     const tableName = tableToClose.name;
                     const processedBy = tableToClose.waiterUsername || currentUserInfo.username;
-                    const orderDetailsForLog = { ...tableToClose };
+                    const orderDetailsForLog = { ...tableToClose }; 
                     const clientDB = await pool.connect();
                     try {
                         await clientDB.query('BEGIN');
                         for (const item of tableToClose.order) {
                             let itemPriceForLog = parseFloat(item.priceAtOrder) || 0;
-                            let quantityForLog = parseInt(item.quantity, 10) || 0; // Standart için adet, ağırlıklı için gramaj
+                            let quantityForLog = parseInt(item.quantity, 10) || 0; 
                             let totalItemPriceForLog = itemPriceForLog * quantityForLog;
 
-                            if (item.isCustomItem || item.isByWeightEntry) {
-                                totalItemPriceForLog = itemPriceForLog; // priceAtOrder zaten toplam fiyat
-                                // Birim fiyatı loglamak için (eğer orijinal ürün bilgisi varsa)
-                                const originalProduct = products.find(p => p.id === item.originalProductId);
+                            if (item.isCustomItem || item.isByWeightEntry) { 
+                                totalItemPriceForLog = itemPriceForLog; 
+                                const originalProduct = products.find(p=>p.id === item.originalProductId);
                                 if (originalProduct && originalProduct.unitPrice) {
-                                    itemPriceForLog = originalProduct.unitPrice * quantityForLog; // Bu satır yanlış, unitPrice zaten birim fiyat
-                                    // Aslında log için birim fiyatı saklamak daha iyi olabilir.
-                                    // Şimdilik, priceAtOrder'ı toplam, quantity'yi gramaj olarak kaydediyoruz.
-                                    // sales_log'daki item_price'ı birim fiyat olarak düşünelim.
-                                    itemPriceForLog = originalProduct.unitPrice;
-                                } else if (item.isCustomItem && !item.isByWeightEntry) { // Manuel fiyatlı, adetli
-                                     itemPriceForLog = item.priceAtOrder; // Bu zaten birim fiyat olmalı
-                                     totalItemPriceForLog = itemPriceForLog * quantityForLog;
+                                    itemPriceForLog = originalProduct.unitPrice; 
+                                } else if (item.isCustomItem && !item.isByWeightEntry) { 
+                                     itemPriceForLog = item.priceAtOrder / quantityForLog; // Manuel adetli ürün için birim fiyatı geri hesapla
+                                     if (isNaN(itemPriceForLog) || !isFinite(itemPriceForLog)) itemPriceForLog = item.priceAtOrder; // Bölme hatası olursa
                                 }
                             }
-
-
                             await clientDB.query(
                                 `INSERT INTO sales_log (item_name, item_price, quantity, total_item_price, category, description, waiter_username, table_name, sale_timestamp)
                                  VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
                                 [ item.name || 'Bilinmeyen Ürün',
-                                  (item.isCustomItem || item.isByWeightEntry) && item.originalProductId ? (products.find(p=>p.id === item.originalProductId)?.unitPrice || item.priceAtOrder) : item.priceAtOrder, // Birim fiyat
-                                  quantityForLog, // Adet veya Gramaj
-                                  totalItemPriceForLog, // Satırın toplam fiyatı
+                                  itemPriceForLog, 
+                                  quantityForLog, 
+                                  totalItemPriceForLog, 
                                   item.category || 'Diğer', item.description || null,
                                   item.waiterUsername || processedBy, tableName, closingTime ]
                             );
@@ -544,18 +531,18 @@ wss.on('connection', (ws, req) => {
                 if (payload && payload.items && Array.isArray(payload.items) && payload.items.length > 0) {
                     const quickSaleTimestamp = new Date();
                     const processedByQuickSale = payload.cashierUsername || currentUserInfo.username;
-                    const customerNameForLog = payload.customerName || null;
+                    const customerNameForLog = payload.customerName || null; 
                     const clientQuickSaleDB = await pool.connect();
                     try {
                         await clientQuickSaleDB.query('BEGIN');
                         const currentProductsListQuickSale = fetchProductsFromDB();
                         let totalQuickSaleAmount = 0;
                         for (const item of payload.items) {
-                            let itemPrice = parseFloat(item.priceAtOrder) || 0; // Ağırlıklı için bu zaten hesaplanmış toplam
-                            let itemQuantity = parseInt(item.quantity, 10) || 0; // Ağırlıklı için gramaj
+                            let itemPrice = parseFloat(item.priceAtOrder) || 0; 
+                            let itemQuantity = parseInt(item.quantity, 10) || 0; 
                             let totalItemPrice = itemPrice * itemQuantity;
 
-                            if (item.isCustomItem || item.isByWeightEntry) {
+                            if (item.isCustomItem || item.isByWeightEntry) { 
                                 totalItemPrice = itemPrice;
                             }
                             totalQuickSaleAmount += totalItemPrice;
@@ -566,8 +553,8 @@ wss.on('connection', (ws, req) => {
                                 `INSERT INTO sales_log (item_name, item_price, quantity, total_item_price, category, description, waiter_username, table_name, sale_timestamp, customer_name)
                                  VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
                                 [ item.name || (productDetails ? productDetails.name : 'Bilinmeyen Ürün'),
-                                  (item.isCustomItem || item.isByWeightEntry) && item.originalProductId && productDetails ? productDetails.unitPrice : item.priceAtOrder, // Birim fiyat
-                                  itemQuantity, // Adet veya Gramaj
+                                  (item.isCustomItem || item.isByWeightEntry) && item.originalProductId && productDetails ? productDetails.unitPrice : item.priceAtOrder,
+                                  itemQuantity, 
                                   totalItemPrice,
                                   category, item.description || null, processedByQuickSale,
                                   'Hızlı Satış', quickSaleTimestamp, customerNameForLog ]
