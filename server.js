@@ -253,7 +253,8 @@ wss.on('connection', (ws, req) => {
     console.log(`Yeni bir istemci bağlandı. IP: ${clientIpAddress || 'Bilinmiyor'}`);
     const activeUsernamesOnConnect = getActiveUsernames();
     const allUsersForStatusOnConnect = users.map(u => ({ username: u.username, role: u.role }));
-    ws.send(JSON.stringify({ type: 'initial_user_status', payload: { activeUsernames: activeUsernamesOnConnect, allUsers: allUsersForStatusOnConnect } }));
+    ws.send(JSON.stringify({ type: 'all_users_and_active_status_data', payload: { allUsers: allUsersForStatusOnConnect, activeUsernames: activeUsernamesOnConnect } }));
+
 
     ws.on('message', async (messageAsString) => {
         let message;
@@ -309,15 +310,18 @@ wss.on('connection', (ws, req) => {
                          clients.set(ws, { ...payload.user, ip: clientIpAddress });
                          currentUserInfo = clients.get(ws);
                          const memProductsReauth = fetchProductsFromDB();
+                         ws.send(JSON.stringify({ type: 'reauth_success', payload: { user: currentUserInfo } }));
                          ws.send(JSON.stringify({ type: 'tables_update', payload: { tables: tables } }));
                          ws.send(JSON.stringify({ type: 'products_update', payload: { products: memProductsReauth } }));
                          console.log(`Kullanıcı oturumu sürdürdü: ${currentUserInfo.username} (IP: ${currentUserInfo.ip})`);
                          if(oldClientTerminatedReauth) broadcastActiveUsersList();
-                     } else { ws.send(JSON.stringify({ type: 'error', payload: { message: 'Geçersiz oturum bilgisi.' } }));}
+                     } else {
+                         ws.send(JSON.stringify({ type: 'error', payload: { message: 'Geçersiz oturum bilgisi. Lütfen tekrar giriş yapın.' } }));
+                     }
                  } else { ws.send(JSON.stringify({ type: 'error', payload: { message: 'Eksik oturum bilgisi.' } }));}
                 break;
 
-            case 'get_all_users_and_active_status': // BU CASE EKLENDİ
+            case 'get_all_users_and_active_status':
                 const activeUsernames = getActiveUsernames();
                 const allUsersForStatus = users.map(u => ({ username: u.username, role: u.role }));
                 ws.send(JSON.stringify({ type: 'all_users_and_active_status_data', payload: { allUsers: allUsersForStatus, activeUsernames: activeUsernames } }));
@@ -341,7 +345,7 @@ wss.on('connection', (ws, req) => {
                 }
                 ws.send(JSON.stringify({ type: 'users_list', payload: { users: users.map(u => ({id: u.id, username: u.username, role: u.role})) } }));
                 break;
-
+            
             case 'add_order_item':
                 if (!currentUserInfo) { ws.send(JSON.stringify({ type: 'error', payload: { message: 'Giriş yapmalısınız.' } })); return; }
                 const tableToAdd = tables.find(t => t.id === payload.tableId);
