@@ -711,82 +711,81 @@
 <script>
     // *** YEREL TEST İÇİN URL ***
     // Render'a yüklerken burayı 'wss://<UYGULAMA_ADINIZ>.onrender.com' olarak değiştirin.
-    const WEBSOCKET_URL = 'wss://emet-adisyon.onrender.com';
     let socket;
 
     // adisyon.html içindeki <script> bloğunda, appState tanımı:
 
 const appState = {
-    user: null,
-    products: [ // Sunucudaki en son menü ile senkronize edildi
-        // ÇORBA
-        { id: 1001, name: "KELLE PAÇA ÇORBA", price: 60.00, category: "ÇORBA" },
-        { id: 1002, name: "TARHANA ÇORBA", price: 50.00, category: "ÇORBA" },
-        // ET - TAVUK
-        { id: 1003, name: "YAPRAK D. EKMEK ARASI", price: 200.00, category: "ET - TAVUK" },
-        { id: 1004, name: "YAPRAK D. PORS.", price: 250.00, category: "ET - TAVUK" },
-        { id: 1005, name: "ET DÖNER EKMEK ARASI", price: 150.00, category: "ET - TAVUK" },
-        { id: 1006, name: "ET DÖNER PORSİYON", price: 175.00, category: "ET - TAVUK" },
-        { id: 1007, name: "TAVUK DÖNER EKMEK ARASI", price: 130.00, category: "ET - TAVUK" },
-        { id: 1008, name: "TAVUK DÖNER PORSİYON", price: 150.00, category: "ET - TAVUK" },
-        { id: 1009, name: "KÖFTE EKMEK", price: 130.00, category: "ET - TAVUK" },
-        { id: 1010, name: "KÖFTE PORSİYON", price: 150.00, category: "ET - TAVUK" },
-        { id: 1011, name: "KUZU ŞİŞ", price: 150.00, category: "ET - TAVUK" },
-        { id: 1012, name: "ADANA ŞİŞ", price: 150.00, category: "ET - TAVUK" },
-        { id: 1013, name: "PİRZOLA - 4 ADET", price: 250.00, category: "ET - TAVUK" },
-        { id: 1014, name: "TAVUK FAJİTA", price: 200.00, category: "ET - TAVUK" },
-        { id: 1015, name: "TAVUK (PİLİÇ) ÇEVİRME", price: 250.00, category: "ET - TAVUK" },
-        { id: 1016, name: "ET DÖNER - KG", price: 1300.00, category: "ET - TAVUK", isByWeight: true, unitPrice: 1.30 },
-        { id: 1017, name: "TAVUK DÖNER - KG", price: 800.00, category: "ET - TAVUK", isByWeight: true, unitPrice: 0.80 },
-        // ATIŞTIRMALIK
-        { id: 1018, name: "AYVALIK TOSTU", price: 120.00, category: "ATIŞTIRMALIK" },
-        { id: 1019, name: "HAMBURGER", price: 150.00, category: "ATIŞTIRMALIK" },
-        { id: 1020, name: "PİDE ÇEŞİTLERİ", price: 120.00, category: "ATIŞTIRMALIK" },
-        { id: 1021, name: "PİZZA KARIŞIK (ORTA BOY)", price: 150.00, category: "ATIŞTIRMALIK" },
-        { id: 1022, name: "PİZZA KARIŞIK (BÜYÜK BOY)", price: 200.00, category: "ATIŞTIRMALIK" },
-        { id: 1023, name: "LAHMACUN", price: 75.00, category: "ATIŞTIRMALIK" },
-        { id: 1024, name: "ÇİĞ KÖFTE KG (MARUL-LİMON)", price: 300.00, category: "ATIŞTIRMALIK", isByWeight: true, unitPrice: 0.30 },
-        { id: 1025, name: "YAĞLI GÖZLEME", price: 50.00, category: "ATIŞTIRMALIK" },
-        { id: 1026, name: "İÇLİ GÖZLEME", price: 60.00, category: "ATIŞTIRMALIK" },
-        // İÇECEK
-        { id: 1027, name: "OSMANLI ŞERBETİ - 1 LT", price: 75.00, category: "İÇECEK" },
-        { id: 1028, name: "LİMONATA - 1 LT", price: 75.00, category: "İÇECEK" },
-        { id: 1029, name: "AYRAN", price: 10.00, category: "İÇECEK" },
-        { id: 1030, name: "SU", price: 10.00, category: "İÇECEK" },
-        { id: 1031, name: "ÇAY", price: 10.00, category: "İÇECEK" },
-        { id: 1032, name: "SOĞUK ÇAY ÇEŞİTLERİ", price: 25.00, category: "İÇECEK" },
-        { id: 1033, name: "TAMEK MEYVE SUYU", price: 25.00, category: "İÇECEK" },
-        { id: 1034, name: "MEYVELİ MADEN SUYU", price: 25.00, category: "İÇECEK" },
-        { id: 1035, name: "NİĞDE GAZOZU", price: 25.00, category: "İÇECEK" },
-        { id: 1036, name: "ŞALGAM", price: 25.00, category: "İÇECEK" },
-        { id: 1037, name: "SADE MADEN SUYU", price: 15.00, category: "İÇECEK" },
-        { id: 1038, name: "TROPİKAL - ÇİLEK KOKUSU", price: 75.00, category: "İÇECEK" },
-        { id: 1039, name: "TROPİKAL - KARPUZELLA", price: 75.00, category: "İÇECEK" },
-        { id: 1040, name: "TROPİKAL - NAR-I ŞAHANE", price: 75.00, category: "İÇECEK" },
-        { id: 1041, name: "TROPİKAL - MAVİ TURUNÇ", price: 75.00, category: "İÇECEK" },
-        { id: 1042, name: "TROPİKAL - ELMA RÜYASI", price: 75.00, category: "İÇECEK" },
-        // TATLI
-        { id: 1043, name: "EV BAKLAVASI - KG", price: 400.00, category: "TATLI", isByWeight: true, unitPrice: 0.40 },
-        { id: 1044, name: "EV BAKLAVASI - PORSİYON", price: 75.00, category: "TATLI" },
-        { id: 1045, name: "AŞURE - 500 GRAM", price: 100.00, category: "TATLI" },
-        { id: 1046, name: "HÖŞMERİM - 500 GR", price: 100.00, category: "TATLI" },
-        { id: 1047, name: "WAFFLE", price: 150.00, category: "TATLI" },
-        { id: 1048, name: "DİĞER PASTA ÇEŞİTLERİ", price: 50.00, category: "TATLI" }
-    ],
-    tables: [],
-    currentTableId: null,
-    salesReport: [],
-    activityLog: [],
-    currentQuickSaleOrder: [],
-    currentOrderOriginalTotal: 0,
-    currentOrderDiscountAmount: 0,
-    waiters: [],
-    allUsers: [],
-    activeUsernames: []
-};
+        user: null,
+        products: [ // Sunucudaki en son menü ile senkronize edildi (başlangıç/yedek değer)
+            // ÇORBA
+            { id: 1001, name: "KELLE PAÇA ÇORBA", price: 60.00, category: "ÇORBA" },
+            { id: 1002, name: "TARHANA ÇORBA", price: 50.00, category: "ÇORBA" },
+            // ET - TAVUK
+            { id: 1003, name: "YAPRAK D. EKMEK ARASI", price: 200.00, category: "ET - TAVUK" },
+            { id: 1004, name: "YAPRAK D. PORS.", price: 250.00, category: "ET - TAVUK" },
+            { id: 1005, name: "ET DÖNER EKMEK ARASI", price: 150.00, category: "ET - TAVUK" },
+            { id: 1006, name: "ET DÖNER PORSİYON", price: 175.00, category: "ET - TAVUK" },
+            { id: 1007, name: "TAVUK DÖNER EKMEK ARASI", price: 130.00, category: "ET - TAVUK" },
+            { id: 1008, name: "TAVUK DÖNER PORSİYON", price: 150.00, category: "ET - TAVUK" },
+            { id: 1009, name: "KÖFTE EKMEK", price: 130.00, category: "ET - TAVUK" },
+            { id: 1010, name: "KÖFTE PORSİYON", price: 150.00, category: "ET - TAVUK" },
+            { id: 1011, name: "KUZU ŞİŞ", price: 150.00, category: "ET - TAVUK" },
+            { id: 1012, name: "ADANA ŞİŞ", price: 150.00, category: "ET - TAVUK" },
+            { id: 1013, name: "PİRZOLA - 4 ADET", price: 250.00, category: "ET - TAVUK" },
+            { id: 1014, name: "TAVUK FAJİTA", price: 200.00, category: "ET - TAVUK" },
+            { id: 1015, name: "TAVUK (PİLİÇ) ÇEVİRME", price: 250.00, category: "ET - TAVUK" },
+            { id: 1016, name: "ET DÖNER - KG", price: 1300.00, category: "ET - TAVUK", isByWeight: true, unitPrice: 1.30 },
+            { id: 1017, name: "TAVUK DÖNER - KG", price: 800.00, category: "ET - TAVUK", isByWeight: true, unitPrice: 0.80 },
+            // ATIŞTIRMALIK
+            { id: 1018, name: "AYVALIK TOSTU", price: 120.00, category: "ATIŞTIRMALIK" },
+            { id: 1019, name: "HAMBURGER", price: 150.00, category: "ATIŞTIRMALIK" },
+            { id: 1020, name: "PİDE ÇEŞİTLERİ", price: 120.00, category: "ATIŞTIRMALIK" },
+            { id: 1021, name: "PİZZA KARIŞIK (ORTA BOY)", price: 150.00, category: "ATIŞTIRMALIK" },
+            { id: 1022, name: "PİZZA KARIŞIK (BÜYÜK BOY)", price: 200.00, category: "ATIŞTIRMALIK" },
+            { id: 1023, name: "LAHMACUN", price: 75.00, category: "ATIŞTIRMALIK" },
+            { id: 1024, name: "ÇİĞ KÖFTE KG (MARUL-LİMON)", price: 300.00, category: "ATIŞTIRMALIK", isByWeight: true, unitPrice: 0.30 },
+            { id: 1025, name: "YAĞLI GÖZLEME", price: 50.00, category: "ATIŞTIRMALIK" },
+            { id: 1026, name: "İÇLİ GÖZLEME", price: 60.00, category: "ATIŞTIRMALIK" },
+            // İÇECEK
+            { id: 1027, name: "OSMANLI ŞERBETİ - 1 LT", price: 75.00, category: "İÇECEK" },
+            { id: 1028, name: "LİMONATA - 1 LT", price: 75.00, category: "İÇECEK" },
+            { id: 1029, name: "AYRAN", price: 10.00, category: "İÇECEK" },
+            { id: 1030, name: "SU", price: 10.00, category: "İÇECEK" },
+            { id: 1031, name: "ÇAY", price: 10.00, category: "İÇECEK" },
+            { id: 1032, name: "SOĞUK ÇAY ÇEŞİTLERİ", price: 25.00, category: "İÇECEK" },
+            { id: 1033, name: "TAMEK MEYVE SUYU", price: 25.00, category: "İÇECEK" },
+            { id: 1034, name: "MEYVELİ MADEN SUYU", price: 25.00, category: "İÇECEK" },
+            { id: 1035, name: "NİĞDE GAZOZU", price: 25.00, category: "İÇECEK" },
+            { id: 1036, name: "ŞALGAM", price: 25.00, category: "İÇECEK" },
+            { id: 1037, name: "SADE MADEN SUYU", price: 15.00, category: "İÇECEK" },
+            { id: 1038, name: "TROPİKAL - ÇİLEK KOKUSU", price: 75.00, category: "İÇECEK" },
+            { id: 1039, name: "TROPİKAL - KARPUZELLA", price: 75.00, category: "İÇECEK" },
+            { id: 1040, name: "TROPİKAL - NAR-I ŞAHANE", price: 75.00, category: "İÇECEK" },
+            { id: 1041, name: "TROPİKAL - MAVİ TURUNÇ", price: 75.00, category: "İÇECEK" },
+            { id: 1042, name: "TROPİKAL - ELMA RÜYASI", price: 75.00, category: "İÇECEK" },
+            // TATLI
+            { id: 1043, name: "EV BAKLAVASI - KG", price: 400.00, category: "TATLI", isByWeight: true, unitPrice: 0.40 },
+            { id: 1044, name: "EV BAKLAVASI - PORSİYON", price: 75.00, category: "TATLI" },
+            { id: 1045, name: "AŞURE - 500 GRAM", price: 100.00, category: "TATLI" },
+            { id: 1046, name: "HÖŞMERİM - 500 GR", price: 100.00, category: "TATLI" },
+            { id: 1047, name: "WAFFLE", price: 150.00, category: "TATLI" },
+            { id: 1048, name: "DİĞER PASTA ÇEŞİTLERİ", price: 50.00, category: "TATLI" }
+        ],
+        tables: [],
+        currentTableId: null,
+        salesReport: [],
+        activityLog: [],
+        currentQuickSaleOrder: [],
+        currentOrderOriginalTotal: 0,
+        currentOrderDiscountAmount: 0,
+        waiters: [],
+        allUsers: [],
+        activeUsernames: []
+    };
 
     // --- DOM Elementleri ---
-    const loadingOverlay = document.getElementById('loadingOverlay');
+   const loadingOverlay = document.getElementById('loadingOverlay');
     const loadingMessage = document.getElementById('loadingMessage');
     const loginModal = document.getElementById('loginModal');
     const usernameInput = document.getElementById('usernameInput');
@@ -797,17 +796,18 @@ const appState = {
     const activeUserNameSpan = document.getElementById('activeUserName');
     const activeUserRoleSpan = document.getElementById('activeUserRole');
     const logoutButton = document.getElementById('logoutButton');
+
     const salesReportButton = document.getElementById('salesReportButton');
+    const activityLogButton = document.getElementById('activityLogButton'); // TANIMLANDI
     const quickSaleEntryButton = document.getElementById('quickSaleEntryButton');
     const quickSaleButtonContainerTop = document.getElementById('quickSaleButtonContainerTop');
     const addProductToMenuButton = document.getElementById('addProductToMenuButton');
     const editProductMenuButton = document.getElementById('editProductMenuButton');
     const manageTablesButton = document.getElementById('manageTablesButton');
     const manageWaitersButton = document.getElementById('manageWaitersButton');
+
     const tablesGrid = document.getElementById('tablesGrid');
     const productsListRef = document.getElementById('productsListRef');
-    const quickSaleCustomerNameInput = document.getElementById('quickSaleCustomerName'); // Yeni eklendi
-
 
     const orderPageContainer = document.getElementById('orderPageContainer');
     const orderPageTableName = document.getElementById('orderPageTableName');
@@ -828,10 +828,10 @@ const appState = {
     const manualProductQuantity = document.getElementById('manualProductQuantity');
     const manualProductDescription = document.getElementById('manualProductDescription');
     const addManualProductButton = document.getElementById('addManualProductButton');
+    
     const cashierStatusList = document.getElementById('cashierStatusList');
     const waiterStatusList = document.getElementById('waiterStatusList');
 
-    // Hızlı Satış Modalı Elementleri
     const quickSaleModal = document.getElementById('quickSaleModal');
     const closeQuickSaleModalButton = document.getElementById('closeQuickSaleModalButton');
     const quickSaleProductGrid = document.getElementById('quickSaleProductGrid');
@@ -840,9 +840,10 @@ const appState = {
     const quickSaleDiscountInfo = document.getElementById('quickSaleDiscountInfo');
     const applyQuickSaleDiscountButton = document.getElementById('applyQuickSaleDiscountButton');
     const completeQuickSaleButton = document.getElementById('completeQuickSaleButton');
-
+    const quickSaleCustomerNameInput = document.getElementById('quickSaleCustomerName');
 
     const receiptModal = document.getElementById('receiptModal');
+    const receiptModalContent = document.getElementById('receiptModalContent');
     const receiptDate = document.getElementById('receiptDate');
     const receiptTableName = document.getElementById('receiptTableName');
     const receiptWaiterName = document.getElementById('receiptWaiterName');
@@ -854,17 +855,13 @@ const appState = {
     const printReceiptButton = document.getElementById('printReceiptButton');
     const closeReceiptModalOnlyButton = document.getElementById('closeReceiptModalOnlyButton');
 
-    // Masa Kapatma Onay Modalı Elementleri
     const confirmCloseTableModal = document.getElementById('confirmCloseTableModal');
     const confirmCloseTableYesButton = document.getElementById('confirmCloseTableYesButton');
     const confirmCloseTableNoButton = document.getElementById('confirmCloseTableNoButton');
-
-    // Personel İndirimi Onay Modalı Elementleri
     const confirmDiscountModal = document.getElementById('confirmDiscountModal');
     const confirmDiscountYesButton = document.getElementById('confirmDiscountYesButton');
     const confirmDiscountNoButton = document.getElementById('confirmDiscountNoButton');
 
-    // Menüye Ürün Ekleme Modalı Elementleri
     const addProductToMenuModal = document.getElementById('addProductToMenuModal');
     const closeAddProductToMenuModalButton = document.getElementById('closeAddProductToMenuModalButton');
     const newProductNameInput = document.getElementById('newProductName');
@@ -873,7 +870,6 @@ const appState = {
     const newProductCategoryInput = document.getElementById('newProductCategoryInput');
     const saveNewProductButton = document.getElementById('saveNewProductButton');
 
-    // Ürün Düzenleme Modalı Elementleri
     const editProductModal = document.getElementById('editProductModal');
     const closeEditProductModalButton = document.getElementById('closeEditProductModalButton');
     const selectProductToEdit = document.getElementById('selectProductToEdit');
@@ -885,7 +881,6 @@ const appState = {
     const editProductCategoryInput = document.getElementById('editProductCategoryInput');
     const saveEditedProductButton = document.getElementById('saveEditedProductButton');
 
-    // Masa Yönetimi Modalı Elementleri
     const manageTablesModal = document.getElementById('manageTablesModal');
     const closeManageTablesModalButton = document.getElementById('closeManageTablesModalButton');
     const newTableNameInput = document.getElementById('newTableNameInput');
@@ -900,7 +895,6 @@ const appState = {
     const confirmDeleteTableYesButton = document.getElementById('confirmDeleteTableYesButton');
     const confirmDeleteTableNoButton = document.getElementById('confirmDeleteTableNoButton');
 
-    // Garson Yönetimi Modalı Elementleri
     const manageWaitersModal = document.getElementById('manageWaitersModal');
     const closeManageWaitersModalButton = document.getElementById('closeManageWaitersModalButton');
     const newWaiterUsernameInput = document.getElementById('newWaiterUsernameInput');
@@ -916,11 +910,9 @@ const appState = {
     const confirmDeleteWaiterYesButton = document.getElementById('confirmDeleteWaiterYesButton');
     const confirmDeleteWaiterNoButton = document.getElementById('confirmDeleteWaiterNoButton');
 
-    // Uygulamadan Çıkış Onay Modalı
     const confirmExitAppModal = document.getElementById('confirmExitAppModal');
     const confirmExitAppYesButton = document.getElementById('confirmExitAppYesButton');
     const confirmExitAppNoButton = document.getElementById('confirmExitAppNoButton');
-
 
     const salesReportModal = document.getElementById('salesReportModal');
     const salesReportModalContent = document.getElementById('salesReportModalContent');
@@ -931,175 +923,100 @@ const appState = {
     const refreshSalesReportButton = document.getElementById('refreshSalesReportButton');
     const printSalesReportButton = document.getElementById('printSalesReportButton');
 
+    const activityLogModal = document.getElementById('activityLogModal');
+    const activityLogModalContent = document.getElementById('activityLogModalContent');
+    const closeActivityLogModalButton = document.getElementById('closeActivityLogModalButton');
+    const activityLogTableContainer = document.getElementById('activityLogTableContainer');
+    const refreshActivityLogButton = document.getElementById('refreshActivityLogButton');
+
+
 
     // --- Yardımcı Fonksiyonlar ---
-    function formatPrice(price) {
-        if (typeof price !== 'number' || isNaN(price)) {
-            return '0 ₺';
-        }
+   function formatPrice(price) {
+        if (typeof price !== 'number' || isNaN(price)) { return '0 ₺'; }
         const formatted = price.toFixed(2).replace('.', ',');
-        if (formatted.endsWith(',00')) {
-            return formatted.substring(0, formatted.length - 3) + ' ₺';
-        }
+        if (formatted.endsWith(',00')) { return formatted.substring(0, formatted.length - 3) + ' ₺'; }
         return formatted + ' ₺';
     }
 
-
-    // Timestamp'i okunabilir tarih/saat formatına çevirir
-function formatTimestamp(timestampInput) {
-    if (!timestampInput) {
-        return '-';
-    }
-
-    let initialDate;
-
-    if (typeof timestampInput === 'number') {
-        initialDate = new Date(timestampInput);
-    } else if (timestampInput instanceof Date) {
-        initialDate = timestampInput;
-    } else if (typeof timestampInput === 'string') {
-        const parts = timestampInput.match(/^(\d{2})\.(\d{2})\.(\d{4}) (\d{2}):(\d{2}):(\d{2})$/);
-        if (parts) {
-            const year = parseInt(parts[3], 10);
-            const monthIndex = parseInt(parts[2], 10) - 1;
-            const day = parseInt(parts[1], 10);
-            const hour = parseInt(parts[4], 10);
-            const minute = parseInt(parts[5], 10);
-            const second = parseInt(parts[6], 10);
-
-            // Assume "DD.MM.YYYY HH:MM:SS" string components are UTC
-            const utcTimestamp = Date.UTC(year, monthIndex, day, hour, minute, second);
-            initialDate = new Date(utcTimestamp);
-        } else {
-            // For other string formats like ISO 8601
-            initialDate = new Date(timestampInput);
+    function formatTimestamp(timestampInput) {
+        if (!timestampInput) { return '-'; }
+        let initialDate;
+        if (typeof timestampInput === 'number') { initialDate = new Date(timestampInput); }
+        else if (timestampInput instanceof Date) { initialDate = timestampInput; }
+        else if (typeof timestampInput === 'string') {
+            const parts = timestampInput.match(/^(\d{2})\.(\d{2})\.(\d{4}) (\d{2}):(\d{2}):(\d{2})$/);
+            if (parts) {
+                const year = parseInt(parts[3], 10); const monthIndex = parseInt(parts[2], 10) - 1;
+                const day = parseInt(parts[1], 10); const hour = parseInt(parts[4], 10);
+                const minute = parseInt(parts[5], 10); const second = parseInt(parts[6], 10);
+                const utcTimestamp = Date.UTC(year, monthIndex, day, hour, minute, second);
+                initialDate = new Date(utcTimestamp);
+            } else { initialDate = new Date(timestampInput); }
+        } else { console.warn("formatTimestamp: Bilinmeyen tip:", timestampInput); return '-'; }
+        if (!initialDate || isNaN(initialDate.getTime())) { console.warn("formatTimestamp: Geçersiz tarih:", timestampInput); return '-'; }
+        try {
+            const options = { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Istanbul', hour12: false };
+            return new Intl.DateTimeFormat('tr-TR', options).format(initialDate).replace(',', '');
+        } catch (e) {
+            console.error("Intl.DateTimeFormat hatası:", e);
+            const day = String(initialDate.getDate()).padStart(2, '0'); const month = String(initialDate.getMonth() + 1).padStart(2, '0');
+            const year = initialDate.getFullYear(); const hours = String(initialDate.getHours()).padStart(2, '0');
+            const minutes = String(initialDate.getMinutes()).padStart(2, '0');
+            return `${day}.${month}.${year} ${hours}:${minutes}`;
         }
-    } else {
-        console.warn("formatTimestamp: Bilinmeyen zaman damgası türü:", timestampInput);
-        return '-';
     }
-
-    if (!initialDate || isNaN(initialDate.getTime())) {
-        console.warn("formatTimestamp: Geçersiz tarih oluşturuldu. Giriş:", timestampInput);
-        return '-';
-    }
-
-    try {
-        const options = {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit',
-            timeZone: 'Europe/Istanbul',
-            hour12: false
-        };
-        let formattedDate = new Intl.DateTimeFormat('tr-TR', options).format(initialDate);
-        return formattedDate.replace(',', '');
-    } catch (e) {
-        console.error("Intl.DateTimeFormat ile tarih formatlama hatası:", e);
-        // Fallback: Try to manually construct TRT from UTC date
-        // initialDate is UTC. Add 3 hours for TRT.
-        const trtEquivalentMilliseconds = initialDate.getTime() + (3 * 60 * 60 * 1000);
-        const trtDate = new Date(trtEquivalentMilliseconds);
-
-        // Format trtDate using its UTC methods to get the TRT components
-        const day = String(trtDate.getUTCDate()).padStart(2, '0');
-        const month = String(trtDate.getUTCMonth() + 1).padStart(2, '0');
-        const year = trtDate.getUTCFullYear();
-        const hours = String(trtDate.getUTCHours()).padStart(2, '0');
-        const minutes = String(trtDate.getUTCMinutes()).padStart(2, '0');
-        return `${day}.${month}.${year} ${hours}:${minutes}`;
-    }
-}
-
-
     
-    function getCurrentFormattedDate() {
-        const now = new Date();
-        return `${String(now.getDate()).padStart(2, '0')}.${String(now.getMonth() + 1).padStart(2, '0')}.${now.getFullYear()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-    }
-
-    function showLoading(message = "İşleniyor...") {
-        loadingMessage.textContent = message;
-        loadingOverlay.classList.add('active');
-    }
-
-    function hideLoading() {
-        loadingOverlay.classList.remove('active');
-    }
+    function getCurrentFormattedDate() { return formatTimestamp(new Date()); }
+    function showLoading(message = "İşleniyor...") { loadingMessage.textContent = message; loadingOverlay.classList.add('active'); }
+    function hideLoading() { loadingOverlay.classList.remove('active'); }
 
     // Kategori adı için CSS sınıfı üreten fonksiyon
-    function sanitizeCategoryForCSS(categoryName) {
+  function sanitizeCategoryForCSS(categoryName) {
         if (!categoryName) return 'default';
         const turkishMap = { 'İ': 'I', 'ı': 'i', 'Ö': 'O', 'ö': 'o', 'Ü': 'U', 'ü': 'u', 'Ş': 'S', 'ş': 's', 'Ğ': 'G', 'ğ': 'g', 'Ç': 'C', 'ç': 'c' };
-        return categoryName
-            .replace(/[İıÖöÜüŞşĞğÇç]/g, match => turkishMap[match] || match)
-            .replace(/&/g, 'AND')
-            .replace(/\s+/g, '-')
-            .replace(/[^a-zA-Z0-9-]/g, '')
-            .toUpperCase();
+        return categoryName.replace(/[İıÖöÜüŞşĞğÇç]/g, match => turkishMap[match] || match).replace(/\s-\s/g, '-').replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-]/g, '').toUpperCase();
     }
 
-
     // --- WebSocket Fonksiyonları ---
+   const WEBSOCKET_URL = 'wss://emet-adisyon.onrender.com';
     function connectWebSocket() {
         showLoading("Sunucuya bağlanılıyor...");
+        console.log("WebSocket bağlantısı kuruluyor:", WEBSOCKET_URL);
         socket = new WebSocket(WEBSOCKET_URL);
 
-            socket.onopen = () => {
-        console.log("WebSocket bağlantısı kuruldu.");
-        hideLoading();
-        
-        // YENİ EKLENEN/AKTİF EDİLEN SATIR:
-        // Sunucudan tüm kullanıcıları ve aktif durumlarını iste
-        sendMessageToServer('get_all_users_and_active_status', {}); 
-
-        const storedUser = localStorage.getItem('adisyonUser');
-        if (storedUser) {
-            try {
-                appState.user = JSON.parse(storedUser);
-                console.log("Oturum bulundu:", appState.user.username);
-                // UI güncellemeleri reauthenticate veya login_success yanıtından sonra yapılmalı.
-                // Sunucu reauthenticate mesajına products_update ve tables_update ile cevap verir.
-                sendMessageToServer('reauthenticate', { user: appState.user });
-            } catch (e) {
-                console.error("localStorage'dan kullanıcı verisi okunamadı:", e);
-                localStorage.removeItem('adisyonUser');
-                showLoginScreen(); // Hata durumunda login ekranını göster
-                // renderUserLoginStatus(); // Bu çağrı, sunucudan gelecek initial_user_status mesajıyla tetiklenir.
+        socket.onopen = () => {
+            console.log("WebSocket bağlantısı kuruldu.");
+            hideLoading();
+            sendMessageToServer('get_all_users_and_active_status', {});
+            const storedUser = localStorage.getItem('adisyonUser');
+            if (storedUser) {
+                try {
+                    const parsedUser = JSON.parse(storedUser);
+                    console.log("Oturum bulundu, yeniden kimlik doğrulanıyor:", parsedUser.username);
+                    sendMessageToServer('reauthenticate', { user: parsedUser });
+                } catch (e) {
+                    console.error("localStorage'dan kullanıcı verisi okunamadı:", e);
+                    localStorage.removeItem('adisyonUser');
+                    showLoginScreen();
+                }
+            } else {
+                showLoginScreen();
             }
-        } else {
-            showLoginScreen(); // Kullanıcı yoksa login ekranını göster
-            // renderUserLoginStatus(); // Bu çağrı, sunucudan gelecek initial_user_status mesajıyla tetiklenir.
-        }
-    };
+        };
 
         socket.onmessage = (event) => {
             console.log("RAW Sunucudan mesaj alındı:", event.data);
             let message;
-            try {
-                message = JSON.parse(event.data);
-            } catch (error) {
-                console.error("JSON.parse BAŞARISIZ!", "Hata:", error, "Alınan Veri:", event.data);
-                return;
-            }
+            try { message = JSON.parse(event.data); }
+            catch (error) { console.error("JSON.parse BAŞARISIZ!", "Hata:", error, "Alınan Veri:", event.data); return; }
             handleServerMessage(message);
         };
-
-        socket.onerror = (error) => {
-            console.error("WebSocket hatası:", error);
-            showLoginError("Sunucu bağlantı hatası. Lütfen daha sonra tekrar deneyin.");
-            hideLoading();
-        };
-
-        socket.onclose = () => {
-            console.log("WebSocket bağlantısı kapandı.");
+        socket.onerror = (error) => { console.error("WebSocket hatası:", error); showLoginError("Sunucu bağlantı hatası."); hideLoading(); };
+        socket.onclose = (event) => {
+            console.log("WebSocket bağlantısı kapandı. Kod:", event.code, "Neden:", event.reason);
             showLoginError("Sunucu bağlantısı kesildi. Yeniden bağlanmak için sayfayı yenileyin.");
-            appContainer.classList.add('hidden');
-            orderPageContainer.classList.remove('active');
-            loginModal.classList.add('active');
-            hideLoading();
+            showLoginScreen(); hideLoading();
         };
     }
 
@@ -1110,20 +1027,30 @@ function formatTimestamp(timestampInput) {
             console.log("Sunucuya gönderildi:", message);
         } else {
             console.error("WebSocket bağlantısı açık değil.");
-            if(appState.user && (!socket || socket.readyState === WebSocket.CLOSED)){
-                 console.log("Bağlantı kapalı, yeniden bağlanılıyor...");
-                 setTimeout(() => connectWebSocket(), 1000);
-            } else if (!appState.user) {
-                 loginModal.classList.add('active');
-                 appContainer.classList.add('hidden');
-                 orderPageContainer.classList.remove('active');
-                 showLoginError("Lütfen önce giriş yapın.");
-            }
-             else {
-                showLoginError("Sunucuya mesaj gönderilemedi. Bağlantı sorunu.");
-            }
+            if (appState.user && (!socket || socket.readyState === WebSocket.CLOSED)) {
+                console.log("Bağlantı kapalı, yeniden bağlanılıyor...");
+                setTimeout(() => connectWebSocket(), 1000);
+            } else if (!appState.user) { showLoginScreen(); showLoginError("Lütfen önce giriş yapın."); }
+            else { showLoginError("Sunucuya mesaj gönderilemedi. Bağlantı sorunu."); }
         }
     }
+
+    // renderInitialDataIfNeeded fonksiyonu TANIMLANDI
+    let initialDataRendered = false;
+    function renderInitialDataIfNeeded() {
+        if (!initialDataRendered || (appState.products && appState.products.length > 0)) {
+            renderProductGrid(orderPageProductGrid, false);
+            renderProductGrid(quickSaleProductGrid, true);
+            renderProductsForReference();
+            populateManualCategorySelect();
+            populateNewProductCategorySelect();
+            populateEditProductCategorySelect();
+            initialDataRendered = true;
+            console.log("İlk data render edildi (ürün grid, referans, kategori select).");
+        }
+    }
+    
+
 
 function handleServerMessage(message) {
     hideLoading();
