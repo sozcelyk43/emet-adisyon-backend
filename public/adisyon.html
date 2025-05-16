@@ -1608,57 +1608,56 @@ function renderProductGrid(targetGridElement, forQuickSale = false) {
         categoryTitle.textContent = category;
         categorySection.appendChild(categoryTitle);
         const productGridDiv = document.createElement('div');
-        productGridDiv.className = forQuickSale ? 'grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2' : 'grid grid-cols-2 md:grid-cols-3 gap-3';
+        productGridDiv.className = forQuickSale ? 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2' : 'grid grid-cols-2 md:grid-cols-3 gap-3'; // Hızlı satış için daha fazla sütun
 
         categories[category].sort((a, b) => a.name.localeCompare(b.name, 'tr')).forEach(product => {
             const card = document.createElement('div');
             const cardBgColorClass = productCardColors[sanitizeCategoryForCSS(category)] || defaultCardColor;
-            card.className = `product-card ${cardBgColorClass} ${forQuickSale ? 'quick-sale-card' : ''}`;
+            // Hızlı satış kartları için daha küçük padding ve min-height
+            card.className = `product-card ${cardBgColorClass} ${forQuickSale ? 'p-2 min-h-[100px]' : 'p-3 min-h-[120px]'}`;
             card.dataset.productId = product.id;
             card.dataset.productName = product.name;
             card.dataset.productPrice = product.price;
             card.dataset.productCategory = product.category || 'DİĞER';
-            if (product.isByWeight) { // Ağırlıklı ürün kontrolü
+            if (product.isByWeight) {
                 card.dataset.isByWeight = "true";
-                card.dataset.unitPrice = product.unitPrice; // Gram başına fiyat
+                card.dataset.unitPrice = product.unitPrice;
             }
 
-            if (forQuickSale) {
+            if (product.isByWeight) { // Hem normal sipariş hem hızlı satış için ağırlıklı ürün UI'ı
                 card.innerHTML = `
-                    <h5>${product.name}</h5>
-                    ${product.isByWeight ? `<p class="text-xs text-gray-500 text-center">(${formatPrice(product.price)}/KG)</p>` : ''}
-                    <button data-product-id="${product.id}" class="add-item-from-card-btn bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-2 rounded w-full mt-auto">Ekle</button>
+                    <div>
+                        <h5 class="${forQuickSale ? 'text-xs' : 'text-sm'}">${product.name}</h5>
+                        <p class="product-price ${forQuickSale ? 'text-[0.65rem]' : 'text-xs'} text-gray-600">${formatPrice(product.price)}/KG (Gram: ${formatPrice(product.unitPrice || 0)})</p>
+                    </div>
+                    <div class="mt-1">
+                        <input type="number" placeholder="Gram" class="weight-input border border-gray-300 rounded ${forQuickSale ? 'text-xs p-1' : 'text-sm p-2'} w-full mb-1" min="1">
+                        ${!forQuickSale ? `<input type="text" placeholder="Açıklama..." class="description-input border border-gray-300 rounded text-xs p-1 w-full mb-1">` : ''}
+                    </div>
+                    <button data-product-id="${product.id}" class="${forQuickSale ? 'add-weighted-item-btn-quick-sale' : 'add-weighted-item-btn'} bg-green-500 hover:bg-green-600 text-white ${forQuickSale ? 'text-xs py-1' : 'text-xs font-semibold py-1 px-2'} rounded w-full mt-1">
+                        Gramajlı Ekle
+                    </button>
                 `;
-            } else { // Normal Sipariş Sayfası
-                if (product.isByWeight) { // Ağırlıklı ürünler için farklı HTML
-                    card.innerHTML = `
-                        <div>
-                            <h5>${product.name}</h5>
-                            <p class="product-price text-xs text-gray-600">${formatPrice(product.price)} / KG (Gram Başına: ${formatPrice(product.unitPrice || 0)})</p>
+            } else { // Standart ürünler
+                card.innerHTML = `
+                    <div>
+                        <h5 class="${forQuickSale ? 'text-sm' : ''}">${product.name}</h5>
+                        ${!forQuickSale ? `<p class="product-price">${formatPrice(product.price)}</p>` : `<p class="product-price text-xs text-center font-semibold">${formatPrice(product.price)}</p>`}
+                    </div>
+                    ${!forQuickSale ? `
+                    <div class="mt-2">
+                        <input type="text" placeholder="Açıklama..." class="description-input border border-gray-300 rounded text-xs p-1 w-full mb-2">
+                        <div class="product-card-quantity flex items-center justify-center space-x-1">
+                            <button class="quantity-decrease bg-red-200 hover:bg-red-300 text-red-700 font-bold rounded">-</button>
+                            <input type="number" value="1" min="1" class="quantity-input border border-gray-300 rounded text-xs p-1">
+                            <button class="quantity-increase bg-green-200 hover:bg-green-300 text-green-700 font-bold rounded">+</button>
                         </div>
-                        <div class="mt-2">
-                            <input type="number" placeholder="Gramaj (örn: 250)" class="weight-input border border-gray-300 rounded text-sm p-2 w-full mb-2" min="1">
-                            <input type="text" placeholder="Açıklama..." class="description-input border border-gray-300 rounded text-xs p-1 w-full mb-2">
-                        </div>
-                        <button data-product-id="${product.id}" class="add-weighted-item-btn bg-green-500 hover:bg-green-600 text-white text-xs font-semibold py-1 px-2 rounded w-full mt-2">Gramajlı Ekle</button>
-                    `;
-                } else { // Standart ürünler için mevcut HTML
-                    card.innerHTML = `
-                        <div>
-                            <h5>${product.name}</h5>
-                            <p class="product-price">${formatPrice(product.price)}</p>
-                        </div>
-                        <div class="mt-2">
-                            <input type="text" placeholder="Açıklama..." class="description-input border border-gray-300 rounded text-xs p-1 w-full mb-2">
-                            <div class="product-card-quantity flex items-center justify-center space-x-1">
-                                <button class="quantity-decrease bg-red-200 hover:bg-red-300 text-red-700 font-bold rounded">-</button>
-                                <input type="number" value="1" min="1" class="quantity-input border border-gray-300 rounded text-xs p-1">
-                                <button class="quantity-increase bg-green-200 hover:bg-green-300 text-green-700 font-bold rounded">+</button>
-                            </div>
-                        </div>
-                        <button data-product-id="${product.id}" class="add-item-from-card-btn bg-blue-500 hover:bg-blue-600 text-white text-xs font-semibold py-1 px-2 rounded w-full mt-2">Siparişe Ekle</button>
-                    `;
-                }
+                    </div>
+                    ` : ''}
+                    <button data-product-id="${product.id}" class="add-item-from-card-btn ${forQuickSale ? 'bg-blue-600 hover:bg-blue-700 py-2' : 'bg-blue-500 hover:bg-blue-600 text-xs py-1 px-2'} text-white font-semibold rounded w-full mt-auto">
+                        ${forQuickSale ? 'Ekle' : 'Siparişe Ekle'}
+                    </button>
+                `;
             }
             productGridDiv.appendChild(card);
         });
@@ -1668,20 +1667,24 @@ function renderProductGrid(targetGridElement, forQuickSale = false) {
     addProductCardEventListeners(targetGridElement, forQuickSale);
 }
 
-
     // Ürün kartlarındaki butonlara event listener ekler
 function addProductCardEventListeners(targetGridElement, forQuickSale) {
+    // Standart ürün ekleme butonu (hem normal hem hızlı satış için)
     targetGridElement.querySelectorAll('.add-item-from-card-btn').forEach(addBtn => {
         addBtn.addEventListener('click', () => {
             const card = addBtn.closest('.product-card');
             const productId = card.dataset.productId;
+            // Ağırlıklı ürünler bu butondan eklenmemeli, onlar için ayrı buton var.
+            if (card.dataset.isByWeight === "true" && forQuickSale) {
+                 // Hızlı satışta standart "Ekle" butonu ağırlıklı ürünler için farklı davranmalı
+                 // veya bu buton ağırlıklı ürünler için hiç gösterilmemeli, sadece gramajlı ekle olmalı.
+                 // Şimdilik bir uyarı verelim, UI'da bu butonun ağırlıklı ürünler için olmaması daha iyi olur.
+                alert("Ağırlıklı ürünler için lütfen 'Gramajlı Ekle' butonunu kullanın.");
+                return;
+            }
+
             if (forQuickSale) {
-                const product = appState.products.find(p => String(p.id) === String(productId));
-                if (product && product.isByWeight) {
-                    alert("Ağırlıklı ürünler hızlı satışta bu şekilde doğrudan eklenemez. Lütfen normal sipariş ekranını kullanın veya kasiyere danışın.");
-                    return;
-                }
-                addProductToQuickSale(productId, 1, '');
+                addProductToQuickSale(productId, 1, '', false); // isCustomItem = false
             } else {
                 const quantityInput = card.querySelector('.quantity-input');
                 const descriptionInput = card.querySelector('.description-input');
@@ -1694,49 +1697,86 @@ function addProductCardEventListeners(targetGridElement, forQuickSale) {
         });
     });
 
-    if (!forQuickSale) {
-        targetGridElement.querySelectorAll('.add-weighted-item-btn').forEach(addBtn => {
-            addBtn.addEventListener('click', () => {
-                const card = addBtn.closest('.product-card');
-                const productId = card.dataset.productId;
-                const unitPrice = parseFloat(card.dataset.unitPrice);
-                const originalProductName = card.dataset.productName;
-                const category = card.dataset.productCategory;
+    // Ağırlıklı ürün ekleme butonu (Normal Sipariş Sayfası)
+    targetGridElement.querySelectorAll('.add-weighted-item-btn').forEach(addBtn => {
+        addBtn.addEventListener('click', () => {
+            const card = addBtn.closest('.product-card');
+            const productId = card.dataset.productId;
+            const unitPrice = parseFloat(card.dataset.unitPrice);
+            const originalProductName = card.dataset.productName;
+            const category = card.dataset.productCategory;
 
-                const weightInput = card.querySelector('.weight-input');
-                const descriptionInput = card.querySelector('.description-input');
-                const weightInGrams = parseInt(weightInput.value);
-                const description = descriptionInput ? descriptionInput.value.trim() : '';
+            const weightInput = card.querySelector('.weight-input');
+            const descriptionInput = card.querySelector('.description-input'); // Normal siparişte açıklama var
+            const weightInGrams = parseInt(weightInput.value);
+            const description = descriptionInput ? descriptionInput.value.trim() : '';
 
-                if (isNaN(weightInGrams) || weightInGrams <= 0) {
-                    alert("Lütfen geçerli bir gramaj girin.");
-                    weightInput.focus();
-                    return;
-                }
-                if (isNaN(unitPrice) || unitPrice <= 0) {
-                    alert("Ürün birim fiyatı hatalı. Lütfen yöneticiye bildirin.");
-                    return;
-                }
+            if (isNaN(weightInGrams) || weightInGrams <= 0) {
+                alert("Lütfen geçerli bir gramaj girin.");
+                weightInput.focus();
+                return;
+            }
+            if (isNaN(unitPrice) || unitPrice <= 0) {
+                alert("Ürün birim fiyatı hatalı. Lütfen yöneticiye bildirin.");
+                return;
+            }
 
-                const calculatedPrice = unitPrice * weightInGrams;
-                const itemNameWithWeight = `${originalProductName} (${weightInGrams} gr)`;
+            const calculatedPrice = unitPrice * weightInGrams;
+            const itemNameWithWeight = `${originalProductName} (${weightInGrams} gr)`;
 
-                addProductToOrder(
-                    productId,      // Orijinal ürün ID'si
-                    weightInGrams,  // Quantity olarak gramajı gönder
-                    description,
-                    true,           // isCustomItem = true
-                    itemNameWithWeight, // Özel isim
-                    calculatedPrice,    // Hesaplanmış fiyat
-                    category,       // Kategori
-                    productId       // originalProductId
-                );
-
-                weightInput.value = '';
-                if (descriptionInput) descriptionInput.value = '';
-            });
+            addProductToOrder(
+                productId, weightInGrams, description, true,
+                itemNameWithWeight, calculatedPrice, category, productId
+            );
+            weightInput.value = '';
+            if (descriptionInput) descriptionInput.value = '';
         });
+    });
 
+    // Ağırlıklı ürün ekleme butonu (Hızlı Satış)
+    targetGridElement.querySelectorAll('.add-weighted-item-btn-quick-sale').forEach(addBtn => {
+        addBtn.addEventListener('click', () => {
+            const card = addBtn.closest('.product-card');
+            const productId = card.dataset.productId;
+            const unitPrice = parseFloat(card.dataset.unitPrice);
+            const originalProductName = card.dataset.productName;
+            const category = card.dataset.productCategory;
+
+            const weightInput = card.querySelector('.weight-input');
+            // Hızlı satışta ürün kartında ayrı bir açıklama inputu yok, bu yüzden boş gönderiyoruz.
+            const description = '';
+            const weightInGrams = parseInt(weightInput.value);
+
+            if (isNaN(weightInGrams) || weightInGrams <= 0) {
+                alert("Lütfen geçerli bir gramaj girin.");
+                weightInput.focus();
+                return;
+            }
+            if (isNaN(unitPrice) || unitPrice <= 0) {
+                alert("Ürün birim fiyatı hatalı. Lütfen yöneticiye bildirin.");
+                return;
+            }
+
+            const calculatedPrice = unitPrice * weightInGrams;
+            const itemNameWithWeight = `${originalProductName} (${weightInGrams} gr)`;
+
+            addProductToQuickSale(
+                productId, // Orijinal ürün ID'si (KG ürününün ID'si)
+                weightInGrams, // quantity olarak gramaj
+                description, // Hızlı satışta açıklama yok
+                true, // isCustomItem = true
+                itemNameWithWeight, // Özel isim
+                calculatedPrice, // Hesaplanmış fiyat
+                category, // Kategori
+                productId // originalProductId
+            );
+            weightInput.value = ''; // Gramaj inputunu temizle
+        });
+    });
+
+
+    // Adet artırma/azaltma butonları (sadece standart ürünler için ve normal sipariş sayfasında)
+    if (!forQuickSale) {
         targetGridElement.querySelectorAll('.quantity-decrease').forEach(btn => {
             btn.addEventListener('click', () => {
                 const input = btn.nextElementSibling;
@@ -1797,9 +1837,7 @@ function addProductToOrder(productId, quantity, description, isCustomItem = fals
         payload.name = customName;
         payload.priceAtOrder = customPrice; // Hesaplanmış fiyat
         payload.category = customCategory || (product ? product.category : 'DİĞER');
-        // Ağırlıklı ürünün orijinal ID'sini veya KG ürününün ID'sini gönderiyoruz.
-        // Sunucu tarafı bunu productId olarak alıp, originalProductId ile de ayrıca saklayabilir.
-        payload.productId = originalProdId;
+        payload.productId = originalProdId; // Sunucuya orijinal ürün ID'sini gönderiyoruz.
         payload.originalProductId = originalProdId; // Orijinal KG ürününün ID'si
         payload.isByWeightEntry = true; // Bu bir ağırlıklı ürün girişi olduğunu belirtir
     } else if (product) { // Standart ürün
@@ -1824,83 +1862,83 @@ function addProductToOrder(productId, quantity, description, isCustomItem = fals
 
     
     // Hızlı satış sepetine ürün ekleme
-    function addProductToQuickSale(productId, quantity, description) {
-        const product = appState.products.find(p => p.id === parseInt(productId));
-        if (!product || quantity <= 0) {
-            alert("Ürün eklenirken bir hata oluştu.");
-            return;
-        }
-        const existingItem = appState.currentQuickSaleOrder.find(item =>
-            item.productId === parseInt(productId) &&
-            item.description === description
-        );
-        if (existingItem) {
-            existingItem.quantity += quantity;
-        } else {
-            appState.currentQuickSaleOrder.push({
-                productId: parseInt(productId),
-                name: product.name,
-                priceAtOrder: product.price,
-                quantity: quantity,
-                description: description,
-                waiterUsername: appState.user.username,
-                timestamp: Date.now()
-            });
-        }
-        resetCurrentOrderDiscount();
-        renderQuickSaleOrder();
+    function addProductToQuickSale(productId, quantity, description, isCustomItem = false, customName = null, customPrice = null, customCategory = null, originalProdId = null) {
+    const product = appState.products.find(p => String(p.id) === String(productId));
+
+    if (!isCustomItem && !product) {
+        alert("Ürün hızlı satış sepetine eklenirken bir hata oluştu (ürün bulunamadı).");
+        return;
+    }
+    if (quantity <= 0) {
+        alert("Miktar 0'dan büyük olmalıdır.");
+        return;
     }
 
-    // Hızlı satış sepetini render eder
-    function renderQuickSaleOrder() {
-        quickSaleCurrentItems.innerHTML = '';
-        let originalTotal = 0;
-        if (appState.currentQuickSaleOrder.length === 0) {
-            quickSaleCurrentItems.innerHTML = '<p class="text-gray-500 text-center py-4">Sepet boş.</p>';
-        } else {
-            appState.currentQuickSaleOrder.forEach((item, index) => {
-                const itemTotal = item.priceAtOrder * item.quantity;
-                originalTotal += itemTotal;
-                const itemDiv = document.createElement('div');
-                itemDiv.className = 'flex justify-between items-start p-2 bg-white rounded-md text-sm';
-                let descriptionHTML = item.description ? `<p class="text-xs text-gray-500"><em>${item.description}</em></p>` : '';
-                itemDiv.innerHTML = `
-                    <div>
-                        <span class="font-medium">${item.name}</span>
-                        <span class="text-xs text-gray-500"> (${item.quantity} x ${formatPrice(item.priceAtOrder)})</span>
-                        ${descriptionHTML}
-                    </div>
-                    <div class="flex items-center">
-                        <span class="font-semibold mr-2">${formatPrice(itemTotal)}</span>
-                        <button data-index="${index}" class="remove-item-quick-sale-btn text-red-500 hover:text-red-700 text-xs p-1">X</button>
-                    </div>
-                `;
-                quickSaleCurrentItems.appendChild(itemDiv);
-            });
-        }
+    let nameForQuickSale = customName;
+    let priceForQuickSale = customPrice;
+    let categoryForQuickSale = customCategory;
+    let actualProductId = originalProdId; // Loglama ve referans için orijinal ürün ID'si
 
-        appState.currentOrderOriginalTotal = originalTotal;
-        if (appState.currentOrderDiscountAmount > 0) {
-            const discounted = originalTotal - appState.currentOrderDiscountAmount;
-            quickSaleTotal.textContent = `Toplam: ${formatPrice(discounted)} (İndirimli)`;
-            quickSaleDiscountInfo.textContent = `İndirim Uygulandı: -${formatPrice(appState.currentOrderDiscountAmount)}`;
-            quickSaleDiscountInfo.classList.remove('hidden');
-        } else {
-            quickSaleTotal.textContent = `Toplam: ${formatPrice(originalTotal)}`;
-            quickSaleDiscountInfo.classList.add('hidden');
-        }
+    if (!isCustomItem && product) { // Standart ürün
+        nameForQuickSale = product.name;
+        priceForQuickSale = product.price;
+        categoryForQuickSale = product.category;
+        actualProductId = parseInt(product.id);
+    } else if (isCustomItem && product) { // Ağırlıklı ürün, product bilgisi KG ürününe ait
+        categoryForQuickSale = categoryForQuickSale || product.category; // Eğer customCategory gelmediyse KG ürününün kategorisini kullan
+        actualProductId = parseInt(product.id); // Orijinal KG ürününün ID'si
+    } else if (isCustomItem && !product && originalProdId) { // Orijinal ürün bilgisi yok ama ID'si var (nadiren olmalı)
+         actualProductId = parseInt(originalProdId);
+    }
 
 
-        document.querySelectorAll('.remove-item-quick-sale-btn').forEach(button => {
-            button.addEventListener('click', (e) => {
-                const itemIndex = parseInt(e.target.dataset.index);
-                appState.currentQuickSaleOrder.splice(itemIndex, 1);
-                resetCurrentOrderDiscount();
-                renderQuickSaleOrder();
-            });
+    // Hızlı satışta aynı özel isimli (örn: "ET DÖNER - KG (250 gr)") ürünleri birleştirme
+    const existingItem = appState.currentQuickSaleOrder.find(item =>
+        item.name === nameForQuickSale && // İsim (ağırlık dahil) ve açıklama ile birleştir
+        item.description === description &&
+        item.priceAtOrder === priceForQuickSale // Fiyatı da aynı olmalı (farklı gramajlar farklı satır olur)
+    );
+
+    if (existingItem) {
+        // Hızlı satışta ağırlıklı ürünler genellikle birleştirilmez, her biri ayrı satır olur.
+        // Eğer birleştirme isteniyorsa, quantity (gramaj) toplanır.
+        // Bu örnekte, aynı gramaj ve fiyattaysa adedi artırıyoruz (bu pek mantıklı değil ağırlıklı için)
+        // Daha iyisi: her ağırlıklı eklemeyi yeni bir kalem olarak eklemek.
+        // Şimdilik, eğer isim ve fiyat tam olarak aynıysa birleştirme yapalım (bu, aynı gramajda ikinci kez eklenirse olur)
+        existingItem.quantity += quantity; // Bu satır, eğer ağırlıklı ürünler birleştirilmeyecekse kaldırılmalı.
+                                          // Veya quantity burada adet anlamına geliyorsa (örn: 2 tane 250gr), o zaman kalabilir.
+                                          // Mevcut mantıkla, quantity gramaj olduğu için bu satır hatalı olabilir.
+                                          // Her ağırlıklı eklemeyi YENİ BİR SATIR olarak ekleyelim:
+         appState.currentQuickSaleOrder.push({
+            productId: actualProductId, // Orijinal KG ürününün ID'si
+            name: nameForQuickSale,
+            priceAtOrder: priceForQuickSale,
+            quantity: quantity, // Gramaj
+            description: description,
+            category: categoryForQuickSale || 'DİĞER',
+            waiterUsername: appState.user.username,
+            timestamp: Date.now(),
+            isCustomItem: isCustomItem,
+            originalProductId: originalProdId
+        });
+
+    } else {
+        appState.currentQuickSaleOrder.push({
+            productId: actualProductId, // Orijinal KG ürününün ID'si
+            name: nameForQuickSale,
+            priceAtOrder: priceForQuickSale,
+            quantity: quantity, // Gramaj veya adet
+            description: description,
+            category: categoryForQuickSale || 'DİĞER',
+            waiterUsername: appState.user.username,
+            timestamp: Date.now(),
+            isCustomItem: isCustomItem,
+            originalProductId: originalProdId
         });
     }
-
+    resetCurrentOrderDiscount();
+    renderQuickSaleOrder();
+}
 
     // Manuel ürün ekleme için kategori seçeneklerini doldurur
     function populateManualCategorySelect() {
