@@ -65,6 +65,7 @@ let users = [
     // Kasiyerler
     { id: 1, username: 'hamza', password: 'ham.za', role: 'cashier' },
     { id: 2, username: 'bilal', password: 'bil.al', role: 'cashier' },
+    { id: 10, username: 'sinan', password: 'sinan12', role: 'cashier' },
     // Garsonlar
     { id: 3, username: 'aykut', password: 'ay.kut', role: 'waiter' },
     { id: 4, username: 'osman', password: 'os.man', role: 'waiter' },
