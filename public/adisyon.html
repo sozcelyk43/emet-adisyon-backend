@@ -6,279 +6,292 @@
     <title>EMET LEZZET GÜNLERİ ADİSYON</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
+    
+
+<style>
+    body {
+        font-family: 'Inter', sans-serif;
+        overscroll-behavior-y: contain; /* Mobil dikey kaydırmada sayfa yenilemeyi engelle */
+    }
+    .modal {
+        display: none;
+        animation: fadeIn 0.3s ease-out;
+    }
+    .modal.active {
+        display: flex;
+    }
+    /* Başlangıçta tüm modallar ve sipariş sayfası gizli */
+    #orderPageContainer, #quickSaleModal, #addProductToMenuModal, #editProductModal,
+    #manageTablesModal, #manageWaitersModal, #confirmDeleteTableModal,
+    #confirmDeleteWaiterModal, #confirmExitAppModal, #salesReportModal,
+    #activityLogModal, #receiptModal, #confirmCloseTableModal, #confirmDiscountModal {
+        display: none;
+    }
+    /* Aktif olan modal veya sayfa için */
+    #orderPageContainer.active,
+    #quickSaleModal.active,
+    #addProductToMenuModal.active,
+    #editProductModal.active,
+    #manageTablesModal.active,
+    #manageWaitersModal.active,
+    #confirmDeleteTableModal.active,
+    #confirmDeleteWaiterModal.active,
+    #confirmExitAppModal.active,
+    #salesReportModal.active,
+    #activityLogModal.active,
+    #receiptModal.active,
+    #confirmCloseTableModal.active,
+    #confirmDiscountModal.active {
+        display: block; /* Veya flex/grid, içeriğe göre */
+    }
+
+    /* Modal arkaplan ve ortalama stilleri (genel modallar için) */
+    #addProductToMenuModal.active,
+    #editProductModal.active,
+    #manageTablesModal.active,
+    #manageWaitersModal.active,
+    #confirmDeleteTableModal.active,
+    #confirmDeleteWaiterModal.active,
+    #confirmExitAppModal.active,
+    #salesReportModal.active,
+    #activityLogModal.active,
+    #receiptModal.active,
+    #confirmCloseTableModal.active,
+    #confirmDiscountModal.active {
+        position: fixed;
+        inset: 0;
+        background-color: rgba(0,0,0,0.75);
+        align-items: center;
+        justify-content: center;
+        z-index: 50;
+        padding: 1rem;
+        display: flex; /* Ortalamak için flex kullan */
+    }
+    /* Hızlı satış modalı için özel (daha geniş olabilir) */
+    #quickSaleModal.active {
+         position: fixed;
+         inset: 0;
+         background-color: rgba(0,0,0,0.75);
+         align-items: center;
+         justify-content: center;
+         z-index: 50;
+         padding: 1rem;
+         display: flex;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: scale(0.95); }
+        to { opacity: 1; transform: scale(1); }
+    }
+    #loadingOverlay {
+        display: none; /* Başlangıçta gizli */
+    }
+    #loadingOverlay.active {
+        display: flex; /* Aktif olduğunda göster */
+        position: fixed;
+        inset: 0;
+        background-color: rgba(0,0,0,0.75); /* Arkaplanı karart */
+        align-items: center;
+        justify-content: center;
+        z-index: 100; /* Diğer her şeyin üzerinde */
+    }
+
+    /* Ürün Kartı Miktarı */
+    .product-card-quantity input {
+        width: 40px;
+        text-align: center;
+        border: 1px solid #d1d5db; /* Tailwind gray-300 */
+        padding-top: 0.1rem;
+        padding-bottom: 0.1rem;
+    }
+     .product-card-quantity button {
+         min-width: 24px;
+         height: 24px;
+         display: inline-flex;
+         align-items: center;
+         justify-content: center;
+     }
+
+    /* Kategori Alanı Renkleri */
+    .category-section-bg-ET-TAVUK { background-color: #fee2e2; }
+    .category-section-bg-ATIŞTIRMALIK { background-color: #ffedd5; }
+    .category-section-bg-TATLI { background-color: #fce7f3; }
+    .category-section-bg-İÇECEK { background-color: #eff6ff; }
+    .category-section-bg-ÇORBA { background-color: #fef9c3; }
+    .category-section-bg-DİĞER { background-color: #dcfce7; }
+    .category-section-bg-default { background-color: #f3f4f6; } /* Varsayılan kategori rengi */
+
+    /* Ürün Kartı Renkleri (Kategorinin daha koyu tonu) */
+    .product-card-bg-ET-TAVUK { background-color: #fecaca; }
+    .product-card-bg-ATIŞTIRMALIK { background-color: #fed7aa; }
+    .product-card-bg-TATLI { background-color: #fbcfe8; }
+    .product-card-bg-İÇECEK { background-color: #dbeafe; }
+    .product-card-bg-ÇORBA { background-color: #fef08a; }
+    .product-card-bg-DİĞER { background-color: #bbf7d0; }
+    .product-card-bg-default { background-color: #e5e7eb; } /* Varsayılan ürün kartı rengi */
+
+    /* Ürün Kartı Görünümü */
+    .product-card {
+        border-radius: 0.5rem;
+        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+        padding: 0.75rem;
+        transition: transform 0.2s ease-in-out;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        min-height: 120px; /* Normal ürün kartları için */
+    }
+     .product-card.quick-sale-card { /* Hızlı satış ürün kartları için daha kompakt */
+        min-height: 80px;
+        padding: 0.5rem;
+        justify-content: center; /* İçeriği ortala */
+    }
+    .product-card:hover {
+        transform: translateY(-2px);
+    }
+    .product-card h5 { /* Ürün adı */
+         font-weight: 600;
+         color: #1f2937; /* Tailwind gray-800 */
+         margin-bottom: 0.25rem;
+         font-size: 0.875rem; /* 14px */
+    }
+     .product-card.quick-sale-card h5 { /* Hızlı satış ürün adı */
+         font-size: 0.9rem; /* Biraz daha büyük */
+         text-align: center;
+         margin-bottom: 0.5rem;
+         line-height: 1.2;
+         min-height: 2.4em; /* Yaklaşık 2 satır sığdırmak için */
+         display: -webkit-box; /* Çok satırlı metin kesme için */
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        text-overflow: ellipsis;
+     }
+     .product-card p.product-price { /* Ürün fiyatı */
+         color: #4b5563; /* Tailwind gray-600 */
+         font-size: 0.8rem;
+         margin-bottom: 0.5rem;
+     }
+     .product-card .description-input { /* Açıklama inputu */
+         margin-top: 0.5rem;
+         margin-bottom: 0.5rem;
+         background-color: #fff; /* Beyaz arka plan */
+     }
+     .product-card .add-item-from-card-btn { /* "Ekle" butonu */
+         margin-top: auto; /* Kartın en altına iter */
+     }
+     .product-card.quick-sale-card .add-item-from-card-btn { /* Hızlı satış "Ekle" butonu */
+         padding-top: 0.75rem;
+         padding-bottom: 0.75rem;
+         font-size: 1rem;
+         font-weight: bold;
+     }
+
+    /* Login Modalı Aktif Kullanıcı Durum Göstergeleri */
+    .status-indicator {
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        margin-right: 4px;
+        vertical-align: middle;
+    }
+    .status-indicator.active {
+        background-color: #34D399; /* Tailwind green-400 */
+    }
+    .status-indicator.inactive {
+        background-color: #F87171; /* Tailwind red-400 */
+    }
+    .user-status-item {
+        display: inline-flex; /* İkon ve ismi yan yana getirmek için */
+        align-items: center; /* Dikeyde ortalamak için */
+        padding: 2px 4px;
+        font-size: 0.7rem; /* Daha küçük yazı tipi */
+        line-height: 1;
+    }
+
+    .no-print { /* Yazdırma sırasında gizlenecek elementler için */
+        display: revert !important; /* Normalde görünsün */
+    }
+
+    /* Yazdırma stilleri */
+    @media print {
+        body * {
+            visibility: hidden; /* Önce her şeyi gizle */
         }
-        .modal { 
-            display: none; 
-            animation: fadeIn 0.3s ease-out;
-        }
-        .modal.active {
-            display: flex; 
-        }
-        #orderPageContainer, #quickSaleModal, #addProductToMenuModal, #editProductModal, #manageTablesModal, #manageWaitersModal, #confirmDeleteTableModal, #confirmDeleteWaiterModal, #confirmExitAppModal {
-            display: none;
-        }
-        #orderPageContainer.active, #quickSaleModal.active, #addProductToMenuModal.active, #editProductModal.active, #manageTablesModal.active, #manageWaitersModal.active, #confirmDeleteTableModal.active, #confirmDeleteWaiterModal.active, #confirmExitAppModal.active {
-            display: block;
-        }
-        #quickSaleModal.active, #addProductToMenuModal.active, #editProductModal.active, #manageTablesModal.active, #manageWaitersModal.active, #confirmDeleteTableModal.active, #confirmDeleteWaiterModal.active, #confirmExitAppModal.active {
-            position: fixed;
-            inset: 0;
-            background-color: rgba(0,0,0,0.75);
-            align-items: center;
-            justify-content: center;
-            z-index: 50;
-            padding: 1rem;
-        }
-        #addProductToMenuModal.active .modal-content,
-        #editProductModal.active .modal-content,
-        #manageTablesModal.active .modal-content,
-        #manageWaitersModal.active .modal-content,
-        #confirmDeleteTableModal.active .modal-content,
-        #confirmDeleteWaiterModal.active .modal-content,
-        #confirmExitAppModal.active .modal-content {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            width: 100%;
-            height: 100%;
+        .no-print {
+            display: none !important; /* Yazdırma sırasında kesinlikle gizle */
         }
 
+        /* Fiş yazdırma */
+        #receiptModalContent, #receiptModalContent * {
+            visibility: visible; /* Sadece fiş içeriğini görünür yap */
+        }
+        #receiptModalContent {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100mm; /* Termal yazıcı genişliği */
+            font-size: 9pt;
+            padding: 4mm;
+            box-sizing: border-box;
+            border: 1px solid #ccc; /* Görünürlük için kenarlık */
+        }
+        #receiptModalContent h2 { font-size: 11pt; font-weight: bold; margin-bottom: 3mm; text-align: center; }
+        #receiptModalContent p, #receiptModalContent div#receiptItems > div { line-height: 1.3; margin-bottom: 1mm; }
+        #receiptModalContent div#receiptItems > div { display: flex; justify-content: space-between; flex-wrap: wrap; }
+        #receiptModalContent div#receiptItems span.item-details { flex-basis: 70%; }
+        #receiptModalContent div#receiptItems span.item-price { flex-basis: 30%; text-align: right; }
+        #receiptModalContent div#receiptItems span.item-description,
+        #receiptModalContent div#receiptItems span.item-waiter {
+            display: block; font-size: 7pt; padding-left: 5mm; color: #555; flex-basis: 100%;
+        }
+        #receiptModalContent .discount-info { font-weight: bold; color: #dc2626; /* red-600 */ }
+        #receiptModalContent hr { margin-top: 2mm; margin-bottom: 2mm; border-top: 1px dashed #999; }
+        #receiptModalContent .text-right p#receiptTotalLine { font-size: 10pt; font-weight: bold; }
+        #receiptModalContent p.thank-you-note { margin-top: 4mm; text-align: center; font-size: 8pt; }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: scale(0.95); }
-            to { opacity: 1; transform: scale(1); }
+         /* Satış Raporu yazdırma (A4 dikey) */
+        #salesReportModalContent, #salesReportModalContent * {
+             visibility: visible; /* Sadece satış raporu içeriğini görünür yap */
         }
-        #loadingOverlay {
-            display: none;
-        }
-        #loadingOverlay.active {
-            display: flex;
-        }
-        /* Ürün Kartı Miktarı */
-        .product-card-quantity input {
-            width: 40px;
-            text-align: center;
-            border: 1px solid #d1d5db; /* Tailwind gray-300 */
-            padding-top: 0.1rem;
-            padding-bottom: 0.1rem;
-        }
-         .product-card-quantity button {
-             min-width: 24px;
-             height: 24px;
-             display: inline-flex;
-             align-items: center;
-             justify-content: center;
+         #salesReportModalContent {
+             position: absolute;
+             left: 0;
+             top: 0;
+             width: 100%; /* A4 genişliği */
+             font-size: 10pt;
+             padding: 10mm;
+             box-sizing: border-box;
          }
-
-        /* Kategori Alanı Renkleri */
-        .category-section-bg-ET-TAVUK { background-color: #fee2e2; }
-        .category-section-bg-ATIŞTIRMALIK { background-color: #ffedd5; }
-        .category-section-bg-TATLI { background-color: #fce7f3; }
-        .category-section-bg-İÇECEK { background-color: #eff6ff; }
-        .category-section-bg-ÇORBA { background-color: #fef9c3; }
-        .category-section-bg-DİĞER { background-color: #dcfce7; }
-        .category-section-bg-default { background-color: #f3f4f6; }
-
-        /* Ürün Kartı Renkleri (Kategorinin daha koyu tonu) */
-        .product-card-bg-ET-TAVUK { background-color: #fecaca; }
-        .product-card-bg-ATIŞTIRMALIK { background-color: #fed7aa; }
-        .product-card-bg-TATLI { background-color: #fbcfe8; }
-        .product-card-bg-İÇECEK { background-color: #dbeafe; }
-        .product-card-bg-ÇORBA { background-color: #fef08a; }
-        .product-card-bg-DİĞER { background-color: #bbf7d0; }
-        .product-card-bg-default { background-color: #e5e7eb; }
-
-
-        /* Ürün Kartı Görünümü */
-        .product-card {
-            border-radius: 0.5rem;
-            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
-            padding: 0.75rem;
-            transition: transform 0.2s ease-in-out;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            min-height: 120px;
-        }
-         .product-card.quick-sale-card {
-            min-height: 80px;
-            padding: 0.5rem;
-            justify-content: center;
-        }
-        .product-card:hover {
-            transform: translateY(-2px);
-        }
-        .product-card h5 {
-             font-weight: 600;
-             color: #1f2937;
-             margin-bottom: 0.25rem;
-             font-size: 0.875rem;
-        }
-         .product-card.quick-sale-card h5 {
-             font-size: 0.9rem;
-             text-align: center;
-             margin-bottom: 0.5rem;
-             line-height: 1.2;
-             min-height: 2.4em;
-             display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-            text-overflow: ellipsis;
+         #salesReportModalContent table {
+             width: 100%;
+             border-collapse: collapse;
          }
-         .product-card p.product-price {
-             color: #4b5563;
-             font-size: 0.8rem;
-             margin-bottom: 0.5rem;
+         #salesReportModalContent th, #salesReportModalContent td {
+             border: 1px solid #ccc;
+             padding: 2mm;
+             text-align: left;
          }
-         .product-card .description-input {
-             margin-top: 0.5rem;
-             margin-bottom: 0.5rem;
-             background-color: #fff;
+         #salesReportModalContent th {
+             background-color: #eee;
          }
-         .product-card .add-item-from-card-btn {
-             margin-top: auto;
-         }
-         .product-card.quick-sale-card .add-item-from-card-btn {
-             padding-top: 0.75rem;
-             padding-bottom: 0.75rem;
-             font-size: 1rem;
-             font-weight: bold;
-         }
-
-
-        /* Yazdırma stilleri */
-        @media print {
-            body * {
-                visibility: hidden;
-            }
-            /* Fiş yazdırma */
-            #receiptModalContent, #receiptModalContent * {
-                visibility: visible;
-            }
-            #receiptModalContent {
-                position: absolute;
-                left: 0;
-                top: 0;
-                width: 100mm;
-                font-size: 9pt;
-                padding: 4mm;
-                box-sizing: border-box;
-                border: 1px solid #ccc;
-            }
-             /* Satış Raporu yazdırma (A4 dikey) */
-            #salesReportModalContent, #salesReportModalContent * {
-                 visibility: visible;
-            }
-             #salesReportModalContent {
-                 position: absolute;
-                 left: 0;
-                 top: 0;
-                 width: 100%;
-                 font-size: 10pt;
-                 padding: 10mm;
-                 box-sizing: border-box;
-             }
-             #salesReportModalContent table {
-                 width: 100%;
-                 border-collapse: collapse;
-             }
-             #salesReportModalContent th, #salesReportModalContent td {
-                 border: 1px solid #ccc;
-                 padding: 2mm;
-                 text-align: left;
-             }
-             #salesReportModalContent th {
-                 background-color: #eee;
-             }
-
-            /* Genel yazdırma gizlemeleri */
-            #receiptModalContent button,
-            #salesReportModalContent button,
-            #quickSaleModal button:not(#printReceiptButton),
-            #appContainer button#logoutButton,
-            #orderPageContainer button:not(#printReceiptButton):not(#closeReceiptModalOnlyButton):not(#finalizeAndCloseTableButton),
-            #confirmCloseTableModal button,
-            #confirmDiscountModal button,
-            #addProductToMenuModal button,
-            #editProductModal button,
-            #manageTablesModal button,
-            #manageWaitersModal button,
-            #confirmDeleteTableModal button,
-            #confirmDeleteWaiterModal button,
-            #confirmExitAppModal button /* Çıkış onay modalı butonları */
-             {
-                display: none !important;
-            }
-             #appContainer header h1, #appContainer header p,
-             #orderPageContainer header,
-             #quickSaleModal header {
-             }
-             #quickSaleButtonContainerTop,
-             #salesReportButton,
-             #addProductToMenuButton,
-             #editProductMenuButton,
-             #manageTablesButton,
-             #manageWaitersButton
-              {
-                display: none !important;
-             }
-
-
-            #receiptModalContent h2 {
-                font-size: 11pt;
-                font-weight: bold;
-                margin-bottom: 3mm;
-                text-align: center;
-            }
-             #receiptModalContent p, #receiptModalContent div#receiptItems > div {
-                line-height: 1.3;
-                margin-bottom: 1mm;
-            }
-            #receiptModalContent div#receiptItems > div {
-                display: flex;
-                justify-content: space-between;
-                flex-wrap: wrap;
-            }
-             #receiptModalContent div#receiptItems span.item-details {
-                flex-basis: 70%;
-             }
-             #receiptModalContent div#receiptItems span.item-price {
-                 flex-basis: 30%;
-                 text-align: right;
-             }
-            #receiptModalContent div#receiptItems span.item-description,
-            #receiptModalContent div#receiptItems span.item-waiter {
-                display: block;
-                font-size: 7pt;
-                padding-left: 5mm;
-                color: #555;
-                flex-basis: 100%;
-            }
-             #receiptModalContent .discount-info {
-                 font-weight: bold;
-                 color: #dc2626; /* red-600 */
-             }
-            #receiptModalContent hr {
-                margin-top: 2mm;
-                margin-bottom: 2mm;
-                border-top: 1px dashed #999;
-            }
-            #receiptModalContent .text-right p#receiptTotalLine {
-                font-size: 10pt;
-                font-weight: bold;
-            }
-            #receiptModalContent p.thank-you-note {
-                 margin-top: 4mm;
-                 text-align: center;
-                 font-size: 8pt;
-            }
+         /* Aktivite Logları yazdırma (Satış raporuna benzer) */
+        #activityLogModalContent, #activityLogModalContent * {
+             visibility: visible;
         }
-    </style>
+         #activityLogModalContent {
+             position: absolute; left: 0; top: 0; width: 100%; font-size: 10pt;
+             padding: 10mm; box-sizing: border-box;
+         }
+         #activityLogModalContent table { width: 100%; border-collapse: collapse; }
+         #activityLogModalContent th, #activityLogModalContent td {
+             border: 1px solid #ccc; padding: 2mm; text-align: left;
+         }
+         #activityLogModalContent th { background-color: #eee; }
+    }
+</style>
+
 </head>
 <body class="bg-gray-100 text-gray-800">
 
@@ -296,8 +309,23 @@
     <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-sm">
         <h2 class="text-2xl font-semibold mb-6 text-center text-blue-600">Kullanıcı Girişi</h2>
         <p class="text-sm text-gray-500 text-center mb-4">Garson veya Kasa olarak giriş yapın.</p>
+
         <input type="text" id="usernameInput" placeholder="Kullanıcı Adı" class="w-full p-3 border border-gray-300 rounded-md mb-4 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
         <input type="password" id="passwordInput" placeholder="Şifre" class="w-full p-3 border border-gray-300 rounded-md mb-4 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+
+        <div class="mb-6 text-xs text-gray-600">
+            <p class="font-semibold mb-1 text-center text-gray-700">Aktif Kullanıcı Durumları:</p>
+            <div id="cashierStatusContainer" class="mb-2">
+                <p class="text-sm font-medium text-center text-blue-600">Kasa Hesapları</p>
+                <div id="cashierStatusList" class="flex flex-wrap justify-center gap-x-3 gap-y-1">
+                    </div>
+            </div>
+            <div id="waiterStatusContainer">
+                <p class="text-sm font-medium text-center text-green-600">Garson Hesapları</p>
+                <div id="waiterStatusList" class="flex flex-wrap justify-center gap-x-3 gap-y-1">
+                    </div>
+            </div>
+        </div>
         <button id="loginButton" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold p-3 rounded-md transition duration-150">Giriş Yap</button>
         <p id="loginError" class="text-red-500 text-sm mt-2 text-center"></p>
     </div>
@@ -685,67 +713,81 @@
     const WEBSOCKET_URL = 'wss://emet-adisyon.onrender.com';
     let socket;
 
-    const appState = {
-        user: null,
-       products: [
-    { id: 1001, name: "İSKENDER - 120 GR", price: 275.00, category: "ET - TAVUK" },
-    { id: 1002, name: "ET DÖNER EKMEK ARASI", price: 150.00, category: "ET - TAVUK" },
-    { id: 1003, name: "ET DÖNER PORSİYON", price: 175.00, category: "ET - TAVUK" },
-    { id: 1004, name: "TAVUK DÖNER EKMEK ARASI", price: 130.00, category: "ET - TAVUK" },
-    { id: 1005, name: "TAVUK DÖNER PORSİYON", price: 150.00, category: "ET - TAVUK" },
-    { id: 1006, name: "KÖFTE EKMEK", price: 130.00, category: "ET - TAVUK" },
-    { id: 1007, name: "KÖFTE PORSİYON", price: 150.00, category: "ET - TAVUK" },
-    { id: 1008, name: "KUZU ŞİŞ", price: 150.00, category: "ET - TAVUK" },
-    { id: 1009, name: "ADANA ŞİŞ", price: 150.00, category: "ET - TAVUK" },
-    { id: 1010, name: "PİRZOLA - 4 ADET", price: 250.00, category: "ET - TAVUK" },
-    { id: 1011, name: "TAVUK FAJİTA", price: 200.00, category: "ET - TAVUK" },
-    { id: 1012, name: "TAVUK (PİLİÇ) ÇEVİRME", price: 250.00, category: "ET - TAVUK" },
-    { id: 1013, name: "ET DÖNER - KG", price: 1300.00, category: "ET - TAVUK" },
-    { id: 1014, name: "ET DÖNER - 500 GR", price: 650.00, category: "ET - TAVUK" },
-    { id: 1015, name: "TAVUK DÖNER - KG", price: 800.00, category: "ET - TAVUK" },
-    { id: 1016, name: "TAVUK DÖNER - 500 GR", price: 400.00, category: "ET - TAVUK" },
-    { id: 1017, name: "AYVALIK TOSTU", price: 120.00, category: "ATIŞTIRMALIK" },
-    { id: 1018, name: "HAMBURGER", price: 150.00, category: "ATIŞTIRMALIK" },
-    { id: 1019, name: "BALIK BURGER", price: 150.00, category: "ATIŞTIRMALIK" },
-    { id: 1020, name: "PİDE ÇEŞİTLERİ", price: 120.00, category: "ATIŞTIRMALIK" },
-    { id: 1021, name: "PİZZA KARIŞIK (ORTA BOY)", price: 150.00, category: "ATIŞTIRMALIK" },
-    { id: 1022, name: "PİZZA KARIŞIK (BÜYÜK BOY)", price: 200.00, category: "ATIŞTIRMALIK" },
-    { id: 1023, name: "LAHMACUN", price: 75.00, category: "ATIŞTIRMALIK" },
-    { id: 1024, name: "ÇİĞ KÖFTE KG (MARUL-LİMON)", price: 300.00, category: "ATIŞTIRMALIK" },
-    { id: 1025, name: "YAĞLI GÖZLEME", price: 50.00, category: "ATIŞTIRMALIK" },
-    { id: 1026, name: "İÇLİ GÖZLEME", price: 60.00, category: "ATIŞTIRMALIK" },
-    { id: 1027, name: "OSMANLI ŞERBETİ - 1 LT", price: 75.00, category: "İÇECEK" },
-    { id: 1028, name: "LİMONATA - 1 LT", price: 75.00, category: "İÇECEK" },
-    { id: 1029, name: "AYRAN", price: 10.00, category: "İÇECEK" },
-    { id: 1030, name: "SU", price: 10.00, category: "İÇECEK" },
-    { id: 1031, name: "ÇAY", price: 10.00, category: "İÇECEK" },
-    { id: 1032, name: "SOĞUK ÇAY ÇEŞİTLERİ", price: 25.00, category: "İÇECEK" },
-    { id: 1033, name: "TAMEK MEYVE SUYU", price: 25.00, category: "İÇECEK" },
-    { id: 1034, name: "MEYVELİ MADEN SUYU", price: 25.00, category: "İÇECEK" },
-    { id: 1035, name: "NİĞDE GAZOZU", price: 25.00, category: "İÇECEK" },
-    { id: 1036, name: "ŞALGAM", price: 25.00, category: "İÇECEK" },
-    { id: 1037, name: "SADE MADEN SUYU", price: 15.00, category: "İÇECEK" },
-    { id: 1038, name: "TROPİKAL - ÇİLEK KOKUSU", price: 75.00, category: "İÇECEK" },
-    { id: 1039, name: "TROPİKAL - KAVUNEZYA", price: 75.00, category: "İÇECEK" },
-    { id: 1040, name: "TROPİKAL - NAR-I ŞAHANE", price: 75.00, category: "İÇECEK" },
-    { id: 1041, name: "EV BAKLAVASI - KG", price: 400.00, category: "TATLI" },
-    { id: 1042, name: "EV BAKLAVASI - 500 GR", price: 200.00, category: "TATLI" },
-    { id: 1043, name: "EV BAKLAVASI - PORSİYON", price: 75.00, category: "TATLI" },
-    { id: 1044, name: "AŞURE - 500 GRAM", price: 100.00, category: "TATLI" },
-    { id: 1045, name: "HÖŞMERİM - 500 GR", price: 100.00, category: "TATLI" },
-    { id: 1046, name: "WAFFLE", price: 150.00, category: "TATLI" },
-    { id: 1047, name: "DİĞER PASTA ÇEŞİTLERİ", price: 50.00, category: "TATLI" },
-    { id: 1048, name: "KELLE PAÇA ÇORBA", price: 60.00, category: "ÇORBA" },
-    { id: 1049, name: "TARHANA ÇORBA", price: 50.00, category: "ÇORBA" }
-],
-        tables: [],
-        currentTableId: null,
-        salesReport: [],
-        currentQuickSaleOrder: [],
-        currentOrderOriginalTotal: 0,
-        currentOrderDiscountAmount: 0,
-        waiters: []
-    };
+    // adisyon.html içindeki <script> bloğunda, appState tanımı:
+
+const appState = {
+    user: null,
+    products: [ // Sunucudaki en son menü ile senkronize edildi
+        // ÇORBA
+        { id: 1001, name: "KELLE PAÇA ÇORBA", price: 60.00, category: "ÇORBA" },
+        { id: 1002, name: "TARHANA ÇORBA", price: 50.00, category: "ÇORBA" },
+        // ET - TAVUK
+        { id: 1003, name: "YAPRAK D. EKMEK ARASI", price: 200.00, category: "ET - TAVUK" },
+        { id: 1004, name: "ET DÖNER EKMEK ARASI", price: 150.00, category: "ET - TAVUK" },
+        { id: 1005, name: "ET DÖNER PORSİYON", price: 175.00, category: "ET - TAVUK" },
+        { id: 1006, name: "TAVUK DÖNER EKMEK ARASI", price: 130.00, category: "ET - TAVUK" },
+        { id: 1007, name: "TAVUK DÖNER PORSİYON", price: 150.00, category: "ET - TAVUK" },
+        { id: 1008, name: "KÖFTE EKMEK", price: 130.00, category: "ET - TAVUK" },
+        { id: 1009, name: "KÖFTE PORSİYON", price: 150.00, category: "ET - TAVUK" },
+        { id: 1010, name: "KUZU ŞİŞ", price: 150.00, category: "ET - TAVUK" },
+        { id: 1011, name: "ADANA ŞİŞ", price: 150.00, category: "ET - TAVUK" },
+        { id: 1012, name: "PİRZOLA - 4 ADET", price: 250.00, category: "ET - TAVUK" },
+        { id: 1013, name: "TAVUK FAJİTA", price: 200.00, category: "ET - TAVUK" },
+        { id: 1014, name: "TAVUK (PİLİÇ) ÇEVİRME", price: 250.00, category: "ET - TAVUK" },
+        { id: 1015, name: "ET DÖNER - KG", price: 1300.00, category: "ET - TAVUK" },
+        { id: 1016, name: "ET DÖNER - 500 GR", price: 650.00, category: "ET - TAVUK" },
+        { id: 1017, name: "TAVUK DÖNER - KG", price: 800.00, category: "ET - TAVUK" },
+        { id: 1018, name: "TAVUK DÖNER - 500 GR", price: 400.00, category: "ET - TAVUK" },
+        { id: 1019, name: "YAPRAK D. PORS.", price: 250.00, category: "ET - TAVUK" },
+        // ATIŞTIRMALIK
+        { id: 1020, name: "AYVALIK TOSTU", price: 120.00, category: "ATIŞTIRMALIK" },
+        { id: 1021, name: "HAMBURGER", price: 150.00, category: "ATIŞTIRMALIK" },
+        { id: 1022, name: "BALIK BURGER", price: 150.00, category: "ATIŞTIRMALIK" },
+        { id: 1023, name: "PİDE ÇEŞİTLERİ", price: 120.00, category: "ATIŞTIRMALIK" },
+        { id: 1024, name: "PİZZA KARIŞIK (ORTA BOY)", price: 150.00, category: "ATIŞTIRMALIK" },
+        { id: 1025, name: "PİZZA KARIŞIK (BÜYÜK BOY)", price: 200.00, category: "ATIŞTIRMALIK" },
+        { id: 1026, name: "LAHMACUN", price: 75.00, category: "ATIŞTIRMALIK" },
+        { id: 1027, name: "ÇİĞ KÖFTE KG (MARUL-LİMON)", price: 300.00, category: "ATIŞTIRMALIK" },
+        { id: 1028, name: "YAĞLI GÖZLEME", price: 50.00, category: "ATIŞTIRMALIK" },
+        { id: 1029, name: "İÇLİ GÖZLEME", price: 60.00, category: "ATIŞTIRMALIK" },
+        // İÇECEK
+        { id: 1030, name: "OSMANLI ŞERBETİ - 1 LT", price: 75.00, category: "İÇECEK" },
+        { id: 1031, name: "LİMONATA - 1 LT", price: 75.00, category: "İÇECEK" },
+        { id: 1032, name: "AYRAN", price: 10.00, category: "İÇECEK" },
+        { id: 1033, name: "SU", price: 10.00, category: "İÇECEK" },
+        { id: 1034, name: "ÇAY", price: 10.00, category: "İÇECEK" },
+        { id: 1035, name: "SOĞUK ÇAY ÇEŞİTLERİ", price: 25.00, category: "İÇECEK" },
+        { id: 1036, name: "TAMEK MEYVE SUYU", price: 25.00, category: "İÇECEK" },
+        { id: 1037, name: "MEYVELİ MADEN SUYU", price: 25.00, category: "İÇECEK" },
+        { id: 1038, name: "NİĞDE GAZOZU", price: 25.00, category: "İÇECEK" },
+        { id: 1039, name: "ŞALGAM", price: 25.00, category: "İÇECEK" },
+        { id: 1040, name: "SADE MADEN SUYU", price: 15.00, category: "İÇECEK" },
+        { id: 1041, name: "TROPİKAL - ÇİLEK KOKUSU", price: 75.00, category: "İÇECEK" },
+        { id: 1042, name: "TROPİKAL - KARPUZELLA", price: 75.00, category: "İÇECEK" },
+        { id: 1043, name: "TROPİKAL - NAR-I ŞAHANE", price: 75.00, category: "İÇECEK" },
+        { id: 1044, name: "TROPİKAL - MAVİ TURUNÇ", price: 75.00, category: "İÇECEK" },
+        { id: 1045, name: "TROPİKAL - ELMA RÜYASI", price: 75.00, category: "İÇECEK" },
+        // TATLI
+        { id: 1046, name: "EV BAKLAVASI - KG", price: 400.00, category: "TATLI" },
+        { id: 1047, name: "EV BAKLAVASI - 500 GR", price: 200.00, category: "TATLI" },
+        { id: 1048, name: "EV BAKLAVASI - PORSİYON", price: 75.00, category: "TATLI" },
+        { id: 1049, name: "AŞURE - 500 GRAM", price: 100.00, category: "TATLI" },
+        { id: 1050, name: "HÖŞMERİM - 500 GR", price: 100.00, category: "TATLI" },
+        { id: 1051, name: "WAFFLE", price: 150.00, category: "TATLI" },
+        { id: 1052, name: "DİĞER PASTA ÇEŞİTLERİ", price: 50.00, category: "TATLI" }
+    ],
+    tables: [],
+    currentTableId: null,
+    salesReport: [],
+    activityLog: [],
+    currentQuickSaleOrder: [],
+    currentOrderOriginalTotal: 0,
+    currentOrderDiscountAmount: 0,
+    waiters: [],
+    allUsers: [], // Aktif kullanıcı durumları için
+    activeUsernames: [] // Aktif kullanıcı durumları için
+};
+
 
     // --- DOM Elementleri ---
     const loadingOverlay = document.getElementById('loadingOverlay');
@@ -788,6 +830,8 @@
     const manualProductQuantity = document.getElementById('manualProductQuantity');
     const manualProductDescription = document.getElementById('manualProductDescription');
     const addManualProductButton = document.getElementById('addManualProductButton');
+    const cashierStatusList = document.getElementById('cashierStatusList');
+    const waiterStatusList = document.getElementById('waiterStatusList');
 
     // Hızlı Satış Modalı Elementleri
     const quickSaleModal = document.getElementById('quickSaleModal');
@@ -1005,36 +1049,33 @@ function formatTimestamp(timestampInput) {
         showLoading("Sunucuya bağlanılıyor...");
         socket = new WebSocket(WEBSOCKET_URL);
 
-        socket.onopen = () => {
-            console.log("WebSocket bağlantısı kuruldu.");
-            hideLoading();
-            // Oturum kontrolü
-            const storedUser = localStorage.getItem('adisyonUser');
-            if (storedUser) {
-                try {
-                    appState.user = JSON.parse(storedUser);
-                    console.log("Oturum bulundu:", appState.user.username);
-                    activeUserNameSpan.textContent = appState.user.username;
-                    activeUserRoleSpan.textContent = appState.user.role;
-                    loginModal.classList.remove('active');
-                    appContainer.classList.remove('hidden');
-                    orderPageContainer.classList.remove('active');
-                    updateUIForRole();
-                    // Oturum sürdürme mesajı gönder
-                    sendMessageToServer('reauthenticate', { user: appState.user });
-                } catch (e) {
-                    console.error("localStorage'dan kullanıcı verisi okunamadı:", e);
-                    localStorage.removeItem('adisyonUser');
-                    loginModal.classList.add('active');
-                    appContainer.classList.add('hidden');
-                    orderPageContainer.classList.remove('active');
-                }
-            } else {
-                loginModal.classList.add('active');
-                appContainer.classList.add('hidden');
-                orderPageContainer.classList.remove('active');
+            socket.onopen = () => {
+        console.log("WebSocket bağlantısı kuruldu.");
+        hideLoading();
+        
+        // YENİ EKLENEN/AKTİF EDİLEN SATIR:
+        // Sunucudan tüm kullanıcıları ve aktif durumlarını iste
+        sendMessageToServer('get_all_users_and_active_status', {}); 
+
+        const storedUser = localStorage.getItem('adisyonUser');
+        if (storedUser) {
+            try {
+                appState.user = JSON.parse(storedUser);
+                console.log("Oturum bulundu:", appState.user.username);
+                // UI güncellemeleri reauthenticate veya login_success yanıtından sonra yapılmalı.
+                // Sunucu reauthenticate mesajına products_update ve tables_update ile cevap verir.
+                sendMessageToServer('reauthenticate', { user: appState.user });
+            } catch (e) {
+                console.error("localStorage'dan kullanıcı verisi okunamadı:", e);
+                localStorage.removeItem('adisyonUser');
+                showLoginScreen(); // Hata durumunda login ekranını göster
+                // renderUserLoginStatus(); // Bu çağrı, sunucudan gelecek initial_user_status mesajıyla tetiklenir.
             }
-        };
+        } else {
+            showLoginScreen(); // Kullanıcı yoksa login ekranını göster
+            // renderUserLoginStatus(); // Bu çağrı, sunucudan gelecek initial_user_status mesajıyla tetiklenir.
+        }
+    };
 
         socket.onmessage = (event) => {
             console.log("RAW Sunucudan mesaj alındı:", event.data);
@@ -1156,6 +1197,33 @@ function formatTimestamp(timestampInput) {
                     console.log("[tables_update] Kullanıcı bilgisi (appState.user) henüz set edilmemiş, tables_update işlenmedi.");
                 }
                 break;
+
+case 'initial_user_status': // Sunucudan ilk kullanıcı durumları geldiğinde
+            if (message.payload) {
+                appState.allUsers = message.payload.allUsers || [];
+                appState.activeUsernames = message.payload.activeUsernames || [];
+                renderUserLoginStatus();
+            }
+            break;
+
+        case 'active_users_update': // Aktif kullanıcı listesi güncellendiğinde
+            if (message.payload) {
+                appState.allUsers = message.payload.allUsers || []; // Tüm kullanıcı listesi de güncellenebilir
+                appState.activeUsernames = message.payload.activeUsernames || [];
+                renderUserLoginStatus();
+            }
+            break;
+        
+        case 'force_logout': // Sunucu aynı hesaptan başka bir giriş olduğunu bildirdiğinde
+            alert(message.payload.message || 'Bu hesap başka bir yerden giriş yaptığı için oturumunuz sonlandırıldı.');
+            performLogout(false); // Uygulamayı kapatmadan sadece çıkış yap
+            showLoginScreen(); // Login ekranını göster
+            break;
+
+
+
+
+
             case 'products_update':
                 if (message.payload && message.payload.products) {
                     appState.products = message.payload.products;
@@ -1442,6 +1510,46 @@ window.handleAndroidBackButton = function() {
             tablesGrid.appendChild(tableCard);
         });
     }
+
+function renderUserLoginStatus() {
+    if (!cashierStatusList || !waiterStatusList || !appState.allUsers) return;
+
+    cashierStatusList.innerHTML = '';
+    waiterStatusList.innerHTML = '';
+
+    const allUsers = Array.isArray(appState.allUsers) ? appState.allUsers : [];
+    const activeUsernames = Array.isArray(appState.activeUsernames) ? appState.activeUsernames : [];
+
+    const cashiers = allUsers.filter(user => user.role === 'cashier');
+    const waiters = allUsers.filter(user => user.role === 'waiter');
+
+    const createStatusItem = (user) => {
+        const isActive = activeUsernames.includes(user.username);
+        const itemDiv = document.createElement('div');
+        itemDiv.className = 'user-status-item';
+        itemDiv.innerHTML = `
+            <span class="status-indicator ${isActive ? 'active' : 'inactive'}"></span>
+            <span>${user.username}</span>
+        `;
+        return itemDiv;
+    };
+
+    if (cashiers.length === 0) {
+        cashierStatusList.innerHTML = '<p class="text-xs text-gray-500">Tanımlı kasa hesabı yok.</p>';
+    } else {
+        cashiers.forEach(user => cashierStatusList.appendChild(createStatusItem(user)));
+    }
+
+    if (waiters.length === 0) {
+        waiterStatusList.innerHTML = '<p class="text-xs text-gray-500">Tanımlı garson hesabı yok.</p>';
+    } else {
+        waiters.forEach(user => waiterStatusList.appendChild(createStatusItem(user)));
+    }
+}
+
+
+
+
 
     // Ürün Seçim Gridini Oluşturur (Hem normal sipariş hem hızlı satış için)
     function renderProductGrid(targetGridElement = orderPageProductGrid, forQuickSale = false) {
