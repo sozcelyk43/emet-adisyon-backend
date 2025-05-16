@@ -435,43 +435,74 @@ wss.on('connection', (ws, req) => {
                 } else { ws.send(JSON.stringify({ type: 'manual_order_update_fail', payload: { error: 'Geçersiz manuel ürün bilgileri.' } }));}
                 break;
 
-            case 'remove_order_item':
-                 if (!currentUserInfo) { ws.send(JSON.stringify({ type: 'error', payload: { message: 'Giriş yapmalısınız.' } })); return; }
-                const tableToRemoveFrom = tables.find(t => t.id === payload.tableId);
-                if (tableToRemoveFrom) {
-                    // Silme mantığı, ürünün nasıl eklendiğine (isCustomItem, productId, name) göre daha dikkatli olmalı.
-                    // Şimdilik basit bir eşleşme varsayalım.
-                    const productIdNum = payload.productId === null || payload.productId === 'manual' ? null : parseInt(payload.productId, 10);
-                    let removedItemDetails = null;
-                    const itemIndex = tableToRemoveFrom.order.findIndex(item => {
-                        // Eşleşme koşulu: Eğer productId varsa ve custom değilse productId ve description ile eşleş.
-                        // Eğer custom item ise (veya productId yoksa) name ve description ile eşleş.
-                        let idMatch = false;
-                        if (item.isCustomItem || (productIdNum === null || isNaN(productIdNum))) { // Manuel veya ağırlıklı (ID'si null/NaN olabilir)
-                            idMatch = item.name === payload.name;
-                        } else { // Standart ürün
-                            idMatch = item.productId === productIdNum;
-                        }
-                        const descriptionMatch = item.description === (payload.description || '');
-                        const match = idMatch && descriptionMatch;
+       case 'remove_order_item':
+                 if (!currentUserInfo) { 
+                     ws.send(JSON.stringify({ type: 'error', payload: { message: 'Giriş yapmalısınız.' } })); 
+                     return; 
+                 }
+                
+                console.log("[SERVER] remove_order_item isteği alındı. Payload:", JSON.stringify(payload)); // Gelen payload'ı logla
 
-                        if (match) { removedItemDetails = { ...item }; }
+                const tableToRemoveFrom = tables.find(t => t.id === payload.tableId);
+
+                if (tableToRemoveFrom) {
+                    console.log(`[SERVER] Masa (${tableToRemoveFrom.name}) bulundu. Siparişler:`, JSON.stringify(tableToRemoveFrom.order, null, 2)); // Masadaki siparişleri logla
+
+                    const productIdNum = (payload.productId === null || payload.productId === 'manual') ? null : parseInt(payload.productId, 10);
+                    const targetDescription = payload.description === undefined ? '' : payload.description; // payload.description undefined ise boş string yap
+
+                    console.log(`[SERVER] Aranan: productIdNum=${productIdNum}, targetName=${payload.name}, targetDescription='${targetDescription}'`);
+
+                    let removedItemDetails = null; 
+                    const itemIndex = tableToRemoveFrom.order.findIndex(item => {
+                        let idMatch = false;
+                        if (productIdNum !== null && !isNaN(productIdNum)) { // Normal ürün (ID ile eşleşme)
+                            idMatch = item.productId === productIdNum;
+                        } else if (payload.name) { // Manuel ürün (isimle eşleşme)
+                            idMatch = item.name === payload.name;
+                        }
+                        
+                        const descriptionMatch = (item.description || '') === targetDescription; // Siparişteki item.description da undefined ise boş string yap
+                        
+                        // Eşleşme logları
+                        // console.log(`[SERVER] Kontrol edilen öğe: pId=${item.productId}, name=${item.name}, desc='${item.description || ''}'. IdMatch=${idMatch}, DescMatch=${descriptionMatch}`);
+
+                        const match = idMatch && descriptionMatch;
+                        if (match) {
+                            removedItemDetails = { ...item }; 
+                        }
                         return match;
                     });
+
                     if (itemIndex > -1) {
+                        console.log("[SERVER] Öğe bulundu, siliniyor:", JSON.stringify(removedItemDetails));
                         tableToRemoveFrom.order.splice(itemIndex, 1);
                         tableToRemoveFrom.total = calculateTableTotal(tableToRemoveFrom.order);
                         if (tableToRemoveFrom.order.length === 0) {
-                            tableToRemoveFrom.status = 'boş'; tableToRemoveFrom.waiterId = null; tableToRemoveFrom.waiterUsername = null;
+                            tableToRemoveFrom.status = 'boş'; 
+                            tableToRemoveFrom.waiterId = null; 
+                            tableToRemoveFrom.waiterUsername = null;
                         }
                         broadcastTableUpdates();
-                        if (removedItemDetails) {
+                        if (removedItemDetails && currentUserInfo) {
                             await logActivity(currentUserInfo.username, 'SIPARIS_URUN_SILINDI',
                                 { masa: tableToRemoveFrom.name, silinen_urun: removedItemDetails },
-                                'Order', tableToRemoveFrom.id, currentUserInfo.ip);
+                                'Order', 
+                                tableToRemoveFrom.id, 
+                                currentUserInfo.ip // Düzeltildi
+                            );
                         }
-                    } else { ws.send(JSON.stringify({ type: 'order_update_fail', payload: { error: 'Silinecek öğe bulunamadı. Açıklama ve ürün adı eşleşmiyor olabilir.' } }));}
-                } else { ws.send(JSON.stringify({ type: 'order_update_fail', payload: { error: 'Masa bulunamadı.' } }));}
+                        // Başarı mesajı gönderilebilir
+                        // ws.send(JSON.stringify({ type: 'order_item_removed_success', payload: { message: 'Öğe siparişten silindi.'} }));
+                        console.log("[SERVER] Öğe başarıyla silindi ve masalar güncellendi.");
+                    } else { 
+                        console.log("[SERVER] Öğe bulunamadı. Eşleşme sağlanamadı.");
+                        ws.send(JSON.stringify({ type: 'order_update_fail', payload: { error: 'Silinecek öğe bulunamadı. Açıklama ve ürün adı/ID eşleşmiyor olabilir.' } }));
+                    }
+                } else { 
+                    console.log("[SERVER] Masa bulunamadı. Tablo ID:", payload.tableId);
+                    ws.send(JSON.stringify({ type: 'order_update_fail', payload: { error: 'Masa bulunamadı.' } }));
+                }
                 break;
 
             case 'close_table':
