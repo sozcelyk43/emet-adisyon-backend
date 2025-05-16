@@ -2038,7 +2038,9 @@ function addProductToOrder(productId, quantity, description, isCustomItem = fals
     // Sipariş sayfasındaki mevcut siparişleri render eder
 function renderOrderPageForTable(table) {
     orderPageCurrentOrderItems.innerHTML = '';
+    appState.currentOrderOriginalTotal = 0; // Her render'da siparişin genel toplamını sıfırla
 
+    // Garson bilgisini ayarla (mevcut kodunuzdaki gibi)
     if (table.status === 'dolu' && table.waiterUsername) {
         orderPageWaiterInfo.textContent = `Bu Siparişi Alan Garson: ${table.waiterUsername}`;
     } else if (table.status === 'dolu' && !table.waiterUsername && appState.user && appState.user.role === 'cashier') {
@@ -2048,60 +2050,59 @@ function renderOrderPageForTable(table) {
     }
 
     if (!table || !table.order || table.order.length === 0) {
-        orderPageCurrentOrderItems.innerHTML = '<p class="text-gray-500 py-4">Sipariş boş.</p>';
-        appState.currentOrderOriginalTotal = 0;
+        orderPageCurrentOrderItems.innerHTML = '<p class="text-gray-500 py-4 text-center">Sipariş boş.</p>';
+        // appState.currentOrderOriginalTotal zaten 0 olarak ayarlandı.
     } else {
-        let originalTotal = 0;
+        let currentOrderGrandTotal = 0; // Siparişin genel toplamını hesaplamak için
         table.order.forEach((item) => {
-            const price = parseFloat(item.priceAtOrder);
-            const qty = parseInt(item.quantity, 10);
+            const itemNameString = item.name || 'Bilinmeyen Ürün'; // Bu, "ET DÖNER - KG (500 gr)" gibi olabilir
+            const itemPriceAtOrder = parseFloat(item.priceAtOrder) || 0; // Bu, ağırlıklı için hesaplanmış toplam, standart için birim fiyat
+            const itemQuantity = parseFloat(item.quantity) || 0; // Bu, ağırlıklı için gramaj, standart için adet
+            const itemDescription = item.description || '';
 
-            let itemCalculatedTotal = 0;
-            if (!isNaN(price) && !isNaN(qty)) {
-                itemCalculatedTotal = price * qty;
+            let lineItemDisplayTotal;
+            let quantityDisplayString;
+
+            // Sunucudan gelen item objesinde isCustomItem veya isByWeightEntry gibi bir flag olmalı.
+            // server_js_dynamic_weight_menu'deki add_order_item case'i isCustomItem ve isByWeightEntry ekliyordu.
+            // Bu flag'lerden birini kontrol edelim.
+            if (item.isCustomItem || item.isByWeightEntry) { // Ağırlıklı veya manuel olarak fiyatı belirlenmiş ürün
+                lineItemDisplayTotal = itemPriceAtOrder; // priceAtOrder zaten bu satırın toplam fiyatı
+                quantityDisplayString = `(${itemQuantity} gr)`; // Miktar gram olarak gösterilir
+            } else { // Standart, adetli ürün
+                lineItemDisplayTotal = itemPriceAtOrder * itemQuantity;
+                quantityDisplayString = `(${itemQuantity} x ${formatPrice(itemPriceAtOrder)})`;
             }
             
-            originalTotal += itemCalculatedTotal;
+            currentOrderGrandTotal += lineItemDisplayTotal;
 
             const orderItemDiv = document.createElement('div');
-            orderItemDiv.className = 'flex justify-between items-start p-3 bg-gray-50 rounded-md';
+            orderItemDiv.className = 'flex justify-between items-start p-3 bg-gray-50 rounded-md shadow';
 
-            let itemName = item.name || 'Bilinmeyen Ürün';
-            const productDetails = appState.products.find(p => p.id === item.productId);
-            if(productDetails && !item.name) {
-                itemName = productDetails.name;
-            }
-
-            const displayPrice = !isNaN(price) ? price : 0;
-            const displayQty = !isNaN(qty) ? qty : 0;
-            const currentItemDisplayTotal = displayPrice * displayQty;
-
-            let descriptionHTML = '';
-            if (item.description && item.description.trim() !== '') {
-                descriptionHTML = `<p class="text-xs text-gray-500 pl-1 mt-1"><em>Açıklama: ${item.description}</em></p>`;
-            }
-            let waiterNameHTML = '';
-            if (item.waiterUsername) {
-                waiterNameHTML = `<p class="text-xs text-blue-500 pl-1 mt-1">Ekleyen: ${item.waiterUsername} (${formatTimestamp(item.timestamp)})</p>`;
-            }
+            let descriptionHTML = itemDescription ? `<p class="text-xs text-gray-500 italic ml-2 mt-1">(${itemDescription})</p>` : '';
+            let waiterNameHTML = item.waiterUsername ? `<p class="text-xs text-blue-600 ml-2 mt-1">Ekleyen: ${item.waiterUsername} (${formatTimestamp(item.timestamp)})</p>` : '';
 
             orderItemDiv.innerHTML = `
                 <div class="flex-grow">
-                    <span class="font-medium">${itemName}</span>
-                    <span class="text-sm text-gray-600"> (${displayQty} x ${formatPrice(displayPrice)})</span>
+                    <span class="font-medium">${itemNameString}</span>
+                    <span class="text-sm text-gray-600"> ${quantityDisplayString}</span>
                     ${descriptionHTML}
                     ${waiterNameHTML}
                 </div>
                 <div class="flex items-center ml-2">
-                    <span class="font-semibold mr-3">${formatPrice(currentItemDisplayTotal)}</span>
-                    <button data-product-id="${item.productId || 'manual'}" data-item-name="${itemName}" data-item-description="${item.description || ''}" class="remove-item-btn-orderpage text-red-500 hover:text-red-700 text-sm font-bold p-1 rounded-full bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-red-400">X</button>
+                    <span class="font-semibold mr-3">${formatPrice(lineItemDisplayTotal)}</span>
+                    <button data-product-id="${item.productId || (item.isCustomItem ? 'manual' : '')}" 
+                            data-item-name="${itemNameString}" 
+                            data-item-description="${itemDescription}" 
+                            class="remove-item-btn-orderpage text-red-500 hover:text-red-700 text-lg font-bold p-1 rounded-full hover:bg-red-100 transition-colors">&times;</button>
                 </div>
             `;
             orderPageCurrentOrderItems.appendChild(orderItemDiv);
         });
-        appState.currentOrderOriginalTotal = originalTotal;
+        appState.currentOrderOriginalTotal = currentOrderGrandTotal; // Siparişin genel toplamını state'e ata
     }
 
+    // İndirim ve genel toplamı gösteren kısım (mevcut kodunuzdaki gibi)
     if (appState.currentOrderDiscountAmount > 0 && appState.currentOrderOriginalTotal > 0) {
         const discounted = appState.currentOrderOriginalTotal - appState.currentOrderDiscountAmount;
         orderPageCurrentOrderTotal.textContent = `Toplam: ${formatPrice(discounted)} (İndirimli)`;
@@ -2112,26 +2113,24 @@ function renderOrderPageForTable(table) {
         discountInfoDiv.classList.add('hidden');
     }
 
-    if (appState.user && appState.user.role === 'cashier') {
-        showReceiptButton.classList.remove('hidden');
-        finalizeAndCloseTableButton.classList.remove('hidden');
-        applyDiscountButton.classList.remove('hidden');
-    } else {
-        showReceiptButton.classList.add('hidden');
-        finalizeAndCloseTableButton.classList.add('hidden');
-        applyDiscountButton.classList.add('hidden');
-    }
+    // Kasiyer butonlarının görünürlüğü (mevcut kodunuzdaki gibi)
+    const isCashier = appState.user && appState.user.role === 'cashier';
+    showReceiptButton.classList.toggle('hidden', !isCashier && (!table || !table.order || table.order.length === 0));
+    finalizeAndCloseTableButton.classList.toggle('hidden', !isCashier);
+    applyDiscountButton.classList.toggle('hidden', !isCashier);
 
-    document.querySelectorAll('.remove-item-btn-orderpage').forEach(button => {
+    // Silme butonlarına event listener ekle (mevcut kodunuzdaki gibi)
+    orderPageCurrentOrderItems.querySelectorAll('.remove-item-btn-orderpage').forEach(button => {
         button.addEventListener('click', (e) => {
-            const buttonElement = e.target.closest('button');
-            const productIdToRemove = buttonElement.dataset.productId;
-            const descriptionToRemove = buttonElement.dataset.description;
-            const nameToRemove = buttonElement.dataset.itemName;
+            const btnElement = e.target.closest('button');
+            const productIdToRemove = btnElement.dataset.productId;
+            const descriptionToRemove = btnElement.dataset.itemDescription; // data-item-description olarak güncellendi
+            const nameToRemove = btnElement.dataset.itemName; // data-item-name olarak güncellendi
             removeItemFromOrderPage(productIdToRemove, descriptionToRemove, nameToRemove);
         });
     });
 }
+
 
     // Satış Raporu Modalı'nı render eder
     function renderSalesReport() {
