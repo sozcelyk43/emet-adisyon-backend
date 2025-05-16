@@ -368,33 +368,72 @@ wss.on('connection', (ws, req) => {
                 } else { ws.send(JSON.stringify({ type: 'manual_order_update_fail', payload: { error: 'Geçersiz manuel ürün bilgileri.' } }));}
                 break;
 
+           // server.js dosyasındaki ws.on('message', ...) switch bloğunun içinde:
+
             case 'remove_order_item':
-                 if (!currentUserInfo) { ws.send(JSON.stringify({ type: 'error', payload: { message: 'Giriş yapmalısınız.' } })); return; }
+                 if (!currentUserInfo) { 
+                     ws.send(JSON.stringify({ type: 'error', payload: { message: 'Giriş yapmalısınız.' } })); 
+                     return; 
+                 }
                 const tableToRemoveFrom = tables.find(t => t.id === payload.tableId);
                 if (tableToRemoveFrom) {
-                    const productIdNum = payload.productId === null || payload.productId === 'manual' ? null : parseInt(payload.productId, 10);
-                    let removedItemDetails = null;
+                    // payload.productId 'manual' string'i veya null olabilir, ya da sayısal bir ID.
+                    // parseInt, 'manual' için NaN döndürür.
+                    const productIdNum = (payload.productId === null || payload.productId === 'manual') ? null : parseInt(payload.productId, 10);
+                    
+                    let removedItemDetails = null; // Loglamak için silinen öğenin detayları
+
                     const itemIndex = tableToRemoveFrom.order.findIndex(item => {
-                        const match = ( (productIdNum !== null && item.productId === productIdNum) || (productIdNum === null && item.name === payload.name) ) &&
-                        item.description === (payload.description || '');
-                        if (match) { removedItemDetails = { ...item }; }
+                        let match = false;
+                        if (productIdNum !== null && !isNaN(productIdNum)) { // Normal ürün (ID ile eşleşme)
+                            match = item.productId === productIdNum &&
+                                    item.description === (payload.description || '');
+                        } else if (payload.name) { // Manuel ürün (isimle eşleşme, productIdNum null veya NaN ise)
+                            match = item.name === payload.name &&
+                                    item.description === (payload.description || '');
+                        }
+                        // Eğer sadece productId ile silmek isterseniz (açıklama olmadan),
+                        // ve manuel ürünler için sadece isimle, aşağıdaki gibi basitleştirilebilir,
+                        // ancak aynı üründen farklı açıklamalarla eklenmişse yanlış olanı silebilir.
+                        // if (productIdNum !== null && !isNaN(productIdNum)) {
+                        //     match = item.productId === productIdNum;
+                        // } else if (payload.name) {
+                        //     match = item.name === payload.name;
+                        // }
+
+                        if (match) {
+                            removedItemDetails = { ...item }; // Silmeden önce kopyala
+                        }
                         return match;
                     });
+
                     if (itemIndex > -1) {
                         tableToRemoveFrom.order.splice(itemIndex, 1);
                         tableToRemoveFrom.total = calculateTableTotal(tableToRemoveFrom.order);
                         if (tableToRemoveFrom.order.length === 0) {
-                            tableToRemoveFrom.status = 'boş'; tableToRemoveFrom.waiterId = null; tableToRemoveFrom.waiterUsername = null;
+                            tableToRemoveFrom.status = 'boş'; 
+                            tableToRemoveFrom.waiterId = null; 
+                            tableToRemoveFrom.waiterUsername = null;
                         }
                         broadcastTableUpdates();
-                        if (removedItemDetails) {
+                        if (removedItemDetails && currentUserInfo) { // currentUserInfo kontrolü eklendi
                             await logActivity(currentUserInfo.username, 'SIPARIS_URUN_SILINDI',
                                 { masa: tableToRemoveFrom.name, silinen_urun: removedItemDetails },
-                                'Order', tableToRemoveFrom.id, clientIpAddress);
+                                'Order', 
+                                tableToRemoveFrom.id, 
+                                currentUserInfo.ip // Düzeltildi: clientIpAddress yerine currentUserInfo.ip
+                            );
                         }
-                    } else { ws.send(JSON.stringify({ type: 'order_update_fail', payload: { error: 'Öğe bulunamadı.' } }));}
-                } else { ws.send(JSON.stringify({ type: 'order_update_fail', payload: { error: 'Masa bulunamadı.' } }));}
+                        // İstemciye başarılı olduğuna dair bir mesaj gönderilebilir (opsiyonel)
+                        // ws.send(JSON.stringify({ type: 'order_item_removed_success', payload: { message: 'Öğe siparişten silindi.'} }));
+                    } else { 
+                        ws.send(JSON.stringify({ type: 'order_update_fail', payload: { error: 'Öğe bulunamadı.' } }));
+                    }
+                } else { 
+                    ws.send(JSON.stringify({ type: 'order_update_fail', payload: { error: 'Masa bulunamadı.' } }));
+                }
                 break;
+
 
             case 'close_table':
                 if (!currentUserInfo || currentUserInfo.role !== 'cashier') { ws.send(JSON.stringify({ type: 'error', payload: { message: 'Bu işlem için yetkiniz yok.' } })); return; }
