@@ -60,13 +60,10 @@ console.log(`EMET LEZZET GÜNLERİ HTTP Sunucusu ${HTTP_PORT} portunda başlatı
 console.log(`WebSocket sunucusu da bu HTTP sunucusu üzerinden çalışıyor.`);
 
 // --- Sunucu Verileri ---
-// GÜNCELLENMİŞ KULLANICI LİSTESİ
 let users = [
-    // Kasiyerler
     { id: 1, username: 'hamza', password: 'ham.za', role: 'cashier' },
     { id: 2, username: 'bilal', password: 'bil.al', role: 'cashier' },
     { id: 10, username: 'sinan', password: 'sinan12', role: 'cashier' },
-    // Garsonlar
     { id: 3, username: 'aykut', password: 'ay.kut', role: 'waiter' },
     { id: 4, username: 'osman', password: 'os.man', role: 'waiter' },
     { id: 5, username: 'omerfaruk', password: 'omer.faruk', role: 'waiter' },
@@ -76,11 +73,11 @@ let users = [
     { id: 9, username: 'garson', password: 'gar.son', role: 'waiter' },
 ];
 
-// Ürünler bellekte tutulacak (en son güncellenen menü)
 let currentProductId = 1000;
 let products = [
-    // ET - TAVUK
-    { id: ++currentProductId, name: "İSKENDER - 120 GR", price: 275.00, category: "ET - TAVUK" },
+    { id: ++currentProductId, name: "KELLE PAÇA ÇORBA", price: 60.00, category: "ÇORBA" },
+    { id: ++currentProductId, name: "TARHANA ÇORBA", price: 50.00, category: "ÇORBA" },
+    { id: ++currentProductId, name: "YAPRAK D. EKMEK ARASI", price: 200.00, category: "ET - TAVUK" },
     { id: ++currentProductId, name: "ET DÖNER EKMEK ARASI", price: 150.00, category: "ET - TAVUK" },
     { id: ++currentProductId, name: "ET DÖNER PORSİYON", price: 175.00, category: "ET - TAVUK" },
     { id: ++currentProductId, name: "TAVUK DÖNER EKMEK ARASI", price: 130.00, category: "ET - TAVUK" },
@@ -96,7 +93,7 @@ let products = [
     { id: ++currentProductId, name: "ET DÖNER - 500 GR", price: 650.00, category: "ET - TAVUK" },
     { id: ++currentProductId, name: "TAVUK DÖNER - KG", price: 800.00, category: "ET - TAVUK" },
     { id: ++currentProductId, name: "TAVUK DÖNER - 500 GR", price: 400.00, category: "ET - TAVUK" },
-    // ATIŞTIRMALIK
+    { id: ++currentProductId, name: "YAPRAK D. PORS.", price: 250.00, category: "ET - TAVUK" },
     { id: ++currentProductId, name: "AYVALIK TOSTU", price: 120.00, category: "ATIŞTIRMALIK" },
     { id: ++currentProductId, name: "HAMBURGER", price: 150.00, category: "ATIŞTIRMALIK" },
     { id: ++currentProductId, name: "BALIK BURGER", price: 150.00, category: "ATIŞTIRMALIK" },
@@ -107,7 +104,6 @@ let products = [
     { id: ++currentProductId, name: "ÇİĞ KÖFTE KG (MARUL-LİMON)", price: 300.00, category: "ATIŞTIRMALIK" },
     { id: ++currentProductId, name: "YAĞLI GÖZLEME", price: 50.00, category: "ATIŞTIRMALIK" },
     { id: ++currentProductId, name: "İÇLİ GÖZLEME", price: 60.00, category: "ATIŞTIRMALIK" },
-    // İÇECEK
     { id: ++currentProductId, name: "OSMANLI ŞERBETİ - 1 LT", price: 75.00, category: "İÇECEK" },
     { id: ++currentProductId, name: "LİMONATA - 1 LT", price: 75.00, category: "İÇECEK" },
     { id: ++currentProductId, name: "AYRAN", price: 10.00, category: "İÇECEK" },
@@ -120,19 +116,17 @@ let products = [
     { id: ++currentProductId, name: "ŞALGAM", price: 25.00, category: "İÇECEK" },
     { id: ++currentProductId, name: "SADE MADEN SUYU", price: 15.00, category: "İÇECEK" },
     { id: ++currentProductId, name: "TROPİKAL - ÇİLEK KOKUSU", price: 75.00, category: "İÇECEK" },
-    { id: ++currentProductId, name: "TROPİKAL - KAVUNEZYA", price: 75.00, category: "İÇECEK" },
+    { id: ++currentProductId, name: "TROPİKAL - KARPUZELLA", price: 75.00, category: "İÇECEK" },
     { id: ++currentProductId, name: "TROPİKAL - NAR-I ŞAHANE", price: 75.00, category: "İÇECEK" },
-    // TATLI
+    { id: ++currentProductId, name: "TROPİKAL - MAVİ TURUNÇ", price: 75.00, category: "İÇECEK" },
+    { id: ++currentProductId, name: "TROPİKAL - ELMA RÜYASI", price: 75.00, category: "İÇECEK" },
     { id: ++currentProductId, name: "EV BAKLAVASI - KG", price: 400.00, category: "TATLI" },
     { id: ++currentProductId, name: "EV BAKLAVASI - 500 GR", price: 200.00, category: "TATLI" },
     { id: ++currentProductId, name: "EV BAKLAVASI - PORSİYON", price: 75.00, category: "TATLI" },
     { id: ++currentProductId, name: "AŞURE - 500 GRAM", price: 100.00, category: "TATLI" },
     { id: ++currentProductId, name: "HÖŞMERİM - 500 GR", price: 100.00, category: "TATLI" },
     { id: ++currentProductId, name: "WAFFLE", price: 150.00, category: "TATLI" },
-    { id: ++currentProductId, name: "DİĞER PASTA ÇEŞİTLERİ", price: 50.00, category: "TATLI" },
-    // ÇORBA
-    { id: ++currentProductId, name: "KELLE PAÇA ÇORBA", price: 60.00, category: "ÇORBA" },
-    { id: ++currentProductId, name: "TARHANA ÇORBA", price: 50.00, category: "ÇORBA" }
+    { id: ++currentProductId, name: "DİĞER PASTA ÇEŞİTLERİ", price: 50.00, category: "TATLI" }
 ];
 let nextProductId = currentProductId + 1;
 
@@ -179,13 +173,24 @@ function broadcastTableUpdates() {
 }
 
 function fetchProductsFromDB() {
-    console.log("Bellekten ürünler çekiliyor (kullanıcı tarafından sağlanan sıralamayla).");
+    console.log("Bellekten ürünler çekiliyor (tanımlandığı sırayla).");
     return products.slice();
 }
 
 async function broadcastProductsUpdate() {
     const currentProducts = fetchProductsFromDB();
     broadcast({ type: 'products_update', payload: { products: currentProducts } });
+}
+
+function getActiveUsernames() {
+    return Array.from(clients.values()).map(userInfo => userInfo.username);
+}
+
+function broadcastActiveUsersList() {
+    const activeUsernames = getActiveUsernames();
+    const allUsersForStatus = users.map(u => ({ username: u.username, role: u.role }));
+    broadcast({ type: 'active_users_update', payload: { activeUsernames, allUsers: allUsersForStatus } });
+    console.log("Aktif kullanıcı listesi yayınlandı:", activeUsernames);
 }
 
 function broadcastWaitersList(requestingWs) {
@@ -246,6 +251,9 @@ async function logActivity(username, actionType, details = {}, targetEntity = nu
 wss.on('connection', (ws, req) => {
     const clientIpAddress = getClientIp(ws, req);
     console.log(`Yeni bir istemci bağlandı. IP: ${clientIpAddress || 'Bilinmiyor'}`);
+    const activeUsernamesOnConnect = getActiveUsernames();
+    const allUsersForStatusOnConnect = users.map(u => ({ username: u.username, role: u.role }));
+    ws.send(JSON.stringify({ type: 'initial_user_status', payload: { activeUsernames: activeUsernamesOnConnect, allUsers: allUsersForStatusOnConnect } }));
 
     ws.on('message', async (messageAsString) => {
         let message;
@@ -267,7 +275,10 @@ wss.on('connection', (ws, req) => {
                 if (user) {
                     for (let [client, info] of clients.entries()) {
                         if (info.id === user.id && client !== ws) {
-                            client.terminate(); clients.delete(client);
+                            console.log(`Mevcut bağlantı sonlandırılıyor (ID: ${user.id}, Kullanıcı: ${info.username})`);
+                            client.send(JSON.stringify({ type: 'force_logout', payload: { message: 'Bu hesap başka bir yerden giriş yaptı.' } }));
+                            client.terminate();
+                            clients.delete(client);
                         }
                     }
                     clients.set(ws, { id: user.id, username: user.username, role: user.role, ip: clientIpAddress });
@@ -276,6 +287,7 @@ wss.on('connection', (ws, req) => {
                     ws.send(JSON.stringify({ type: 'login_success', payload: { user: currentUserInfo, tables: tables, products: memProductsLogin }}));
                     console.log(`Kullanıcı giriş yaptı: ${user.username} (Rol: ${user.role}, IP: ${clientIpAddress})`);
                     await logActivity(user.username, 'KULLANICI_GIRIS', { rol: user.role }, 'User', user.id, clientIpAddress);
+                    broadcastActiveUsersList();
                 } else {
                     ws.send(JSON.stringify({ type: 'login_fail', payload: { error: 'Kullanıcı adı veya şifre hatalı.' } }));
                     await logActivity(payload.username, 'KULLANICI_GIRIS_BASARISIZ', { sebep: 'Hatalı şifre/kullanıcı adı' }, 'User', null, clientIpAddress);
@@ -286,8 +298,13 @@ wss.on('connection', (ws, req) => {
                  if (payload && payload.user && payload.user.id) {
                      const foundUser = users.find(u => u.id === payload.user.id && u.username === payload.user.username);
                      if (foundUser) {
+                         let oldClientTerminatedReauth = false;
                          for (let [client, info] of clients.entries()) {
-                             if (info.id === foundUser.id && client !== ws) { client.terminate(); clients.delete(client); }
+                             if (info.id === foundUser.id && client !== ws) {
+                                 client.send(JSON.stringify({ type: 'force_logout', payload: { message: 'Bu hesap başka bir yerden giriş yaptı (reauth).' } }));
+                                 client.terminate(); clients.delete(client);
+                                 oldClientTerminatedReauth = true;
+                             }
                          }
                          clients.set(ws, { ...payload.user, ip: clientIpAddress });
                          currentUserInfo = clients.get(ws);
@@ -295,8 +312,15 @@ wss.on('connection', (ws, req) => {
                          ws.send(JSON.stringify({ type: 'tables_update', payload: { tables: tables } }));
                          ws.send(JSON.stringify({ type: 'products_update', payload: { products: memProductsReauth } }));
                          console.log(`Kullanıcı oturumu sürdürdü: ${currentUserInfo.username} (IP: ${currentUserInfo.ip})`);
+                         if(oldClientTerminatedReauth) broadcastActiveUsersList();
                      } else { ws.send(JSON.stringify({ type: 'error', payload: { message: 'Geçersiz oturum bilgisi.' } }));}
                  } else { ws.send(JSON.stringify({ type: 'error', payload: { message: 'Eksik oturum bilgisi.' } }));}
+                break;
+
+            case 'get_all_users_and_active_status': // BU CASE EKLENDİ
+                const activeUsernames = getActiveUsernames();
+                const allUsersForStatus = users.map(u => ({ username: u.username, role: u.role }));
+                ws.send(JSON.stringify({ type: 'all_users_and_active_status_data', payload: { allUsers: allUsersForStatus, activeUsernames: activeUsernames } }));
                 break;
 
             case 'get_products':
@@ -323,10 +347,8 @@ wss.on('connection', (ws, req) => {
                 const tableToAdd = tables.find(t => t.id === payload.tableId);
                 const receivedProductId = parseInt(payload.productId, 10);
                 if (isNaN(receivedProductId)) { ws.send(JSON.stringify({ type: 'order_update_fail', payload: { error: 'Geçersiz ürün IDsi.' } })); return; }
-                
                 const currentProductsList = fetchProductsFromDB();
                 const productToAdd = currentProductsList.find(p => p.id === receivedProductId);
-
                 if (tableToAdd && productToAdd && typeof payload.quantity === 'number' && payload.quantity > 0) {
                     const existingItem = tableToAdd.order.find(item => item.productId === receivedProductId && item.description === (payload.description || ''));
                     if (existingItem) {
@@ -346,7 +368,7 @@ wss.on('connection', (ws, req) => {
                     broadcastTableUpdates();
                      await logActivity(currentUserInfo.username, 'SIPARIS_URUN_EKLENDI',
                          { masa: tableToAdd.name, urun_id: productToAdd.id, urun_adi: productToAdd.name, adet: payload.quantity, fiyat: productToAdd.price, aciklama: payload.description || '' },
-                         'Order', tableToAdd.id, clientIpAddress);
+                         'Order', tableToAdd.id, currentUserInfo.ip);
                 } else { ws.send(JSON.stringify({ type: 'order_update_fail', payload: { error: 'Geçersiz masa, ürün veya adet.' } })); }
                 break;
 
@@ -365,76 +387,37 @@ wss.on('connection', (ws, req) => {
                     broadcastTableUpdates();
                     await logActivity(currentUserInfo.username, 'SIPARIS_MANUEL_URUN_EKLENDI',
                         { masa: tableForManual.name, urun_adi: payload.name, adet: payload.quantity, fiyat: payload.price, kategori: payload.category || 'Diğer', aciklama: payload.description || '' },
-                        'Order', tableForManual.id, clientIpAddress);
+                        'Order', tableForManual.id, currentUserInfo.ip);
                 } else { ws.send(JSON.stringify({ type: 'manual_order_update_fail', payload: { error: 'Geçersiz manuel ürün bilgileri.' } }));}
                 break;
 
-           // server.js dosyasındaki ws.on('message', ...) switch bloğunun içinde:
-
             case 'remove_order_item':
-                 if (!currentUserInfo) { 
-                     ws.send(JSON.stringify({ type: 'error', payload: { message: 'Giriş yapmalısınız.' } })); 
-                     return; 
-                 }
+                 if (!currentUserInfo) { ws.send(JSON.stringify({ type: 'error', payload: { message: 'Giriş yapmalısınız.' } })); return; }
                 const tableToRemoveFrom = tables.find(t => t.id === payload.tableId);
                 if (tableToRemoveFrom) {
-                    // payload.productId 'manual' string'i veya null olabilir, ya da sayısal bir ID.
-                    // parseInt, 'manual' için NaN döndürür.
-                    const productIdNum = (payload.productId === null || payload.productId === 'manual') ? null : parseInt(payload.productId, 10);
-                    
-                    let removedItemDetails = null; // Loglamak için silinen öğenin detayları
-
+                    const productIdNum = payload.productId === null || payload.productId === 'manual' ? null : parseInt(payload.productId, 10);
+                    let removedItemDetails = null;
                     const itemIndex = tableToRemoveFrom.order.findIndex(item => {
-                        let match = false;
-                        if (productIdNum !== null && !isNaN(productIdNum)) { // Normal ürün (ID ile eşleşme)
-                            match = item.productId === productIdNum &&
-                                    item.description === (payload.description || '');
-                        } else if (payload.name) { // Manuel ürün (isimle eşleşme, productIdNum null veya NaN ise)
-                            match = item.name === payload.name &&
-                                    item.description === (payload.description || '');
-                        }
-                        // Eğer sadece productId ile silmek isterseniz (açıklama olmadan),
-                        // ve manuel ürünler için sadece isimle, aşağıdaki gibi basitleştirilebilir,
-                        // ancak aynı üründen farklı açıklamalarla eklenmişse yanlış olanı silebilir.
-                        // if (productIdNum !== null && !isNaN(productIdNum)) {
-                        //     match = item.productId === productIdNum;
-                        // } else if (payload.name) {
-                        //     match = item.name === payload.name;
-                        // }
-
-                        if (match) {
-                            removedItemDetails = { ...item }; // Silmeden önce kopyala
-                        }
+                        const match = ( (productIdNum !== null && item.productId === productIdNum) || (productIdNum === null && item.name === payload.name) ) &&
+                        item.description === (payload.description || '');
+                        if (match) { removedItemDetails = { ...item }; }
                         return match;
                     });
-
                     if (itemIndex > -1) {
                         tableToRemoveFrom.order.splice(itemIndex, 1);
                         tableToRemoveFrom.total = calculateTableTotal(tableToRemoveFrom.order);
                         if (tableToRemoveFrom.order.length === 0) {
-                            tableToRemoveFrom.status = 'boş'; 
-                            tableToRemoveFrom.waiterId = null; 
-                            tableToRemoveFrom.waiterUsername = null;
+                            tableToRemoveFrom.status = 'boş'; tableToRemoveFrom.waiterId = null; tableToRemoveFrom.waiterUsername = null;
                         }
                         broadcastTableUpdates();
-                        if (removedItemDetails && currentUserInfo) { // currentUserInfo kontrolü eklendi
+                        if (removedItemDetails) {
                             await logActivity(currentUserInfo.username, 'SIPARIS_URUN_SILINDI',
                                 { masa: tableToRemoveFrom.name, silinen_urun: removedItemDetails },
-                                'Order', 
-                                tableToRemoveFrom.id, 
-                                currentUserInfo.ip // Düzeltildi: clientIpAddress yerine currentUserInfo.ip
-                            );
+                                'Order', tableToRemoveFrom.id, currentUserInfo.ip);
                         }
-                        // İstemciye başarılı olduğuna dair bir mesaj gönderilebilir (opsiyonel)
-                        // ws.send(JSON.stringify({ type: 'order_item_removed_success', payload: { message: 'Öğe siparişten silindi.'} }));
-                    } else { 
-                        ws.send(JSON.stringify({ type: 'order_update_fail', payload: { error: 'Öğe bulunamadı.' } }));
-                    }
-                } else { 
-                    ws.send(JSON.stringify({ type: 'order_update_fail', payload: { error: 'Masa bulunamadı.' } }));
-                }
+                    } else { ws.send(JSON.stringify({ type: 'order_update_fail', payload: { error: 'Öğe bulunamadı.' } }));}
+                } else { ws.send(JSON.stringify({ type: 'order_update_fail', payload: { error: 'Masa bulunamadı.' } }));}
                 break;
-
 
             case 'close_table':
                 if (!currentUserInfo || currentUserInfo.role !== 'cashier') { ws.send(JSON.stringify({ type: 'error', payload: { message: 'Bu işlem için yetkiniz yok.' } })); return; }
@@ -461,7 +444,7 @@ wss.on('connection', (ws, req) => {
                         console.log(`${tableName} masasındaki satışlar sales_log'a kaydedildi.`);
                         await logActivity(currentUserInfo.username, 'MASA_KAPATILDI_HESAP_ALINDI',
                             { masa_adi: tableName, siparis_detaylari: orderDetailsForLog.order, toplam_tutar: orderDetailsForLog.total, islem_yapan: processedBy },
-                            'Table', payload.tableId, clientIpAddress);
+                            'Table', payload.tableId, currentUserInfo.ip);
                         tableToClose.order = []; tableToClose.total = 0; tableToClose.status = 'boş';
                         tableToClose.waiterId = null; tableToClose.waiterUsername = null;
                         broadcastTableUpdates();
@@ -483,7 +466,7 @@ wss.on('connection', (ws, req) => {
                     const clientQuickSaleDB = await pool.connect();
                     try {
                         await clientQuickSaleDB.query('BEGIN');
-                        const currentProductsListQuickSale = fetchProductsFromDB(); // Bellekten al
+                        const currentProductsListQuickSale = fetchProductsFromDB();
                         let totalQuickSaleAmount = 0;
                         for (const item of payload.items) {
                             const itemPrice = parseFloat(item.priceAtOrder) || 0;
@@ -505,7 +488,7 @@ wss.on('connection', (ws, req) => {
                         await logActivity(currentUserInfo.username, 'HIZLI_SATIS_TAMAMLANDI',
                             { urunler: payload.items, toplam_tutar: totalQuickSaleAmount, islem_yapan: processedByQuickSale,
                               orijinal_tutar: payload.originalTotal, indirim_tutari: payload.discountAmount, odenecek_tutar: payload.finalTotal },
-                            'QuickSale', null, clientIpAddress);
+                            'QuickSale', null, currentUserInfo.ip);
                     } catch (error) {
                         await clientQuickSaleDB.query('ROLLBACK');
                         console.error(`Hızlı satış logu kaydedilirken DB hatası:`, error);
@@ -548,7 +531,7 @@ wss.on('connection', (ws, req) => {
                 }
                 break;
 
-            case 'add_product_to_main_menu': // Bellek içi ürün ekleme
+            case 'add_product_to_main_menu':
                 if (!currentUserInfo || currentUserInfo.role !== 'cashier') { ws.send(JSON.stringify({ type: 'error', payload: { message: 'Yetkiniz yok.' } })); return; }
                 if (payload && payload.name && typeof payload.price === 'number' && payload.price >= 0 && payload.category) {
                     const newProduct = {
@@ -561,14 +544,14 @@ wss.on('connection', (ws, req) => {
                     await logActivity(
                         currentUserInfo.username, 'URUN_EKLENDI_MENUYE (Bellek)',
                         { urun_id: newProduct.id, urun_adi: newProduct.name, fiyat: newProduct.price, kategori: newProduct.category },
-                        'ProductInMemory', newProduct.id, clientIpAddress
+                        'ProductInMemory', newProduct.id, currentUserInfo.ip
                     );
                     await broadcastProductsUpdate(); 
                     ws.send(JSON.stringify({ type: 'main_menu_product_added', payload: { product: newProduct, message: `${newProduct.name} menüye eklendi.` } }));
                 } else { ws.send(JSON.stringify({ type: 'error', payload: { message: 'Eksik ürün bilgisi.' } })); }
                 break;
 
-           case 'update_main_menu_product': // Bellek içi ürün güncelleme
+           case 'update_main_menu_product':
                 if (!currentUserInfo || currentUserInfo.role !== 'cashier') { ws.send(JSON.stringify({ type: 'error', payload: { message: 'Yetkiniz yok.' } })); return; }
                 if (payload && payload.id && payload.name && typeof payload.price === 'number' && payload.price >= 0 && payload.category) {
                     const productIndex = products.findIndex(p => p.id === parseInt(payload.id));
@@ -589,7 +572,7 @@ wss.on('connection', (ws, req) => {
                         { urun_id: updatedProduct.id, urun_adi: updatedProduct.name,
                           eski_degerler: { name: oldProduct.name, price: oldProduct.price, category: oldProduct.category },
                           yeni_degerler: { name: updatedProduct.name, price: updatedProduct.price, category: updatedProduct.category } },
-                        'ProductInMemory', updatedProduct.id, clientIpAddress
+                        'ProductInMemory', updatedProduct.id, currentUserInfo.ip
                     );
                     await broadcastProductsUpdate();
                     ws.send(JSON.stringify({ type: 'main_menu_product_updated', payload: { product: updatedProduct, message: `${updatedProduct.name} güncellendi.` } }));
@@ -602,7 +585,7 @@ wss.on('connection', (ws, req) => {
                     const newTable = { id: `masa-${nextTableIdCounter++}`, name: payload.name.trim(), type: payload.type || 'bahce', status: "boş", order: [], total: 0, waiterId: null, waiterUsername: null };
                     tables.push(newTable); broadcastTableUpdates();
                     ws.send(JSON.stringify({ type: 'table_operation_success', payload: { message: `${newTable.name} eklendi.` } }));
-                    await logActivity(currentUserInfo.username, 'MASA_TANIM_EKLENDI (Bellek)', { masa_adi: newTable.name, masa_tipi: newTable.type }, 'TableDefinition', newTable.id, clientIpAddress);
+                    await logActivity(currentUserInfo.username, 'MASA_TANIM_EKLENDI (Bellek)', { masa_adi: newTable.name, masa_tipi: newTable.type }, 'TableDefinition', newTable.id, currentUserInfo.ip);
                 } else { ws.send(JSON.stringify({ type: 'table_operation_fail', payload: { error: 'Geçersiz masa adı.' } }));}
                 break;
             case 'edit_table_name':
@@ -613,7 +596,7 @@ wss.on('connection', (ws, req) => {
                         const oldName = tableToEdit.name;
                         tableToEdit.name = payload.newName.trim(); broadcastTableUpdates();
                         ws.send(JSON.stringify({ type: 'table_operation_success', payload: { message: `Masa adı ${tableToEdit.name} olarak güncellendi.` } }));
-                        await logActivity(currentUserInfo.username, 'MASA_TANIM_ADI_GUNCELLEME (Bellek)', { masa_id: tableToEdit.id, eski_ad: oldName, yeni_ad: tableToEdit.name }, 'TableDefinition', tableToEdit.id, clientIpAddress);
+                        await logActivity(currentUserInfo.username, 'MASA_TANIM_ADI_GUNCELLEME (Bellek)', { masa_id: tableToEdit.id, eski_ad: oldName, yeni_ad: tableToEdit.name }, 'TableDefinition', tableToEdit.id, currentUserInfo.ip);
                     } else { ws.send(JSON.stringify({ type: 'table_operation_fail', payload: { error: 'Masa bulunamadı.' } }));}
                 } else { ws.send(JSON.stringify({ type: 'table_operation_fail', payload: { error: 'Eksik bilgi.' } }));}
                 break;
@@ -628,7 +611,7 @@ wss.on('connection', (ws, req) => {
                         const deletedTable = tables[tableIndexToDelete];
                         tables.splice(tableIndexToDelete, 1); broadcastTableUpdates();
                         ws.send(JSON.stringify({ type: 'table_operation_success', payload: { message: `"${deletedTable.name}" silindi.` } }));
-                        await logActivity(currentUserInfo.username, 'MASA_TANIM_SILINDI (Bellek)', { masa_id: deletedTable.id, masa_adi: deletedTable.name }, 'TableDefinition', deletedTable.id, clientIpAddress);
+                        await logActivity(currentUserInfo.username, 'MASA_TANIM_SILINDI (Bellek)', { masa_id: deletedTable.id, masa_adi: deletedTable.name }, 'TableDefinition', deletedTable.id, currentUserInfo.ip);
                     } else { ws.send(JSON.stringify({ type: 'table_operation_fail', payload: { error: 'Masa bulunamadı.' } }));}
                 } else { ws.send(JSON.stringify({ type: 'table_operation_fail', payload: { error: 'Eksik masa IDsi.' } }));}
                 break;
@@ -644,7 +627,7 @@ wss.on('connection', (ws, req) => {
                     const newWaiter = { id: maxUserId + 1, username: payload.username, password: payload.password, role: 'waiter' };
                     users.push(newWaiter); broadcastWaitersList();
                     ws.send(JSON.stringify({ type: 'waiter_operation_success', payload: { message: `${newWaiter.username} eklendi.` } }));
-                    await logActivity(currentUserInfo.username, 'GARSON_EKLENDI (Bellek)', { garson_kullanici_adi: newWaiter.username }, 'User', newWaiter.id, clientIpAddress);
+                    await logActivity(currentUserInfo.username, 'GARSON_EKLENDI (Bellek)', { garson_kullanici_adi: newWaiter.username }, 'User', newWaiter.id, currentUserInfo.ip);
                 } else { ws.send(JSON.stringify({ type: 'waiter_operation_fail', payload: { error: 'Eksik bilgi.' } }));}
                 break;
             case 'edit_waiter_password':
@@ -654,7 +637,7 @@ wss.on('connection', (ws, req) => {
                     if (waiterToEdit) {
                         waiterToEdit.password = payload.newPassword;
                         ws.send(JSON.stringify({ type: 'waiter_operation_success', payload: { message: `${waiterToEdit.username} şifresi güncellendi.` } }));
-                        await logActivity(currentUserInfo.username, 'GARSON_SIFRE_GUNCELLEME (Bellek)', { garson_kullanici_adi: waiterToEdit.username }, 'User', waiterToEdit.id, clientIpAddress);
+                        await logActivity(currentUserInfo.username, 'GARSON_SIFRE_GUNCELLEME (Bellek)', { garson_kullanici_adi: waiterToEdit.username }, 'User', waiterToEdit.id, currentUserInfo.ip);
                     } else { ws.send(JSON.stringify({ type: 'waiter_operation_fail', payload: { error: 'Garson bulunamadı.' } }));}
                 } else { ws.send(JSON.stringify({ type: 'waiter_operation_fail', payload: { error: 'Eksik bilgi.' } }));}
                 break;
@@ -666,7 +649,7 @@ wss.on('connection', (ws, req) => {
                         const deletedWaiter = users[waiterIndexToDelete];
                         users.splice(waiterIndexToDelete, 1); broadcastWaitersList();
                         ws.send(JSON.stringify({ type: 'waiter_operation_success', payload: { message: `${deletedWaiter.username} silindi.` } }));
-                        await logActivity(currentUserInfo.username, 'GARSON_SILINDI (Bellek)', { garson_kullanici_adi: deletedWaiter.username }, 'User', deletedWaiter.id, clientIpAddress);
+                        await logActivity(currentUserInfo.username, 'GARSON_SILINDI (Bellek)', { garson_kullanici_adi: deletedWaiter.username }, 'User', deletedWaiter.id, currentUserInfo.ip);
                     } else { ws.send(JSON.stringify({ type: 'waiter_operation_fail', payload: { error: 'Garson bulunamadı.' } }));}
                 } else { ws.send(JSON.stringify({ type: 'waiter_operation_fail', payload: { error: 'Eksik garson IDsi.' } }));}
                 break;
@@ -676,6 +659,7 @@ wss.on('connection', (ws, req) => {
                     await logActivity(currentUserInfo.username, 'KULLANICI_CIKIS', {}, 'User', currentUserInfo.id, currentUserInfo.ip);
                     clients.delete(ws);
                     console.log(`Kullanıcı çıkış yaptı: ${currentUserInfo.username}`);
+                    broadcastActiveUsersList();
                 }
                 break;
 
@@ -689,15 +673,20 @@ wss.on('connection', (ws, req) => {
         const closedUser = clients.get(ws);
         if (closedUser) {
             console.log(`İstemci bağlantısı kesildi: ${closedUser.username} (IP: ${closedUser.ip})`);
+            clients.delete(ws);
+            broadcastActiveUsersList();
         } else {
             console.log(`Kimliği doğrulanmamış bir istemcinin bağlantısı kesildi. (IP: ${clientIpAddress})`);
         }
-        clients.delete(ws);
     });
 
     ws.on('error', (error) => {
         console.error('Bir WebSocket hatası oluştu:', error);
-        clients.delete(ws);
+        const erroredUser = clients.get(ws);
+        if (erroredUser) {
+            clients.delete(ws);
+            broadcastActiveUsersList();
+        }
     });
 });
 
