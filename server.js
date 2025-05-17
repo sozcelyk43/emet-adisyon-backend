@@ -520,7 +520,7 @@ wss.on('connection', (ws, req) => {
                     const reportResult = await pool.query(
                         `SELECT id, item_name, item_price, quantity, total_item_price, category, description,
                                 waiter_username, table_name, TO_CHAR(sale_timestamp, 'DD.MM.YYYY HH24:MI:SS') as sale_timestamp
-                         FROM sales_log ORDER BY sale_timestamp DESC LIMIT 500`
+                         FROM sales_log ORDER BY sale_timestamp DESC LIMIT 2000`
                     );
                     ws.send(JSON.stringify({ type: 'sales_report_data', payload: { sales: reportResult.rows } }));
                 } catch (error) {
