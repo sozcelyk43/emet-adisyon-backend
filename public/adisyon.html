@@ -708,7 +708,10 @@
 </div>
 
 
-<script>   let socket;
+<script>   
+    
+    let socket;
+     const WEBSOCKET_URL = 'wss://emet-adisyon.onrender.com'; 
 
     // Uygulama genelindeki durumu tutacak obje
   const appState = {
@@ -959,9 +962,7 @@ function sanitizeCategoryForCSS(categoryName) {
     return String(categoryName).replace(/[İıÖöÜüŞşĞğÇç]/g, match => turkishMap[match] || match).replace(/\s-\s/g, '-').replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-]/g, '').toUpperCase();
 }
 
-    // --- WebSocket Fonksiyonları ---
-const WEBSOCKET_URL = 'wss://emet-adisyon.onrender.com';
-
+ 
 
 function connectWebSocket() {
     showLoading("Sunucuya bağlanılıyor...");
