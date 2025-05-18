@@ -4,20 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EMET LEZZET GÜNLERİ ADİSYON</title>
-        <link rel="icon" href="/favicon.ico" type="image/x-icon">
-
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
+    <link href="/css/output.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body {
             font-family: 'Inter', sans-serif;
         }
-        .modal { 
-            display: none; 
+        .modal {
+            display: none;
             animation: fadeIn 0.3s ease-out;
         }
         .modal.active {
-            display: flex; 
+            display: flex;
         }
         #orderPageContainer, #quickSaleModal, #addProductToMenuModal, #editProductModal, #manageTablesModal, #manageWaitersModal, #confirmDeleteTableModal, #confirmDeleteWaiterModal, #confirmExitAppModal {
             display: none;
@@ -420,6 +419,7 @@
                     Toplam: 0 ₺
                 </div>
                 <div id="quickSaleDiscountInfo" class="text-right text-sm text-red-600 mt-1 hidden"></div>
+                <input type="text" id="quickSaleCustomerName" placeholder="Müşteri Adı (opsiyonel)" class="w-full p-2 border border-gray-300 rounded-md my-3 focus:ring-2 focus:ring-green-500">
                 <div class="mt-4 space-y-2">
                     <button id="applyQuickSaleDiscountButton" class="w-full bg-yellow-500 hover:bg-yellow-600 text-black font-semibold p-2 rounded-md transition duration-150">Personel İndirimi (%30)</button>
                     <button id="completeQuickSaleButton" class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold p-3 rounded-md transition duration-150">Satışı Tamamla ve Fiş Kes</button>
@@ -439,6 +439,9 @@
             <div class="mb-2">
                 <p class="text-sm"><span class="font-semibold">Masa:</span> <span id="receiptTableName"></span></p>
                 <p class="text-sm"><span class="font-semibold">Garson/Kasa:</span> <span id="receiptWaiterName">Bilinmiyor</span></p>
+                <p class="text-sm" id="receiptCustomerNameLine" style="display:none;">
+                    <span class="font-semibold">Müşteri:</span> <span id="receiptCustomerName"></span>
+                </p>
             </div>
             <hr class="my-2 border-gray-300">
             <div id="receiptItems" class="text-sm space-y-1 mb-2">
@@ -798,6 +801,7 @@
     const quickSaleCurrentItems = document.getElementById('quickSaleCurrentItems');
     const quickSaleTotal = document.getElementById('quickSaleTotal');
     const quickSaleDiscountInfo = document.getElementById('quickSaleDiscountInfo');
+    const quickSaleCustomerNameInput = document.getElementById('quickSaleCustomerName'); // Yeni eklendi
     const applyQuickSaleDiscountButton = document.getElementById('applyQuickSaleDiscountButton');
     const completeQuickSaleButton = document.getElementById('completeQuickSaleButton');
 
@@ -806,6 +810,8 @@
     const receiptDate = document.getElementById('receiptDate');
     const receiptTableName = document.getElementById('receiptTableName');
     const receiptWaiterName = document.getElementById('receiptWaiterName');
+    const receiptCustomerNameLine = document.getElementById('receiptCustomerNameLine'); // Yeni eklendi
+    const receiptCustomerName = document.getElementById('receiptCustomerName'); // Yeni eklendi
     const receiptItems = document.getElementById('receiptItems');
     const receiptDiscountInfo = document.getElementById('receiptDiscountInfo');
     const receiptSubtotal = document.getElementById('receiptSubtotal');
@@ -927,11 +933,9 @@ function formatTimestamp(timestampInput) {
             const minute = parseInt(parts[5], 10);
             const second = parseInt(parts[6], 10);
 
-            // Assume "DD.MM.YYYY HH:MM:SS" string components are UTC
             const utcTimestamp = Date.UTC(year, monthIndex, day, hour, minute, second);
             initialDate = new Date(utcTimestamp);
         } else {
-            // For other string formats like ISO 8601
             initialDate = new Date(timestampInput);
         }
     } else {
@@ -958,12 +962,9 @@ function formatTimestamp(timestampInput) {
         return formattedDate.replace(',', '');
     } catch (e) {
         console.error("Intl.DateTimeFormat ile tarih formatlama hatası:", e);
-        // Fallback: Try to manually construct TRT from UTC date
-        // initialDate is UTC. Add 3 hours for TRT.
         const trtEquivalentMilliseconds = initialDate.getTime() + (3 * 60 * 60 * 1000);
         const trtDate = new Date(trtEquivalentMilliseconds);
 
-        // Format trtDate using its UTC methods to get the TRT components
         const day = String(trtDate.getUTCDate()).padStart(2, '0');
         const month = String(trtDate.getUTCMonth() + 1).padStart(2, '0');
         const year = trtDate.getUTCFullYear();
@@ -974,7 +975,6 @@ function formatTimestamp(timestampInput) {
 }
 
 
-    
     function getCurrentFormattedDate() {
         const now = new Date();
         return `${String(now.getDate()).padStart(2, '0')}.${String(now.getMonth() + 1).padStart(2, '0')}.${now.getFullYear()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
@@ -989,7 +989,6 @@ function formatTimestamp(timestampInput) {
         loadingOverlay.classList.remove('active');
     }
 
-    // Kategori adı için CSS sınıfı üreten fonksiyon
     function sanitizeCategoryForCSS(categoryName) {
         if (!categoryName) return 'default';
         const turkishMap = { 'İ': 'I', 'ı': 'i', 'Ö': 'O', 'ö': 'o', 'Ü': 'U', 'ü': 'u', 'Ş': 'S', 'ş': 's', 'Ğ': 'G', 'ğ': 'g', 'Ç': 'C', 'ç': 'c' };
@@ -1010,7 +1009,6 @@ function formatTimestamp(timestampInput) {
         socket.onopen = () => {
             console.log("WebSocket bağlantısı kuruldu.");
             hideLoading();
-            // Oturum kontrolü
             const storedUser = localStorage.getItem('adisyonUser');
             if (storedUser) {
                 try {
@@ -1022,7 +1020,6 @@ function formatTimestamp(timestampInput) {
                     appContainer.classList.remove('hidden');
                     orderPageContainer.classList.remove('active');
                     updateUIForRole();
-                    // Oturum sürdürme mesajı gönder
                     sendMessageToServer('reauthenticate', { user: appState.user });
                 } catch (e) {
                     console.error("localStorage'dan kullanıcı verisi okunamadı:", e);
@@ -1233,114 +1230,97 @@ function formatTimestamp(timestampInput) {
     }
 
 
-// Bu fonksiyon Android WebView'ın onBackPressed() metodundan çağrılmak üzere tasarlanmıştır.
 window.handleAndroidBackButton = function() {
     const isActive = (element) => element && (element.classList.contains('active') || (element.style.display !== 'none' && getComputedStyle(element).display !== 'none'));
 
-    // 1. Öncelikle açık bir "onay" veya "çıkış" modalı var mı kontrol et ve kapat
     if (isActive(confirmExitAppModal)) {
         confirmExitAppModal.classList.remove('active');
         console.log("Geri tuşu: Çıkış onayı kapatıldı.");
-        return; // Olay işlendi, uygulama kapanmasın
+        return;
     }
     if (isActive(confirmCloseTableModal)) {
         confirmCloseTableModal.classList.remove('active');
         console.log("Geri tuşu: Masa kapatma onayı kapatıldı.");
-        return; // Olay işlendi
+        return;
     }
     if (isActive(confirmDiscountModal)) {
         confirmDiscountModal.classList.remove('active');
         console.log("Geri tuşu: İndirim onayı kapatıldı.");
-        return; // Olay işlendi
+        return;
     }
     if (isActive(confirmDeleteTableModal)) {
         confirmDeleteTableModal.classList.remove('active');
         console.log("Geri tuşu: Masa silme onayı kapatıldı.");
-        return; // Olay işlendi
+        return;
     }
     if (isActive(confirmDeleteWaiterModal)) {
         confirmDeleteWaiterModal.classList.remove('active');
         console.log("Geri tuşu: Garson silme onayı kapatıldı.");
-        return; // Olay işlendi
+        return;
     }
 
-    // 2. Aktif olan ana işlem sayfaları veya modalları kontrol et
-    // Bu sayfalar/modallar açıksa, ana ekrana (masalar görünümüne) dön
     if (isActive(orderPageContainer)) {
         console.log("Geri tuşu: Sipariş sayfasından ana ekrana dönülüyor.");
         showTablesView();
-        return; // Olay işlendi
+        return;
     }
     if (isActive(quickSaleModal)) {
         console.log("Geri tuşu: Hızlı satış modalından ana ekrana dönülüyor.");
-        // closeQuickSaleModalButton normalde showTablesView çağırıyor.
-        // Direkt showTablesView() çağırmak da aynı işi görür.
         showTablesView();
-        return; // Olay işlendi
+        return;
     }
     if (isActive(addProductToMenuModal)) {
         console.log("Geri tuşu: Ürün ekleme modalından ana ekrana dönülüyor.");
-        addProductToMenuModal.classList.remove('active'); // Önce modalı kapat
-        showTablesView(); // Sonra ana sayfayı göster
-        return; // Olay işlendi
+        addProductToMenuModal.classList.remove('active');
+        showTablesView();
+        return;
     }
     if (isActive(editProductModal)) {
         console.log("Geri tuşu: Ürün düzenleme modalından ana ekrana dönülüyor.");
         editProductModal.classList.remove('active');
         showTablesView();
-        return; // Olay işlendi
+        return;
     }
     if (isActive(manageTablesModal)) {
         console.log("Geri tuşu: Masa yönetimi modalından ana ekrana dönülüyor.");
         manageTablesModal.classList.remove('active');
         showTablesView();
-        return; // Olay işlendi
+        return;
     }
     if (isActive(manageWaitersModal)) {
         console.log("Geri tuşu: Garson yönetimi modalından ana ekrana dönülüyor.");
         manageWaitersModal.classList.remove('active');
         showTablesView();
-        return; // Olay işlendi
+        return;
     }
     if (isActive(salesReportModal)) {
         console.log("Geri tuşu: Satış raporu modalından ana ekrana dönülüyor.");
         salesReportModal.classList.remove('active');
         showTablesView();
-        return; // Olay işlendi
+        return;
     }
     if (isActive(receiptModal)) {
         console.log("Geri tuşu: Fiş modalından çıkılıyor.");
-        closeReceiptModalOnly(); // Bu fonksiyon kendi mantığına göre davranır (ya masalara döner ya da sipariş sayfasında kalır)
-                                 // Eğer her durumda ana ekrana dönmesi isteniyorsa showTablesView() çağrılabilir.
-                                 // Mevcut closeReceiptModalOnly, hızlı satış sonrası veya masa boşsa ana ekrana döner.
-        return; // Olay işlendi
+        closeReceiptModalOnly();
+        return;
     }
 
-    // 3. Ana ekranda (masalar görünümü) ise çıkış onayı göster
-    // loginModal'ın aktif olmadığını da kontrol etmeliyiz.
     if (isActive(appContainer) && !isActive(loginModal)) {
         console.log("Geri tuşu: Ana ekranda, çıkış onayı gösteriliyor.");
         confirmExitAppModal.classList.add('active');
-        return; // Olay işlendi (popup açıldı)
+        return;
     }
 
-    // 4. Login ekranında ise uygulamayı kapatmasına izin ver (Android tarafı halletmeli)
-    // Veya burada da bir çıkış onayı gösterilebilir. Şimdilik varsayılan davranışa (kapanma) bırakıyoruz.
     if (isActive(loginModal)) {
         console.log("Geri tuşu: Login ekranında, uygulama kapanabilir.");
-        // Android tarafına uygulamanın kapanabileceğini bildirmek için:
         if (window.Android && typeof window.Android.closeApp === 'function') {
             window.Android.closeApp();
         } else {
-            // Tarayıcıda veya Android arayüzü yoksa, history.back() ile bir önceki sayfaya gitmeye çalışabilir.
-            // Tek sayfa uygulamada bu genellikle bir işe yaramaz veya istenmeyen davranışa yol açar.
-            // Bu durumda, kullanıcıya bir uyarı verilebilir veya hiçbir şey yapılmayabilir.
             console.warn("Login ekranında geri tuşuna basıldı, ancak 'window.Android.closeApp' bulunamadı.");
         }
-        return; // Olay (kapatma isteğiyle) işlendi
+        return;
     }
 
-    // 5. Hiçbir koşul eşleşmezse (beklenmedik durum), güvenli çıkış yapmayı dene
     console.log("Geri tuşu: Tanımlanmayan durum, uygulama kapatılmaya çalışılıyor.");
     if (window.Android && typeof window.Android.closeApp === 'function') {
         window.Android.closeApp();
@@ -1349,13 +1329,6 @@ window.handleAndroidBackButton = function() {
     }
 };
 
-
-
-
-
-
-
-    // --- Rol Bazlı UI Güncelleme ---
     function updateUIForRole() {
         if (!appState.user) return;
         console.log("UI güncelleniyor. Kullanıcı rolü:", appState.user.role);
@@ -1389,7 +1362,6 @@ window.handleAndroidBackButton = function() {
         logoutButton.textContent = "Uygulamadan Çık";
     }
 
-    // Gerekliyse başlangıç render fonksiyonlarını çağırır
     let initialDataRendered = false;
     function renderInitialDataIfNeeded() {
         if (!initialDataRendered || appState.products.length > 0) {
@@ -1404,8 +1376,6 @@ window.handleAndroidBackButton = function() {
         }
     }
 
-
-    // --- Render Fonksiyonları ---
     function renderInitialData() {
         renderInitialDataIfNeeded();
     }
@@ -1421,7 +1391,7 @@ window.handleAndroidBackButton = function() {
             const tableCard = document.createElement('div');
             const isDolu = table.status === 'dolu' && table.order && table.order.length > 0;
 
-            let baseColorClass = 'bg-gray-400 hover:bg-gray-500'; // Varsayılan
+            let baseColorClass = 'bg-gray-400 hover:bg-gray-500';
             if (table.type === 'kamelya') {
                 baseColorClass = 'bg-yellow-600 hover:bg-yellow-700';
             } else if (table.type === 'bahce') {
@@ -1445,7 +1415,6 @@ window.handleAndroidBackButton = function() {
         });
     }
 
-    // Ürün Seçim Gridini Oluşturur (Hem normal sipariş hem hızlı satış için)
     function renderProductGrid(targetGridElement = orderPageProductGrid, forQuickSale = false) {
         targetGridElement.innerHTML = '';
         const categories = {};
@@ -1537,7 +1506,6 @@ window.handleAndroidBackButton = function() {
         addProductCardEventListeners(forQuickSale);
     }
 
-    // Ürün kartlarındaki butonlara event listener ekler
     function addProductCardEventListeners(forQuickSale = false) {
         const selector = forQuickSale ? '#quickSaleProductGrid .product-card' : '#orderPageProductGrid .product-card';
         document.querySelectorAll(selector).forEach(card => {
@@ -1575,7 +1543,6 @@ window.handleAndroidBackButton = function() {
         });
     }
 
-    // Ürün kartından normal sipariş ekleme fonksiyonu
     function addProductFromCard(productId, quantity, description) {
          const product = appState.products.find(p => p.id === parseInt(productId));
          if (!product || quantity <= 0 || !appState.currentTableId) {
@@ -1592,7 +1559,6 @@ window.handleAndroidBackButton = function() {
         resetCurrentOrderDiscount();
     }
 
-    // Hızlı satış sepetine ürün ekleme
     function addProductToQuickSale(productId, quantity, description) {
         const product = appState.products.find(p => p.id === parseInt(productId));
         if (!product || quantity <= 0) {
@@ -1620,7 +1586,6 @@ window.handleAndroidBackButton = function() {
         renderQuickSaleOrder();
     }
 
-    // Hızlı satış sepetini render eder
     function renderQuickSaleOrder() {
         quickSaleCurrentItems.innerHTML = '';
         let originalTotal = 0;
@@ -1670,8 +1635,6 @@ window.handleAndroidBackButton = function() {
         });
     }
 
-
-    // Manuel ürün ekleme için kategori seçeneklerini doldurur
     function populateManualCategorySelect() {
         manualProductCategory.innerHTML = '<option value="">Kategori Seçin</option>';
         const categories = ["ET - TAVUK", "ATIŞTIRMALIK", "İÇECEK", "TATLI", "ÇORBA"];
@@ -1683,7 +1646,6 @@ window.handleAndroidBackButton = function() {
         });
     }
 
-    // Yeni ürün ekleme modalı için kategori select'i doldurur
     function populateNewProductCategorySelect() {
         newProductCategorySelect.innerHTML = '<option value="">Mevcut Kategori Seçin</option>';
         const categories = ["ET - TAVUK", "ATIŞTIRMALIK", "İÇECEK", "TATLI", "ÇORBA"];
@@ -1706,7 +1668,6 @@ window.handleAndroidBackButton = function() {
         });
     }
 
-    // Ürün düzenleme modalı için kategori select'i doldurur
     function populateEditProductCategorySelect() {
         editProductCategorySelect.innerHTML = '<option value="">Mevcut Kategori Seçin</option>';
         const categories = ["ET - TAVUK", "ATIŞTIRMALIK", "İÇECEK", "TATLI", "ÇORBA"];
@@ -1768,7 +1729,6 @@ window.handleAndroidBackButton = function() {
         });
     }
 
-    // Sipariş sayfasındaki mevcut siparişleri render eder
 function renderOrderPageForTable(table) {
     orderPageCurrentOrderItems.innerHTML = '';
 
@@ -1793,7 +1753,7 @@ function renderOrderPageForTable(table) {
             if (!isNaN(price) && !isNaN(qty)) {
                 itemCalculatedTotal = price * qty;
             }
-            
+
             originalTotal += itemCalculatedTotal;
 
             const orderItemDiv = document.createElement('div');
@@ -1866,7 +1826,6 @@ function renderOrderPageForTable(table) {
     });
 }
 
-    // Satış Raporu Modalı'nı render eder
     function renderSalesReport() {
         salesReportTableContainer.innerHTML = '';
         let totalItems = 0;
@@ -1929,8 +1888,6 @@ function renderOrderPageForTable(table) {
         grandTotalSalesSpan.textContent = formatPrice(grandTotal);
     }
 
-
-    // --- İşlevler ---
     function handleLogin() {
         const username = usernameInput.value.trim();
         const password = passwordInput.value.trim();
@@ -1960,15 +1917,11 @@ function renderOrderPageForTable(table) {
         passwordInput.value = '';
         console.log("Çıkış yapıldı ve oturum temizlendi.");
         initialDataRendered = false;
-        // WebView uygulamasını kapatmak için (eğer bir WebView içinde çalışıyorsa)
-        if (window.ReactNativeWebView) { // React Native WebView için
+        if (window.ReactNativeWebView) {
             window.ReactNativeWebView.postMessage('closeApp');
-        } else if (window.Android && typeof window.Android.closeApp === 'function') { // Özel Android Interface için
+        } else if (window.Android && typeof window.Android.closeApp === 'function') {
             window.Android.closeApp();
         } else {
-            // Tarayıcıda çalışıyorsa veya kapatma desteklenmiyorsa, kullanıcıyı bilgilendir
-            // alert("Uygulamadan çıkıldı. Pencereyi kapatabilirsiniz.");
-            // Veya login ekranına yönlendir
             console.log("Uygulama kapatma simüle edildi (tarayıcı ortamı).");
         }
     }
@@ -1993,6 +1946,10 @@ function renderOrderPageForTable(table) {
 
         appState.currentTableId = null;
         resetCurrentOrderDiscount();
+        // Hızlı satış sonrası müşteri adı alanını temizle
+        if (quickSaleCustomerNameInput) {
+            quickSaleCustomerNameInput.value = '';
+        }
         console.log("Masalar ekranına dönüldü.");
     }
 
@@ -2012,7 +1969,6 @@ function renderOrderPageForTable(table) {
         }
     }
 
-    // Manuel ürün ekleme fonksiyonu
     function addManualProduct() {
         const name = manualProductName.value.trim();
         const category = manualProductCategory.value;
@@ -2049,7 +2005,6 @@ function renderOrderPageForTable(table) {
     }
 
 
-    // Ürün silme fonksiyonu güncellendi
     function removeItemFromOrderPage(productIdToRemove, descriptionToRemove, nameToRemove) {
          if (!appState.currentTableId) return;
         showLoading("Ürün siliniyor...");
@@ -2062,7 +2017,6 @@ function renderOrderPageForTable(table) {
         resetCurrentOrderDiscount();
     }
 
-    // Fiş modalını açar (Sadece Kasa için)
     function handleShowReceipt() {
         const table = appState.tables.find(t => t.id === appState.currentTableId);
         if (!table || !table.order || table.order.length === 0) {
@@ -2070,10 +2024,9 @@ function renderOrderPageForTable(table) {
             return;
         }
         const finalTotal = appState.currentOrderDiscountAmount > 0 ? (appState.currentOrderOriginalTotal - appState.currentOrderDiscountAmount) : appState.currentOrderOriginalTotal;
-        prepareAndShowReceipt(table.order, table.name, table.waiterUsername, appState.currentOrderOriginalTotal, appState.currentOrderDiscountAmount > 0 ? finalTotal : null);
+        prepareAndShowReceipt(table.order, table.name, table.waiterUsername, appState.currentOrderOriginalTotal, appState.currentOrderDiscountAmount > 0 ? finalTotal : null, null); // Müşteri adı null, çünkü bu masa fişi
     }
 
-    // Masayı kapatma fonksiyonu (Sadece Kasa için)
     function handleFinalizeAndCloseTable() {
         if (appState.currentTableId && appState.user && appState.user.role === 'cashier') {
             confirmCloseTableModal.classList.add('active');
@@ -2082,7 +2035,6 @@ function renderOrderPageForTable(table) {
         }
     }
 
-    // Personel İndirimi Uygulama Fonksiyonu (Normal Siparişler için)
     function handleApplyDiscount() {
         if (appState.user && appState.user.role === 'cashier' && appState.currentTableId) {
             const table = appState.tables.find(t => t.id === appState.currentTableId);
@@ -2097,11 +2049,9 @@ function renderOrderPageForTable(table) {
         }
     }
 
-    // Personel İndirimi Uygulama Fonksiyonu (Hızlı Satış için)
     function handleApplyQuickSaleDiscount() {
         if (appState.user && appState.user.role === 'cashier') {
             if (appState.currentQuickSaleOrder.length > 0) {
-                // Hızlı satış sepetinin orijinal toplamı renderQuickSaleOrder'da appState.currentOrderOriginalTotal'a atanmıştı.
                 confirmDiscountModal.classList.add('active');
             } else {
                 alert("Hızlı satış sepetinde indirim uygulanacak ürün bulunmuyor.");
@@ -2111,7 +2061,6 @@ function renderOrderPageForTable(table) {
         }
     }
 
-    // İndirimi sıfırlama fonksiyonu
     function resetCurrentOrderDiscount() {
         appState.currentOrderDiscountAmount = 0;
         discountInfoDiv.classList.add('hidden');
@@ -2131,13 +2080,13 @@ function renderOrderPageForTable(table) {
     }
 
 
-    // Hızlı Satış Modalını Açma
     function openQuickSaleModal() {
         if (appState.user && appState.user.role === 'cashier') {
             appState.currentQuickSaleOrder = [];
             resetCurrentOrderDiscount();
             renderQuickSaleOrder();
             renderProductGrid(quickSaleProductGrid, true);
+            if (quickSaleCustomerNameInput) quickSaleCustomerNameInput.value = ''; // Müşteri adını temizle
             quickSaleModal.classList.add('active');
             appContainer.classList.add('hidden');
             orderPageContainer.classList.remove('active');
@@ -2146,24 +2095,38 @@ function renderOrderPageForTable(table) {
         }
     }
 
-    // Hızlı Satışı Tamamlama
     function completeQuickSale() {
         if (appState.currentQuickSaleOrder.length === 0) {
             alert("Hızlı satış sepeti boş.");
             return;
         }
         showLoading("Hızlı satış tamamlanıyor...");
-        sendMessageToServer('complete_quick_sale', {
+
+        const customerName = quickSaleCustomerNameInput.value.trim();
+
+        const payload = {
             items: appState.currentQuickSaleOrder,
-            cashierUsername: appState.user.username
-        });
-        const finalTotal = appState.currentOrderDiscountAmount > 0 ? (appState.currentOrderOriginalTotal - appState.currentOrderDiscountAmount) : appState.currentOrderOriginalTotal;
-        prepareAndShowReceipt(appState.currentQuickSaleOrder, "Hızlı Satış", appState.user.username, appState.currentOrderOriginalTotal, appState.currentOrderDiscountAmount > 0 ? finalTotal : null);
+            cashierUsername: appState.user.username,
+            originalTotal: appState.currentOrderOriginalTotal,
+            discountAmount: appState.currentOrderDiscountAmount,
+            finalTotal: appState.currentOrderDiscountAmount > 0 ? (appState.currentOrderOriginalTotal - appState.currentOrderDiscountAmount) : appState.currentOrderOriginalTotal,
+            customerName: customerName
+        };
+
+        sendMessageToServer('complete_quick_sale', payload);
+
+        const finalTotalForReceipt = appState.currentOrderDiscountAmount > 0 ? (appState.currentOrderOriginalTotal - appState.currentOrderDiscountAmount) : appState.currentOrderOriginalTotal;
+        prepareAndShowReceipt(
+            appState.currentQuickSaleOrder,
+            "Hızlı Satış",
+            appState.user.username,
+            appState.currentOrderOriginalTotal,
+            appState.currentOrderDiscountAmount > 0 ? finalTotalForReceipt : null,
+            customerName
+        );
     }
 
-
-    // Ortak fiş hazırlama fonksiyonu (indirimli toplamı alacak şekilde güncellendi)
-    function prepareAndShowReceipt(orderItems, tableName, waiterName, originalTotal, discountedTotalValue) {
+    function prepareAndShowReceipt(orderItems, tableName, waiterName, originalTotal, discountedTotalValue, customerName) {
         receiptDate.textContent = getCurrentFormattedDate();
         receiptTableName.textContent = tableName;
 
@@ -2173,6 +2136,14 @@ function renderOrderPageForTable(table) {
             receiptWaiterName.textContent = appState.user.username;
         } else {
             receiptWaiterName.textContent = "Bilinmiyor";
+        }
+
+        if (tableName === "Hızlı Satış" && customerName && customerName.length > 0) {
+            receiptCustomerName.textContent = customerName;
+            receiptCustomerNameLine.style.display = 'block';
+        } else {
+            receiptCustomerNameLine.style.display = 'none';
+            receiptCustomerName.textContent = '';
         }
 
         receiptItems.innerHTML = '';
@@ -2220,7 +2191,6 @@ function renderOrderPageForTable(table) {
         window.print();
     }
 
-    // Satış raporu modalını açar ve veri ister
     function openSalesReport() {
         if (appState.user && appState.user.role === 'cashier') {
             showLoading("Satış raporu yükleniyor...");
@@ -2231,22 +2201,20 @@ function renderOrderPageForTable(table) {
         }
     }
 
-    // Satış raporunu yazdırır
     function printSalesReport() {
         window.print();
     }
 
-    // Sadece fiş modalını kapatır
     function closeReceiptModalOnly() {
         receiptModal.classList.remove('active');
         const currentTable = appState.tables.find(t => t.id === appState.currentTableId);
         if (receiptTableName.textContent === "Hızlı Satış" || (currentTable && currentTable.status === 'boş')) {
             resetCurrentOrderDiscount();
+            if (quickSaleCustomerNameInput) quickSaleCustomerNameInput.value = ''; // Müşteri adını temizle
             showTablesView();
         }
     }
 
-    // Menüye ürün ekleme modalını açar
     function openAddProductToMenuModal() {
         if (appState.user && appState.user.role === 'cashier') {
             addProductToMenuModal.classList.add('active');
@@ -2261,7 +2229,6 @@ function renderOrderPageForTable(table) {
         }
     }
 
-    // Menüye yeni ürün kaydeder
     function handleSaveNewProduct() {
         const name = newProductNameInput.value.trim();
         const price = parseFloat(newProductPriceInput.value);
@@ -2290,7 +2257,6 @@ function renderOrderPageForTable(table) {
         addProductToMenuModal.classList.remove('active');
     }
 
-    // Ürün Düzenleme Modalını Açma
     function openEditProductModal() {
         if (appState.user && appState.user.role === 'cashier') {
             populateSelectProductToEdit();
@@ -2301,7 +2267,6 @@ function renderOrderPageForTable(table) {
         }
     }
 
-    // Düzenlenecek ürünler için select'i doldurur
     function populateSelectProductToEdit() {
         selectProductToEdit.innerHTML = '<option value="">-- Ürün Seçin --</option>';
         appState.products.sort((a,b) => a.name.localeCompare(b, 'tr')).forEach(product => {
@@ -2312,7 +2277,6 @@ function renderOrderPageForTable(table) {
         });
     }
 
-    // Seçilen ürünü düzenleme formuna yükler
     selectProductToEdit.addEventListener('change', () => {
         const productId = parseInt(selectProductToEdit.value);
         if (productId) {
@@ -2339,7 +2303,6 @@ function renderOrderPageForTable(table) {
         }
     });
 
-    // Düzenlenmiş ürünü kaydeder
     function handleSaveEditedProduct() {
         const productId = parseInt(editingProductIdInput.value);
         const name = editProductNameInput.value.trim();
@@ -2369,7 +2332,6 @@ function renderOrderPageForTable(table) {
         editProductModal.classList.remove('active');
     }
 
-    // Masa Yönetimi Modalını Açma/Kapama ve Doldurma
     function openManageTablesModal() {
         if (appState.user && appState.user.role === 'cashier') {
             populateTableSelectsForManagement();
@@ -2398,7 +2360,6 @@ function renderOrderPageForTable(table) {
         editTableNameInput.value = '';
     }
 
-    // Yeni Masa Ekleme
     function handleAddNewTable() {
         const newName = newTableNameInput.value.trim();
         if (!newName) {
@@ -2410,7 +2371,6 @@ function renderOrderPageForTable(table) {
         newTableNameInput.value = '';
     }
 
-    // Masa Adı Güncelleme
     function handleUpdateTableName() {
         const tableId = selectTableToEditName.value;
         const newName = editTableNameInput.value.trim();
@@ -2426,7 +2386,6 @@ function renderOrderPageForTable(table) {
         sendMessageToServer('edit_table_name', { tableId: tableId, newName: newName });
     }
 
-    // Masa Silme (Onay ile)
     function handleDeleteTable() {
         const tableId = selectTableToDelete.value;
         if (!tableId) {
@@ -2440,7 +2399,6 @@ function renderOrderPageForTable(table) {
         }
     }
 
-    // Garson Yönetimi Modalını Açma/Kapama
     function openManageWaitersModal() {
         if (appState.user && appState.user.role === 'cashier') {
             sendMessageToServer('get_waiters_list', {});
@@ -2453,7 +2411,6 @@ function renderOrderPageForTable(table) {
         manageWaitersModal.classList.remove('active');
     }
 
-    // Garson Yönetimi Modalındaki Select'leri Doldurma
     function populateWaiterSelectsForManagement() {
         selectWaiterToEditPassword.innerHTML = '<option value="">Düzenlenecek Garsonu Seçin</option>';
         selectWaiterToDelete.innerHTML = '<option value="">Silinecek Garsonu Seçin</option>';
@@ -2473,7 +2430,6 @@ function renderOrderPageForTable(table) {
         newWaiterPasswordInput.value = '';
     }
 
-    // Yeni Garson Ekleme
     function handleAddNewWaiter() {
         const username = newWaiterUsernameInput.value.trim();
         const password = newWaiterPasswordInput.value.trim();
@@ -2485,7 +2441,6 @@ function renderOrderPageForTable(table) {
         sendMessageToServer('add_waiter', { username, password });
     }
 
-    // Garson Şifresi Güncelleme
     function handleUpdateWaiterPassword() {
         const waiterId = selectWaiterToEditPassword.value;
         const newPassword = editWaiterPasswordInput.value.trim();
@@ -2501,7 +2456,6 @@ function renderOrderPageForTable(table) {
         sendMessageToServer('edit_waiter_password', { userId: parseInt(waiterId), newPassword: newPassword });
     }
 
-    // Garson Silme (Onay ile)
     let waiterIdToDelete = null;
     function handleDeleteWaiter() {
         const selectedWaiterId = selectWaiterToDelete.value;
@@ -2523,7 +2477,7 @@ function renderOrderPageForTable(table) {
     passwordInput.addEventListener('keypress', (event) => {
         if (event.key === 'Enter') handleLogin();
     });
-    logoutButton.addEventListener('click', () => confirmExitAppModal.classList.add('active')); // Çıkış onayını göster
+    logoutButton.addEventListener('click', () => confirmExitAppModal.classList.add('active'));
     confirmExitAppYesButton.addEventListener('click', () => {
         performLogout();
         confirmExitAppModal.classList.remove('active');
@@ -2580,6 +2534,9 @@ function renderOrderPageForTable(table) {
     closeQuickSaleModalButton.addEventListener('click', () => {
         quickSaleModal.classList.remove('active');
         resetCurrentOrderDiscount();
+        if (quickSaleCustomerNameInput) { // Müşteri adı alanını temizle
+            quickSaleCustomerNameInput.value = '';
+        }
         showTablesView();
     });
     completeQuickSaleButton.addEventListener('click', completeQuickSale);
@@ -2594,7 +2551,6 @@ function renderOrderPageForTable(table) {
     printReceiptButton.addEventListener('click', handlePrintReceipt);
     closeReceiptModalOnlyButton.addEventListener('click', closeReceiptModalOnly);
 
-    // Masa Kapatma Onay Modalı Butonları
     confirmCloseTableYesButton.addEventListener('click', () => {
         if (appState.currentTableId && appState.user && appState.user.role === 'cashier') {
             showLoading("Masa kapatılıyor ve hesap tamamlanıyor...");
@@ -2607,7 +2563,6 @@ function renderOrderPageForTable(table) {
         confirmCloseTableModal.classList.remove('active');
     });
 
-    // Personel İndirimi Onay Modalı Butonları
     confirmDiscountYesButton.addEventListener('click', () => {
         let originalTotalForDiscount = 0;
         let targetDiscountInfoDiv = null;
