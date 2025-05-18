@@ -323,7 +323,7 @@ wss.on('connection', (ws, req) => {
                 const tableToAdd = tables.find(t => t.id === payload.tableId);
                 const receivedProductId = parseInt(payload.productId, 10);
                 if (isNaN(receivedProductId)) { ws.send(JSON.stringify({ type: 'order_update_fail', payload: { error: 'Geçersiz ürün IDsi.' } })); return; }
-                
+
                 const currentProductsList = fetchProductsFromDB();
                 const productToAdd = currentProductsList.find(p => p.id === receivedProductId);
 
@@ -369,41 +369,26 @@ wss.on('connection', (ws, req) => {
                 } else { ws.send(JSON.stringify({ type: 'manual_order_update_fail', payload: { error: 'Geçersiz manuel ürün bilgileri.' } }));}
                 break;
 
-           // server.js dosyasındaki ws.on('message', ...) switch bloğunun içinde:
-
             case 'remove_order_item':
-                 if (!currentUserInfo) { 
-                     ws.send(JSON.stringify({ type: 'error', payload: { message: 'Giriş yapmalısınız.' } })); 
-                     return; 
+                 if (!currentUserInfo) {
+                     ws.send(JSON.stringify({ type: 'error', payload: { message: 'Giriş yapmalısınız.' } }));
+                     return;
                  }
                 const tableToRemoveFrom = tables.find(t => t.id === payload.tableId);
                 if (tableToRemoveFrom) {
-                    // payload.productId 'manual' string'i veya null olabilir, ya da sayısal bir ID.
-                    // parseInt, 'manual' için NaN döndürür.
                     const productIdNum = (payload.productId === null || payload.productId === 'manual') ? null : parseInt(payload.productId, 10);
-                    
-                    let removedItemDetails = null; // Loglamak için silinen öğenin detayları
-
+                    let removedItemDetails = null;
                     const itemIndex = tableToRemoveFrom.order.findIndex(item => {
                         let match = false;
-                        if (productIdNum !== null && !isNaN(productIdNum)) { // Normal ürün (ID ile eşleşme)
+                        if (productIdNum !== null && !isNaN(productIdNum)) {
                             match = item.productId === productIdNum &&
                                     item.description === (payload.description || '');
-                        } else if (payload.name) { // Manuel ürün (isimle eşleşme, productIdNum null veya NaN ise)
+                        } else if (payload.name) {
                             match = item.name === payload.name &&
                                     item.description === (payload.description || '');
                         }
-                        // Eğer sadece productId ile silmek isterseniz (açıklama olmadan),
-                        // ve manuel ürünler için sadece isimle, aşağıdaki gibi basitleştirilebilir,
-                        // ancak aynı üründen farklı açıklamalarla eklenmişse yanlış olanı silebilir.
-                        // if (productIdNum !== null && !isNaN(productIdNum)) {
-                        //     match = item.productId === productIdNum;
-                        // } else if (payload.name) {
-                        //     match = item.name === payload.name;
-                        // }
-
                         if (match) {
-                            removedItemDetails = { ...item }; // Silmeden önce kopyala
+                            removedItemDetails = { ...item };
                         }
                         return match;
                     });
@@ -412,25 +397,23 @@ wss.on('connection', (ws, req) => {
                         tableToRemoveFrom.order.splice(itemIndex, 1);
                         tableToRemoveFrom.total = calculateTableTotal(tableToRemoveFrom.order);
                         if (tableToRemoveFrom.order.length === 0) {
-                            tableToRemoveFrom.status = 'boş'; 
-                            tableToRemoveFrom.waiterId = null; 
+                            tableToRemoveFrom.status = 'boş';
+                            tableToRemoveFrom.waiterId = null;
                             tableToRemoveFrom.waiterUsername = null;
                         }
                         broadcastTableUpdates();
-                        if (removedItemDetails && currentUserInfo) { // currentUserInfo kontrolü eklendi
+                        if (removedItemDetails && currentUserInfo) {
                             await logActivity(currentUserInfo.username, 'SIPARIS_URUN_SILINDI',
                                 { masa: tableToRemoveFrom.name, silinen_urun: removedItemDetails },
-                                'Order', 
-                                tableToRemoveFrom.id, 
-                                currentUserInfo.ip // Düzeltildi: clientIpAddress yerine currentUserInfo.ip
+                                'Order',
+                                tableToRemoveFrom.id,
+                                currentUserInfo.ip
                             );
                         }
-                        // İstemciye başarılı olduğuna dair bir mesaj gönderilebilir (opsiyonel)
-                        // ws.send(JSON.stringify({ type: 'order_item_removed_success', payload: { message: 'Öğe siparişten silindi.'} }));
-                    } else { 
+                    } else {
                         ws.send(JSON.stringify({ type: 'order_update_fail', payload: { error: 'Öğe bulunamadı.' } }));
                     }
-                } else { 
+                } else {
                     ws.send(JSON.stringify({ type: 'order_update_fail', payload: { error: 'Masa bulunamadı.' } }));
                 }
                 break;
@@ -480,10 +463,12 @@ wss.on('connection', (ws, req) => {
                 if (payload && payload.items && Array.isArray(payload.items) && payload.items.length > 0) {
                     const quickSaleTimestamp = new Date();
                     const processedByQuickSale = payload.cashierUsername || currentUserInfo.username;
+                    const customerName = payload.customerName || null; // Müşteri adını al
+
                     const clientQuickSaleDB = await pool.connect();
                     try {
                         await clientQuickSaleDB.query('BEGIN');
-                        const currentProductsListQuickSale = fetchProductsFromDB(); // Bellekten al
+                        const currentProductsListQuickSale = fetchProductsFromDB();
                         let totalQuickSaleAmount = 0;
                         for (const item of payload.items) {
                             const itemPrice = parseFloat(item.priceAtOrder) || 0;
@@ -502,9 +487,17 @@ wss.on('connection', (ws, req) => {
                         await clientQuickSaleDB.query('COMMIT');
                         console.log(`${currentUserInfo.username} tarafından hızlı satış tamamlandı ve sales_log'a kaydedildi.`);
                         ws.send(JSON.stringify({ type: 'quick_sale_success', payload: { message: 'Hızlı satış tamamlandı.'} }));
+
                         await logActivity(currentUserInfo.username, 'HIZLI_SATIS_TAMAMLANDI',
-                            { urunler: payload.items, toplam_tutar: totalQuickSaleAmount, islem_yapan: processedByQuickSale,
-                              orijinal_tutar: payload.originalTotal, indirim_tutari: payload.discountAmount, odenecek_tutar: payload.finalTotal },
+                            {
+                                urunler: payload.items,
+                                toplam_tutar: totalQuickSaleAmount,
+                                islem_yapan: processedByQuickSale,
+                                orijinal_tutar: payload.originalTotal, // Bu değerler istemciden geliyor
+                                indirim_tutari: payload.discountAmount, // Bu değerler istemciden geliyor
+                                odenecek_tutar: payload.finalTotal, // Bu değerler istemciden geliyor
+                                musteri_adi: customerName // Müşteri adını log detaylarına ekle
+                            },
                             'QuickSale', null, clientIpAddress);
                     } catch (error) {
                         await clientQuickSaleDB.query('ROLLBACK');
@@ -518,9 +511,12 @@ wss.on('connection', (ws, req) => {
                 if (!currentUserInfo || currentUserInfo.role !== 'cashier') { ws.send(JSON.stringify({ type: 'error', payload: { message: 'Rapor görüntüleme yetkiniz yok.' } })); return; }
                 try {
                     const reportResult = await pool.query(
+                        // Kullanıcı tüm satışları görmek isteyebilir, LIMIT kaldırılabilir veya dinamik hale getirilebilir.
+                        // Şimdilik LIMIT 500 olarak bırakıyorum, önceki konuşmamıza istinaden.
+                        // İleride tarih aralığı filtresi eklenirse bu sorgu güncellenmelidir.
                         `SELECT id, item_name, item_price, quantity, total_item_price, category, description,
                                 waiter_username, table_name, TO_CHAR(sale_timestamp, 'DD.MM.YYYY HH24:MI:SS') as sale_timestamp
-                         FROM sales_log ORDER BY sale_timestamp DESC LIMIT 2000`
+                         FROM sales_log ORDER BY sale_timestamp DESC LIMIT 500`
                     );
                     ws.send(JSON.stringify({ type: 'sales_report_data', payload: { sales: reportResult.rows } }));
                 } catch (error) {
@@ -533,7 +529,7 @@ wss.on('connection', (ws, req) => {
                 if (!currentUserInfo || currentUserInfo.role !== 'cashier') { ws.send(JSON.stringify({ type: 'error', payload: { message: 'Log görüntüleme yetkiniz yok.' } })); return; }
                 try {
                     const logResult = await pool.query(
-                        `SELECT log_id, user_username, action_type, log_details, 
+                        `SELECT log_id, user_username, action_type, log_details,
                                 TO_CHAR(log_timestamp, 'DD.MM.YYYY HH24:MI:SS') as log_timestamp_formatted
                          FROM activity_log ORDER BY log_timestamp DESC LIMIT 200`
                     );
@@ -548,27 +544,27 @@ wss.on('connection', (ws, req) => {
                 }
                 break;
 
-            case 'add_product_to_main_menu': // Bellek içi ürün ekleme
+            case 'add_product_to_main_menu':
                 if (!currentUserInfo || currentUserInfo.role !== 'cashier') { ws.send(JSON.stringify({ type: 'error', payload: { message: 'Yetkiniz yok.' } })); return; }
                 if (payload && payload.name && typeof payload.price === 'number' && payload.price >= 0 && payload.category) {
                     const newProduct = {
-                        id: nextProductId++, 
+                        id: nextProductId++,
                         name: payload.name.toUpperCase(),
                         price: parseFloat(payload.price),
                         category: payload.category.toUpperCase()
                     };
-                    products.push(newProduct); 
+                    products.push(newProduct);
                     await logActivity(
                         currentUserInfo.username, 'URUN_EKLENDI_MENUYE (Bellek)',
                         { urun_id: newProduct.id, urun_adi: newProduct.name, fiyat: newProduct.price, kategori: newProduct.category },
                         'ProductInMemory', newProduct.id, clientIpAddress
                     );
-                    await broadcastProductsUpdate(); 
+                    await broadcastProductsUpdate();
                     ws.send(JSON.stringify({ type: 'main_menu_product_added', payload: { product: newProduct, message: `${newProduct.name} menüye eklendi.` } }));
                 } else { ws.send(JSON.stringify({ type: 'error', payload: { message: 'Eksik ürün bilgisi.' } })); }
                 break;
 
-           case 'update_main_menu_product': // Bellek içi ürün güncelleme
+           case 'update_main_menu_product':
                 if (!currentUserInfo || currentUserInfo.role !== 'cashier') { ws.send(JSON.stringify({ type: 'error', payload: { message: 'Yetkiniz yok.' } })); return; }
                 if (payload && payload.id && payload.name && typeof payload.price === 'number' && payload.price >= 0 && payload.category) {
                     const productIndex = products.findIndex(p => p.id === parseInt(payload.id));
@@ -576,7 +572,7 @@ wss.on('connection', (ws, req) => {
                         ws.send(JSON.stringify({ type: 'error', payload: { message: 'Güncellenecek ürün bulunamadı.' } }));
                         return;
                     }
-                    const oldProduct = { ...products[productIndex] }; 
+                    const oldProduct = { ...products[productIndex] };
                     products[productIndex] = {
                         ...products[productIndex],
                         name: payload.name.toUpperCase(),
