@@ -60,13 +60,10 @@ console.log(`EMET LEZZET GÜNLERİ HTTP Sunucusu ${HTTP_PORT} portunda başlatı
 console.log(`WebSocket sunucusu da bu HTTP sunucusu üzerinden çalışıyor.`);
 
 // --- Sunucu Verileri ---
-// GÜNCELLENMİŞ KULLANICI LİSTESİ
 let users = [
-    // Kasiyerler
     { id: 1, username: 'hamza', password: 'ham.za', role: 'cashier' },
     { id: 2, username: 'bilal', password: 'bil.al', role: 'cashier' },
     { id: 10, username: 'sinan', password: 'sinan12', role: 'cashier' },
-    // Garsonlar
     { id: 3, username: 'aykut', password: 'ay.kut', role: 'waiter' },
     { id: 4, username: 'osman', password: 'os.man', role: 'waiter' },
     { id: 5, username: 'omerfaruk', password: 'omer.faruk', role: 'waiter' },
@@ -74,12 +71,11 @@ let users = [
     { id: 7, username: 'dursunali', password: 'd.ali', role: 'waiter' },
     { id: 8, username: 'tevfik', password: 'tev.fik', role: 'waiter' },
     { id: 9, username: 'garson', password: 'gar.son', role: 'waiter' },
+    { id: 20, username: 'mutfak', password: 'mut.fak', role: 'kitchen' }
 ];
 
-// Ürünler bellekte tutulacak (en son güncellenen menü)
 let currentProductId = 1000;
 let products = [
-    // ET - TAVUK
     { id: ++currentProductId, name: "İSKENDER - 120 GR", price: 275.00, category: "ET - TAVUK" },
     { id: ++currentProductId, name: "ET DÖNER EKMEK ARASI", price: 150.00, category: "ET - TAVUK" },
     { id: ++currentProductId, name: "ET DÖNER PORSİYON", price: 175.00, category: "ET - TAVUK" },
@@ -96,7 +92,6 @@ let products = [
     { id: ++currentProductId, name: "ET DÖNER - 500 GR", price: 650.00, category: "ET - TAVUK" },
     { id: ++currentProductId, name: "TAVUK DÖNER - KG", price: 800.00, category: "ET - TAVUK" },
     { id: ++currentProductId, name: "TAVUK DÖNER - 500 GR", price: 400.00, category: "ET - TAVUK" },
-    // ATIŞTIRMALIK
     { id: ++currentProductId, name: "AYVALIK TOSTU", price: 120.00, category: "ATIŞTIRMALIK" },
     { id: ++currentProductId, name: "HAMBURGER", price: 150.00, category: "ATIŞTIRMALIK" },
     { id: ++currentProductId, name: "BALIK BURGER", price: 150.00, category: "ATIŞTIRMALIK" },
@@ -107,7 +102,6 @@ let products = [
     { id: ++currentProductId, name: "ÇİĞ KÖFTE KG (MARUL-LİMON)", price: 300.00, category: "ATIŞTIRMALIK" },
     { id: ++currentProductId, name: "YAĞLI GÖZLEME", price: 50.00, category: "ATIŞTIRMALIK" },
     { id: ++currentProductId, name: "İÇLİ GÖZLEME", price: 60.00, category: "ATIŞTIRMALIK" },
-    // İÇECEK
     { id: ++currentProductId, name: "OSMANLI ŞERBETİ - 1 LT", price: 75.00, category: "İÇECEK" },
     { id: ++currentProductId, name: "LİMONATA - 1 LT", price: 75.00, category: "İÇECEK" },
     { id: ++currentProductId, name: "AYRAN", price: 10.00, category: "İÇECEK" },
@@ -122,7 +116,6 @@ let products = [
     { id: ++currentProductId, name: "TROPİKAL - ÇİLEK KOKUSU", price: 75.00, category: "İÇECEK" },
     { id: ++currentProductId, name: "TROPİKAL - KAVUNEZYA", price: 75.00, category: "İÇECEK" },
     { id: ++currentProductId, name: "TROPİKAL - NAR-I ŞAHANE", price: 75.00, category: "İÇECEK" },
-    // TATLI
     { id: ++currentProductId, name: "EV BAKLAVASI - KG", price: 400.00, category: "TATLI" },
     { id: ++currentProductId, name: "EV BAKLAVASI - 500 GR", price: 200.00, category: "TATLI" },
     { id: ++currentProductId, name: "EV BAKLAVASI - PORSİYON", price: 75.00, category: "TATLI" },
@@ -130,7 +123,6 @@ let products = [
     { id: ++currentProductId, name: "HÖŞMERİM - 500 GR", price: 100.00, category: "TATLI" },
     { id: ++currentProductId, name: "WAFFLE", price: 150.00, category: "TATLI" },
     { id: ++currentProductId, name: "DİĞER PASTA ÇEŞİTLERİ", price: 50.00, category: "TATLI" },
-    // ÇORBA
     { id: ++currentProductId, name: "KELLE PAÇA ÇORBA", price: 60.00, category: "ÇORBA" },
     { id: ++currentProductId, name: "TARHANA ÇORBA", price: 50.00, category: "ÇORBA" }
 ];
@@ -143,14 +135,14 @@ function initializeTables() {
     tables = [];
     let currentId = 1;
     for (let i = 1; i <= 6; i++) {
-        tables.push({ id: `masa-${currentId++}`, name: `KAMELYA ${i}`, type: 'kamelya', status: "boş", order: [], total: 0, waiterId: null, waiterUsername: null });
+        tables.push({ id: `masa-${currentId++}`, name: `KAMELYA ${i}`, type: 'kamelya', status: "boş", order: [], total: 0, waiterId: null, waiterUsername: null, kitchen_status: null, last_order_timestamp: 0 });
     }
     for (let i = 1; i <= 16; i++) {
-        tables.push({ id: `masa-${currentId++}`, name: `BAHÇE ${i}`, type: 'bahce', status: "boş", order: [], total: 0, waiterId: null, waiterUsername: null });
+        tables.push({ id: `masa-${currentId++}`, name: `BAHÇE ${i}`, type: 'bahce', status: "boş", order: [], total: 0, waiterId: null, waiterUsername: null, kitchen_status: null, last_order_timestamp: 0 });
     }
     const specialTableNames = ["AHMET EKMEKÇİ", "MEHMET EKMEKÇİ", "SÜLEYMAN EKMEKÇİ"];
     specialTableNames.forEach(name => {
-        tables.push({ id: `masa-${currentId++}`, name: name, type: 'özel', status: "boş", order: [], total: 0, waiterId: null, waiterUsername: null });
+        tables.push({ id: `masa-${currentId++}`, name: name, type: 'özel', status: "boş", order: [], total: 0, waiterId: null, waiterUsername: null, kitchen_status: null, last_order_timestamp: 0 });
     });
     nextTableIdCounter = currentId;
     console.log(`${tables.length} masa bellekte oluşturuldu.`);
@@ -159,7 +151,6 @@ initializeTables();
 
 const clients = new Map();
 
-// --- Yardımcı Fonksiyonlar ---
 function broadcast(message) {
     const messageString = JSON.stringify(message);
     clients.forEach((userInfo, clientSocket) => {
@@ -175,11 +166,11 @@ function broadcast(message) {
 }
 
 function broadcastTableUpdates() {
-    broadcast({ type: 'tables_update', payload: { tables: tables } });
+    const tablesCopy = tables.map(t => ({...t, order: t.order.map(o => ({...o})) })); // Derin kopya
+    broadcast({ type: 'tables_update', payload: { tables: tablesCopy } });
 }
 
 function fetchProductsFromDB() {
-    console.log("Bellekten ürünler çekiliyor (kullanıcı tarafından sağlanan sıralamayla).");
     return products.slice();
 }
 
@@ -242,7 +233,6 @@ async function logActivity(username, actionType, details = {}, targetEntity = nu
     }
 }
 
-// --- Ana WebSocket Olay İşleyicisi ---
 wss.on('connection', (ws, req) => {
     const clientIpAddress = getClientIp(ws, req);
     console.log(`Yeni bir istemci bağlandı. IP: ${clientIpAddress || 'Bilinmiyor'}`);
@@ -251,7 +241,6 @@ wss.on('connection', (ws, req) => {
         let message;
         try {
             message = JSON.parse(messageAsString);
-            console.log(`Alınan mesaj tipi: ${message.type}, Kullanıcı: ${clients.get(ws)?.username || 'Bilinmiyor'}`);
         } catch (e) {
             console.error('Geçersiz JSON formatı:', messageAsString, e);
             ws.send(JSON.stringify({ type: 'error', payload: { message: 'Geçersiz JSON formatı.' } }));
@@ -260,22 +249,25 @@ wss.on('connection', (ws, req) => {
 
         const { type, payload } = message;
         let currentUserInfo = clients.get(ws);
+        console.log(`Alınan mesaj tipi: ${type}, Kullanıcı: ${currentUserInfo?.username || 'Bilinmiyor'}, Payload:`, payload);
+
 
         switch (type) {
             case 'login':
-                const user = users.find(u => u.username === payload.username && u.password === payload.password);
-                if (user) {
+                const userToLogin = users.find(u => u.username === payload.username && u.password === payload.password);
+                if (userToLogin) {
                     for (let [client, info] of clients.entries()) {
-                        if (info.id === user.id && client !== ws) {
+                        if (info.id === userToLogin.id && client !== ws) {
+                            console.log(`${userToLogin.username} için eski bağlantı sonlandırılıyor.`);
                             client.terminate(); clients.delete(client);
                         }
                     }
-                    clients.set(ws, { id: user.id, username: user.username, role: user.role, ip: clientIpAddress });
+                    clients.set(ws, { id: userToLogin.id, username: userToLogin.username, role: userToLogin.role, ip: clientIpAddress });
                     currentUserInfo = clients.get(ws);
                     const memProductsLogin = fetchProductsFromDB();
                     ws.send(JSON.stringify({ type: 'login_success', payload: { user: currentUserInfo, tables: tables, products: memProductsLogin }}));
-                    console.log(`Kullanıcı giriş yaptı: ${user.username} (Rol: ${user.role}, IP: ${clientIpAddress})`);
-                    await logActivity(user.username, 'KULLANICI_GIRIS', { rol: user.role }, 'User', user.id, clientIpAddress);
+                    console.log(`Kullanıcı giriş yaptı: ${userToLogin.username} (Rol: ${userToLogin.role}, IP: ${clientIpAddress})`);
+                    await logActivity(userToLogin.username, 'KULLANICI_GIRIS', { rol: userToLogin.role }, 'User', userToLogin.id, clientIpAddress);
                 } else {
                     ws.send(JSON.stringify({ type: 'login_fail', payload: { error: 'Kullanıcı adı veya şifre hatalı.' } }));
                     await logActivity(payload.username, 'KULLANICI_GIRIS_BASARISIZ', { sebep: 'Hatalı şifre/kullanıcı adı' }, 'User', null, clientIpAddress);
@@ -303,7 +295,6 @@ wss.on('connection', (ws, req) => {
                 try {
                     const memProducts = fetchProductsFromDB();
                     ws.send(JSON.stringify({ type: 'products_update', payload: { products: memProducts } }));
-                    console.log('Sunucu: get_products isteğine products_update (bellekten) mesaj tipiyle yanıt verildi.');
                 } catch (err) {
                     console.error('Ürünler (get_products) alınırken beklenmedik hata:', err);
                     ws.send(JSON.stringify({ type: 'error', payload: { message: 'Ürünler getirilemedi.' } }));
@@ -321,31 +312,52 @@ wss.on('connection', (ws, req) => {
             case 'add_order_item':
                 if (!currentUserInfo) { ws.send(JSON.stringify({ type: 'error', payload: { message: 'Giriş yapmalısınız.' } })); return; }
                 const tableToAdd = tables.find(t => t.id === payload.tableId);
-                const receivedProductId = parseInt(payload.productId, 10);
-                if (isNaN(receivedProductId)) { ws.send(JSON.stringify({ type: 'order_update_fail', payload: { error: 'Geçersiz ürün IDsi.' } })); return; }
+                const productInfo = products.find(p => p.id === parseInt(payload.productId));
 
-                const currentProductsList = fetchProductsFromDB();
-                const productToAdd = currentProductsList.find(p => p.id === receivedProductId);
+                if (tableToAdd && productInfo && typeof payload.quantity === 'number' && payload.quantity > 0) {
+                    let itemName = payload.nameOverwrite || productInfo.name;
+                    let itemPrice = payload.priceAtOrderOverwrite !== null && payload.priceAtOrderOverwrite !== undefined ? payload.priceAtOrderOverwrite : productInfo.price;
+                    let itemQuantity = payload.quantity;
+                    let itemCategory = productInfo.category;
+                    let itemDescription = payload.description || '';
+                    let gramsSold = payload.grams || null;
 
-                if (tableToAdd && productToAdd && typeof payload.quantity === 'number' && payload.quantity > 0) {
-                    const existingItem = tableToAdd.order.find(item => item.productId === receivedProductId && item.description === (payload.description || ''));
-                    if (existingItem) {
-                        existingItem.quantity += payload.quantity;
-                        existingItem.waiterUsername = currentUserInfo.username;
-                        existingItem.timestamp = Date.now();
+                    const existingItem = tableToAdd.order.find(item =>
+                        item.productId === productInfo.id &&
+                        item.description === itemDescription &&
+                        !payload.isKgSale &&
+                        item.priceAtOrder === productInfo.price
+                    );
+
+                    const newOrderItemData = {
+                        productId: productInfo.id, name: itemName, category: itemCategory,
+                        quantity: itemQuantity, priceAtOrder: itemPrice, description: itemDescription,
+                        waiterUsername: currentUserInfo.username, timestamp: Date.now(),
+                        isKgSale: payload.isKgSale || false, grams: gramsSold,
+                        kds_status_mutfak: 'new' // Mutfak için yeni sipariş durumu
+                    };
+
+                    if (existingItem && !payload.isKgSale) {
+                        existingItem.quantity += itemQuantity;
+                        existingItem.timestamp = newOrderItemData.timestamp;
+                        existingItem.waiterUsername = newOrderItemData.waiterUsername;
+                        existingItem.kds_status_mutfak = 'new'; // Eğer mevcut item güncelleniyorsa, mutfak tekrar baksın
                     } else {
-                        tableToAdd.order.push({
-                            productId: receivedProductId, name: productToAdd.name, category: productToAdd.category,
-                            quantity: payload.quantity, priceAtOrder: productToAdd.price, description: payload.description || '',
-                            waiterUsername: currentUserInfo.username, timestamp: Date.now()
-                        });
+                        tableToAdd.order.push(newOrderItemData);
                     }
+
                     tableToAdd.total = calculateTableTotal(tableToAdd.order);
                     tableToAdd.status = 'dolu';
-                    tableToAdd.waiterId = currentUserInfo.id; tableToAdd.waiterUsername = currentUserInfo.username;
+                    if (!tableToAdd.waiterId || currentUserInfo.role === 'waiter') {
+                        tableToAdd.waiterId = currentUserInfo.id;
+                        tableToAdd.waiterUsername = currentUserInfo.username;
+                    }
+                    tableToAdd.last_order_timestamp = Date.now();
+                    tableToAdd.kitchen_status = 'new_order'; // Masada yeni/güncel sipariş var
+
                     broadcastTableUpdates();
                      await logActivity(currentUserInfo.username, 'SIPARIS_URUN_EKLENDI',
-                         { masa: tableToAdd.name, urun_id: productToAdd.id, urun_adi: productToAdd.name, adet: payload.quantity, fiyat: productToAdd.price, aciklama: payload.description || '' },
+                         { masa: tableToAdd.name, urun_id: productInfo.id, urun_adi: itemName, adet: itemQuantity, fiyat: itemPrice, aciklama: itemDescription, gram: gramsSold },
                          'Order', tableToAdd.id, clientIpAddress);
                 } else { ws.send(JSON.stringify({ type: 'order_update_fail', payload: { error: 'Geçersiz masa, ürün veya adet.' } })); }
                 break;
@@ -354,14 +366,21 @@ wss.on('connection', (ws, req) => {
                  if (!currentUserInfo || currentUserInfo.role !== 'cashier') { ws.send(JSON.stringify({ type: 'error', payload: { message: 'Yetkiniz yok.' } })); return; }
                 const tableForManual = tables.find(t => t.id === payload.tableId);
                 if (tableForManual && payload.name && typeof payload.price === 'number' && payload.price >= 0 && typeof payload.quantity === 'number' && payload.quantity > 0) {
-                     tableForManual.order.push({
-                         name: payload.name, category: payload.category || 'Diğer', quantity: payload.quantity,
+                     const manualItemData = {
+                         productId: null, name: payload.name, category: payload.category || 'Diğer', quantity: payload.quantity,
                          priceAtOrder: payload.price, description: payload.description || '',
-                         waiterUsername: currentUserInfo.username, timestamp: Date.now()
-                     });
+                         waiterUsername: currentUserInfo.username, timestamp: Date.now(),
+                         isKgSale: false, grams: null, kds_status_mutfak: 'new'
+                     };
+                    tableForManual.order.push(manualItemData);
                     tableForManual.total = calculateTableTotal(tableForManual.order);
                     tableForManual.status = 'dolu';
-                    tableForManual.waiterId = currentUserInfo.id; tableForManual.waiterUsername = currentUserInfo.username;
+                    if (!tableForManual.waiterId) {
+                        tableForManual.waiterId = currentUserInfo.id;
+                        tableForManual.waiterUsername = currentUserInfo.username;
+                    }
+                    tableForManual.last_order_timestamp = Date.now();
+                    tableForManual.kitchen_status = 'new_order';
                     broadcastTableUpdates();
                     await logActivity(currentUserInfo.username, 'SIPARIS_MANUEL_URUN_EKLENDI',
                         { masa: tableForManual.name, urun_adi: payload.name, adet: payload.quantity, fiyat: payload.price, kategori: payload.category || 'Diğer', aciklama: payload.description || '' },
@@ -380,16 +399,14 @@ wss.on('connection', (ws, req) => {
                     let removedItemDetails = null;
                     const itemIndex = tableToRemoveFrom.order.findIndex(item => {
                         let match = false;
+                        // KG satışları için ürün adı ve gramaj eşleşmesi daha karmaşık olabilir, şimdilik basit ID/isim ile devam.
+                        // Gerçekte timestamp veya benzersiz bir item ID ile silmek daha doğru olur.
                         if (productIdNum !== null && !isNaN(productIdNum)) {
-                            match = item.productId === productIdNum &&
-                                    item.description === (payload.description || '');
-                        } else if (payload.name) {
-                            match = item.name === payload.name &&
-                                    item.description === (payload.description || '');
+                            match = item.productId === productIdNum && item.description === (payload.description || '');
+                        } else if (payload.name) { // Manuel veya KG ürünü (isimle eşleşme)
+                            match = (item.name === payload.name || item.nameOverwrite === payload.name) && item.description === (payload.description || '');
                         }
-                        if (match) {
-                            removedItemDetails = { ...item };
-                        }
+                        if (match) removedItemDetails = { ...item };
                         return match;
                     });
 
@@ -400,24 +417,28 @@ wss.on('connection', (ws, req) => {
                             tableToRemoveFrom.status = 'boş';
                             tableToRemoveFrom.waiterId = null;
                             tableToRemoveFrom.waiterUsername = null;
+                            tableToRemoveFrom.kitchen_status = null; // Masa boşalınca mutfak durumunu sıfırla
+                            tableToRemoveFrom.last_order_timestamp = 0;
+                        } else {
+                             // Kalan siparişlere göre mutfak durumunu yeniden değerlendir
+                            const hasNewItems = tableToRemoveFrom.order.some(it => it.kds_status_mutfak === 'new');
+                            const hasPreparingItems = tableToRemoveFrom.order.some(it => it.kds_status_mutfak === 'preparing');
+                            const hasReadyItems = tableToRemoveFrom.order.some(it => it.kds_status_mutfak === 'ready');
+
+                            if (hasReadyItems) tableToRemoveFrom.kitchen_status = 'ready';
+                            else if (hasPreparingItems) tableToRemoveFrom.kitchen_status = 'preparing';
+                            else if (hasNewItems) tableToRemoveFrom.kitchen_status = 'new_order';
+                            else tableToRemoveFrom.kitchen_status = 'acknowledged'; // Ya da null
                         }
                         broadcastTableUpdates();
                         if (removedItemDetails && currentUserInfo) {
                             await logActivity(currentUserInfo.username, 'SIPARIS_URUN_SILINDI',
                                 { masa: tableToRemoveFrom.name, silinen_urun: removedItemDetails },
-                                'Order',
-                                tableToRemoveFrom.id,
-                                currentUserInfo.ip
-                            );
+                                'Order', tableToRemoveFrom.id, currentUserInfo.ip );
                         }
-                    } else {
-                        ws.send(JSON.stringify({ type: 'order_update_fail', payload: { error: 'Öğe bulunamadı.' } }));
-                    }
-                } else {
-                    ws.send(JSON.stringify({ type: 'order_update_fail', payload: { error: 'Masa bulunamadı.' } }));
-                }
+                    } else { ws.send(JSON.stringify({ type: 'order_update_fail', payload: { error: 'Öğe bulunamadı.' } })); }
+                } else { ws.send(JSON.stringify({ type: 'order_update_fail', payload: { error: 'Masa bulunamadı.' } })); }
                 break;
-
 
             case 'close_table':
                 if (!currentUserInfo || currentUserInfo.role !== 'cashier') { ws.send(JSON.stringify({ type: 'error', payload: { message: 'Bu işlem için yetkiniz yok.' } })); return; }
@@ -447,6 +468,7 @@ wss.on('connection', (ws, req) => {
                             'Table', payload.tableId, clientIpAddress);
                         tableToClose.order = []; tableToClose.total = 0; tableToClose.status = 'boş';
                         tableToClose.waiterId = null; tableToClose.waiterUsername = null;
+                        tableToClose.kitchen_status = null; tableToClose.last_order_timestamp = 0;
                         broadcastTableUpdates();
                     } catch (error) {
                         await clientDB.query('ROLLBACK');
@@ -463,7 +485,7 @@ wss.on('connection', (ws, req) => {
                 if (payload && payload.items && Array.isArray(payload.items) && payload.items.length > 0) {
                     const quickSaleTimestamp = new Date();
                     const processedByQuickSale = payload.cashierUsername || currentUserInfo.username;
-                    const customerName = payload.customerName || null; // Müşteri adını al
+                    const customerName = payload.customerName || null;
 
                     const clientQuickSaleDB = await pool.connect();
                     try {
@@ -487,17 +509,9 @@ wss.on('connection', (ws, req) => {
                         await clientQuickSaleDB.query('COMMIT');
                         console.log(`${currentUserInfo.username} tarafından hızlı satış tamamlandı ve sales_log'a kaydedildi.`);
                         ws.send(JSON.stringify({ type: 'quick_sale_success', payload: { message: 'Hızlı satış tamamlandı.'} }));
-
                         await logActivity(currentUserInfo.username, 'HIZLI_SATIS_TAMAMLANDI',
-                            {
-                                urunler: payload.items,
-                                toplam_tutar: totalQuickSaleAmount,
-                                islem_yapan: processedByQuickSale,
-                                orijinal_tutar: payload.originalTotal, // Bu değerler istemciden geliyor
-                                indirim_tutari: payload.discountAmount, // Bu değerler istemciden geliyor
-                                odenecek_tutar: payload.finalTotal, // Bu değerler istemciden geliyor
-                                musteri_adi: customerName // Müşteri adını log detaylarına ekle
-                            },
+                            { urunler: payload.items, toplam_tutar: totalQuickSaleAmount, islem_yapan: processedByQuickSale,
+                              orijinal_tutar: payload.originalTotal, indirim_tutari: payload.discountAmount, odenecek_tutar: payload.finalTotal, musteri_adi: customerName },
                             'QuickSale', null, clientIpAddress);
                     } catch (error) {
                         await clientQuickSaleDB.query('ROLLBACK');
@@ -511,9 +525,6 @@ wss.on('connection', (ws, req) => {
                 if (!currentUserInfo || currentUserInfo.role !== 'cashier') { ws.send(JSON.stringify({ type: 'error', payload: { message: 'Rapor görüntüleme yetkiniz yok.' } })); return; }
                 try {
                     const reportResult = await pool.query(
-                        // Kullanıcı tüm satışları görmek isteyebilir, LIMIT kaldırılabilir veya dinamik hale getirilebilir.
-                        // Şimdilik LIMIT 500 olarak bırakıyorum, önceki konuşmamıza istinaden.
-                        // İleride tarih aralığı filtresi eklenirse bu sorgu güncellenmelidir.
                         `SELECT id, item_name, item_price, quantity, total_item_price, category, description,
                                 waiter_username, table_name, TO_CHAR(sale_timestamp, 'DD.MM.YYYY HH24:MI:SS') as sale_timestamp
                          FROM sales_log ORDER BY sale_timestamp DESC LIMIT 500`
@@ -548,17 +559,12 @@ wss.on('connection', (ws, req) => {
                 if (!currentUserInfo || currentUserInfo.role !== 'cashier') { ws.send(JSON.stringify({ type: 'error', payload: { message: 'Yetkiniz yok.' } })); return; }
                 if (payload && payload.name && typeof payload.price === 'number' && payload.price >= 0 && payload.category) {
                     const newProduct = {
-                        id: nextProductId++,
-                        name: payload.name.toUpperCase(),
-                        price: parseFloat(payload.price),
-                        category: payload.category.toUpperCase()
-                    };
+                        id: nextProductId++, name: payload.name.toUpperCase(),
+                        price: parseFloat(payload.price), category: payload.category.toUpperCase() };
                     products.push(newProduct);
-                    await logActivity(
-                        currentUserInfo.username, 'URUN_EKLENDI_MENUYE (Bellek)',
+                    await logActivity( currentUserInfo.username, 'URUN_EKLENDI_MENUYE (Bellek)',
                         { urun_id: newProduct.id, urun_adi: newProduct.name, fiyat: newProduct.price, kategori: newProduct.category },
-                        'ProductInMemory', newProduct.id, clientIpAddress
-                    );
+                        'ProductInMemory', newProduct.id, clientIpAddress );
                     await broadcastProductsUpdate();
                     ws.send(JSON.stringify({ type: 'main_menu_product_added', payload: { product: newProduct, message: `${newProduct.name} menüye eklendi.` } }));
                 } else { ws.send(JSON.stringify({ type: 'error', payload: { message: 'Eksik ürün bilgisi.' } })); }
@@ -568,25 +574,15 @@ wss.on('connection', (ws, req) => {
                 if (!currentUserInfo || currentUserInfo.role !== 'cashier') { ws.send(JSON.stringify({ type: 'error', payload: { message: 'Yetkiniz yok.' } })); return; }
                 if (payload && payload.id && payload.name && typeof payload.price === 'number' && payload.price >= 0 && payload.category) {
                     const productIndex = products.findIndex(p => p.id === parseInt(payload.id));
-                    if (productIndex === -1) {
-                        ws.send(JSON.stringify({ type: 'error', payload: { message: 'Güncellenecek ürün bulunamadı.' } }));
-                        return;
-                    }
+                    if (productIndex === -1) { ws.send(JSON.stringify({ type: 'error', payload: { message: 'Güncellenecek ürün bulunamadı.' } })); return; }
                     const oldProduct = { ...products[productIndex] };
-                    products[productIndex] = {
-                        ...products[productIndex],
-                        name: payload.name.toUpperCase(),
-                        price: parseFloat(payload.price),
-                        category: payload.category.toUpperCase()
-                    };
+                    products[productIndex] = { ...products[productIndex], name: payload.name.toUpperCase(), price: parseFloat(payload.price), category: payload.category.toUpperCase() };
                     const updatedProduct = products[productIndex];
-                    await logActivity(
-                        currentUserInfo.username, 'URUN_GUNCELLEME_MENU (Bellek)',
+                    await logActivity( currentUserInfo.username, 'URUN_GUNCELLEME_MENU (Bellek)',
                         { urun_id: updatedProduct.id, urun_adi: updatedProduct.name,
                           eski_degerler: { name: oldProduct.name, price: oldProduct.price, category: oldProduct.category },
                           yeni_degerler: { name: updatedProduct.name, price: updatedProduct.price, category: updatedProduct.category } },
-                        'ProductInMemory', updatedProduct.id, clientIpAddress
-                    );
+                        'ProductInMemory', updatedProduct.id, clientIpAddress );
                     await broadcastProductsUpdate();
                     ws.send(JSON.stringify({ type: 'main_menu_product_updated', payload: { product: updatedProduct, message: `${updatedProduct.name} güncellendi.` } }));
                 } else { ws.send(JSON.stringify({ type: 'error', payload: { message: 'Eksik ürün bilgisi.' } }));}
@@ -595,7 +591,7 @@ wss.on('connection', (ws, req) => {
             case 'add_table':
                 if (!currentUserInfo || currentUserInfo.role !== 'cashier') { ws.send(JSON.stringify({ type: 'error', payload: { message: 'Bu işlem için yetkiniz yok.' } })); return; }
                 if (payload && payload.name && payload.name.trim() !== "") {
-                    const newTable = { id: `masa-${nextTableIdCounter++}`, name: payload.name.trim(), type: payload.type || 'bahce', status: "boş", order: [], total: 0, waiterId: null, waiterUsername: null };
+                    const newTable = { id: `masa-${nextTableIdCounter++}`, name: payload.name.trim(), type: payload.type || 'bahce', status: "boş", order: [], total: 0, waiterId: null, waiterUsername: null, kitchen_status: null, last_order_timestamp: 0 };
                     tables.push(newTable); broadcastTableUpdates();
                     ws.send(JSON.stringify({ type: 'table_operation_success', payload: { message: `${newTable.name} eklendi.` } }));
                     await logActivity(currentUserInfo.username, 'MASA_TANIM_EKLENDI (Bellek)', { masa_adi: newTable.name, masa_tipi: newTable.type }, 'TableDefinition', newTable.id, clientIpAddress);
@@ -667,6 +663,83 @@ wss.on('connection', (ws, req) => {
                 } else { ws.send(JSON.stringify({ type: 'waiter_operation_fail', payload: { error: 'Eksik garson IDsi.' } }));}
                 break;
 
+            case 'get_initial_kds_orders':
+                if (currentUserInfo && currentUserInfo.role === 'kitchen') {
+                    const activeOrdersForKDS = tables
+                        .filter(t => t.status === 'dolu' && t.order && t.order.length > 0 && t.order.some(item => item.kds_status_mutfak !== 'delivered_to_customer'))
+                        .map(t => ({
+                            id: t.id, name: t.name, waiterUsername: t.waiterUsername,
+                            order: t.order.filter(item => item.kds_status_mutfak !== 'delivered_to_customer').map(item => ({ ...item })),
+                            kitchen_status: t.kitchen_status, last_order_timestamp: t.last_order_timestamp
+                        }));
+                    ws.send(JSON.stringify({ type: 'kds_initial_orders', payload: { activeOrders: activeOrdersForKDS } }));
+                }
+                break;
+
+            case 'kds_item_status_change':
+                if (currentUserInfo && currentUserInfo.role === 'kitchen' && payload && payload.tableId && payload.kdsItemId && payload.newStatus) {
+                    const table = tables.find(t => t.id === payload.tableId);
+                    if (table && table.order) {
+                        let itemFound = false;
+                        table.order.forEach(item => {
+                            // kdsItemId'nin son kısmı (rastgele üretilen) ile eşleştirme
+                            const kdsItemIdentifier = `kds-${item.timestamp}-${item.productId || 'manual'}-`;
+                            if (payload.kdsItemId.startsWith(kdsItemIdentifier) && payload.kdsItemId.split('-').pop() === item.kdsInternalIdSuffix) { // kdsInternalIdSuffix istemcide atanmalı
+                                item.kds_status_mutfak = payload.newStatus;
+                                itemFound = true;
+                            }
+                        });
+
+                        if (itemFound) {
+                            const hasNew = table.order.some(it => it.kds_status_mutfak === 'new');
+                            const hasPreparing = table.order.some(it => it.kds_status_mutfak === 'preparing');
+                            const allReadyOrDelivered = table.order.every(it => it.kds_status_mutfak === 'ready' || it.kds_status_mutfak === 'delivered_to_customer');
+                            const hasAnyReady = table.order.some(it => it.kds_status_mutfak === 'ready');
+
+                            if (allReadyOrDelivered && hasAnyReady) table.kitchen_status = 'ready';
+                            else if (hasPreparing) table.kitchen_status = 'preparing';
+                            else if (hasNew) table.kitchen_status = 'new_order';
+                            else table.kitchen_status = 'acknowledged'; // Hepsi teslim edilmiş olabilir.
+
+                            broadcastTableUpdates();
+                        }
+                    }
+                }
+                break;
+
+            case 'kds_table_status_change':
+                 if (currentUserInfo && currentUserInfo.role === 'kitchen' && payload && payload.tableId && payload.newStatusForAllItems) {
+                    const table = tables.find(t => t.id === payload.tableId);
+                    if (table && table.order) {
+                        table.order.forEach(item => {
+                            if (item.kds_status_mutfak !== 'delivered_to_customer') {
+                                item.kds_status_mutfak = payload.newStatusForAllItems;
+                            }
+                        });
+                        if (payload.newStatusForAllItems === 'ready') table.kitchen_status = 'ready';
+                        else if (payload.newStatusForAllItems === 'preparing') table.kitchen_status = 'preparing';
+                        broadcastTableUpdates();
+                    }
+                 }
+                break;
+
+            case 'acknowledge_order_ready':
+                if ((currentUserInfo.role === 'cashier' || currentUserInfo.role === 'waiter') && payload && payload.tableId) {
+                    const table = tables.find(t => t.id === payload.tableId);
+                    if (table) { //  && table.kitchen_status === 'ready' -> Bu kontrolü kaldıralım, garson her durumda acknowledge edebilir.
+                        table.kitchen_status = 'acknowledged';
+                        if (table.order) {
+                            table.order.forEach(item => {
+                                if (item.kds_status_mutfak === 'ready') {
+                                    item.kds_status_mutfak = 'delivered_to_customer';
+                                }
+                            });
+                        }
+                        broadcastTableUpdates();
+                    }
+                }
+                break;
+
             case 'logout':
                 if (currentUserInfo) {
                     await logActivity(currentUserInfo.username, 'KULLANICI_CIKIS', {}, 'User', currentUserInfo.id, currentUserInfo.ip);
@@ -685,6 +758,27 @@ wss.on('connection', (ws, req) => {
         const closedUser = clients.get(ws);
         if (closedUser) {
             console.log(`İstemci bağlantısı kesildi: ${closedUser.username} (IP: ${closedUser.ip})`);
+             // Eğer KDS kullanıcısı ise ve başka aktif KDS bağlantısı yoksa, masaların kitchen_status'larını resetle (opsiyonel)
+            // if (closedUser.role === 'kitchen') {
+            //     let activeKitchenClientExists = false;
+            //     for (let [client, info] of clients.entries()) {
+            //         if (info.role === 'kitchen') {
+            //             activeKitchenClientExists = true;
+            //             break;
+            //         }
+            //     }
+            //     if (!activeKitchenClientExists) {
+            //         console.log("Aktif KDS istemcisi kalmadı, masaların mutfak durumları 'new_order'a resetleniyor.");
+            //         tables.forEach(t => {
+            //             if (t.status === 'dolu' && t.order && t.order.length > 0) {
+            //                 if (t.kitchen_status === 'preparing' || t.kitchen_status === 'ready') {
+            //                    // t.kitchen_status = 'new_order'; // Veya 'pending_kitchen_ack'
+            //                 }
+            //             }
+            //         });
+            //        // broadcastTableUpdates(); // Bu durumda adisyon ekranında yanıp sönme durur, dikkatli olunmalı
+            //     }
+            // }
         } else {
             console.log(`Kimliği doğrulanmamış bir istemcinin bağlantısı kesildi. (IP: ${clientIpAddress})`);
         }
@@ -697,20 +791,19 @@ wss.on('connection', (ws, req) => {
     });
 });
 
-// --- HTTP Sunucusunu Başlatma ---
 httpServer.listen(HTTP_PORT, () => {
   console.log(`EMET LEZZET GÜNLERİ ADİSYON SİSTEMİ ${HTTP_PORT} portunda dinlemede.`);
 });
 
 process.on('SIGINT', async () => {
     console.log('Sunucu kapatılıyor (SIGINT)...');
-    await pool.end();
+    if (pool) await pool.end();
     console.log('PostgreSQL bağlantısı kapatıldı.');
     process.exit(0);
 });
 process.on('SIGTERM', async () => {
     console.log('Sunucu kapatılıyor (SIGTERM)...');
-    await pool.end();
+    if (pool) await pool.end();
     console.log('PostgreSQL bağlantısı kapatıldı.');
     process.exit(0);
 });
