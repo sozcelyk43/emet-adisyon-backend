@@ -58,7 +58,12 @@
 <body class="bg-gray-100 text-gray-800">
 
 <div id="loadingOverlay" class="modal fixed inset-0 bg-gray-900 bg-opacity-75 items-center justify-center z-50"> <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-sm text-center"> <svg class="animate-spin h-12 w-12 text-blue-600 mx-auto mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"> <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle> <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path> </svg> <p id="loadingMessage" class="text-lg font-medium text-gray-700">Bağlanılıyor...</p> </div> </div>
-<div id="loginModal" class="modal fixed inset-0 bg-gray-900 bg-opacity-75 items-center justify-center z-50 active"> <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-sm"> <h2 class="text-2xl font-semibold mb-6 text-center text-blue-600">Kullanıcı Girişi</h2> <p class="text-sm text-gray-500 text-center mb-4">Garson, Kasa veya Mutfak olarak giriş yapın.</p> <input type="text" id="usernameInput" placeholder="Kullanıcı Adı" class="w-full p-3 border border-gray-300 rounded-md mb-4 focus:ring-2 focus:ring-blue-500 focus:border-transparent"> <input type="password" id="passwordInput" placeholder="Şifre" class="w-full p-3 border border-gray-300 rounded-md mb-4 focus:ring-2 focus:ring-blue-500 focus:border-transparent"> <button id="loginButton" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold p-3 rounded-md transition duration-150">Giriş Yap</button> <p id="loginError" class="text-red-500 text-sm mt-2 text-center"></p> </div> </div>
+<div id="loginModal" class="modal fixed inset-0 bg-gray-900 bg-opacity-75 items-center justify-center z-50 active"> <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-sm"> <h2 class="text-2xl font-semibold mb-6 text-center text-blue-600">Kullanıcı Girişi</h2> <p class="text-sm text-gray-500 text-center mb-4">Garson, Kasa veya Mutfak olarak giriş yapın.</p> <input type="text" id="usernameInput" placeholder="Kullanıcı Adı" class="w-full p-3 border border-gray-300 rounded-md mb-4 focus:ring-2 focus:ring-blue-500 focus:border-transparent"> <input type="password" id="passwordInput" placeholder="Şifre" class="w-full p-3 border border-gray-300 rounded-md mb-4 focus:ring-2 focus:ring-blue-500 focus:border-transparent">  <div class="flex items-center justify-between mb-4">
+        <label for="rememberMeCheckbox" class="flex items-center text-sm text-gray-600 cursor-pointer">
+            <input type="checkbox" id="rememberMeCheckbox" class="form-checkbox h-4 w-4 text-blue-600 transition duration-150 ease-in-out rounded focus:ring-blue-500">
+            <span class="ml-2">Beni Hatırla</span>
+        </label>
+    </div><button id="loginButton" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold p-3 rounded-md transition duration-150">Giriş Yap</button> <p id="loginError" class="text-red-500 text-sm mt-2 text-center"></p> </div> </div>
 <div id="appContainer" class="container mx-auto p-4 md:p-8 hidden"> <header class="mb-8 flex flex-wrap justify-between items-center gap-4"> <div> <h1 class="text-3xl md:text-4xl font-bold text-blue-700">EMET LEZZET GÜNLERİ ADİSYON</h1> <p class="text-gray-600 mt-1">Aktif Kullanıcı: <span id="activeUserName" class="font-semibold"></span> (<span id="activeUserRole" class="capitalize"></span>)</p> </div> <div class="flex flex-wrap gap-2"> <button id="manageWaitersButton" class="bg-pink-500 hover:bg-pink-600 text-white font-semibold py-2 px-4 rounded-md transition duration-150 hidden">Garson Yönetimi</button> <button id="manageTablesButton" class="bg-orange-500 hover:bg-orange-600 text-white font-semibold py-2 px-4 rounded-md transition duration-150 hidden">Masalar Yönetimi</button> <button id="editProductMenuButton" class="bg-purple-500 hover:bg-purple-600 text-white font-semibold py-2 px-4 rounded-md transition duration-150 hidden">Ürün Düzenleme</button> <button id="addProductToMenuButton" class="bg-indigo-500 hover:bg-indigo-600 text-white font-semibold py-2 px-4 rounded-md transition duration-150 hidden">Menüye Ürün Ekle</button> <button id="salesReportButton" class="bg-teal-500 hover:bg-teal-600 text-white font-semibold py-2 px-4 rounded-md transition duration-150 hidden">Satış Raporlama</button> <button id="logoutButton" class="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded-md transition duration-150">Uygulamadan Çık</button> </div> </header> <div class="grid grid-cols-1 md:grid-cols-3 gap-6"> <main class="md:col-span-2"> <section id="tablesSection" class="mb-8"> <div class="flex justify-between items-center mb-4"> <h2 class="text-2xl font-semibold text-gray-700">Masalar</h2> </div> <div id="quickSaleButtonContainerTop" class="mb-6 hidden"> <button id="quickSaleEntryButton" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-6 px-6 rounded-xl shadow-lg text-2xl transition duration-150 transform hover:scale-105"> HIZLI SATIŞ </button> </div> <div id="tablesGrid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4"> </div> </section> </main> <aside class="md:col-span-1"> <section id="productsReferenceSection" class="mb-8"> <h2 class="text-2xl font-semibold mb-4 text-gray-700">Güncel Menü</h2> <div class="bg-white p-6 rounded-lg shadow max-h-[70vh] overflow-y-auto"> <div id="productsListRef"> </div> </div> </section> </aside> </div> </div>
 <div id="orderPageContainer" class="container mx-auto p-4 md:p-8"> <header class="mb-6 flex flex-wrap justify-between items-center"> <div class="w-full md:w-auto mb-2 md:mb-0"> <h2 class="text-3xl font-semibold text-blue-700">Sipariş: <span id="orderPageTableName"></span></h2> <input type="text" id="orderPageCustomerName" placeholder="Müşteri Adı (isteğe bağlı)" class="mt-2 p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 w-full md:w-auto"> <p id="orderPageWaiterInfo" class="text-sm text-gray-600 mt-1">Bu Masaya Henüz Sipariş Alınmadı</p> </div> <button id="backToTablesButton" class="bg-gray-500 hover:bg-gray-600 text-white font-semibold py-2 px-4 rounded-md transition duration-150">Masalara Dön</button> </header> <div class="grid grid-cols-1 lg:grid-cols-3 gap-6"> <section class="lg:col-span-2 bg-white p-6 rounded-lg shadow"> <div class="mb-4 relative"> <input type="text" id="productSearchInputOrderPage" placeholder="Ürün Ara..." class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 hidden"> <div id="searchResultsOrderPage" class="search-results-container absolute z-10 bg-white border rounded-md shadow-lg mt-1 w-full hidden"></div> </div> <h3 class="text-xl font-semibold mb-4 text-gray-700">Ürün Seçimi</h3> <div id="orderPageProductGrid" class="space-y-6 max-h-[calc(75vh-50px)] overflow-y-auto pr-2"> </div> <div id="manualProductSection" class="mt-6 pt-6 border-t border-gray-200 hidden"> <h3 class="text-lg font-semibold mb-3 text-orange-600">Manuel Ürün Ekle (Sadece Kasa - Bu siparişe özel)</h3> <div class="space-y-3"> <input type="text" id="manualProductName" placeholder="Ürün Adı" class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500"> <div> <label for="manualProductCategory" class="block text-sm font-medium text-gray-600 mb-1">Kategori:</label> <select id="manualProductCategory" class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500"> <option value="">Kategori Seçin</option> </select> </div> <input type="number" id="manualProductPrice" placeholder="Fiyat (₺)" step="0.01" min="0" class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500"> <input type="number" id="manualProductQuantity" placeholder="Adet" value="1" min="1" class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500"> <input type="text" id="manualProductDescription" placeholder="Açıklama (isteğe bağlı)" class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500"> <button id="addManualProductButton" class="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold p-2 rounded-md transition duration-150">Manuel Ürünü Siparişe Ekle</button> </div> </div> </section> <section class="lg:col-span-1 bg-white p-6 rounded-lg shadow"> <h3 class="text-xl font-semibold mb-4 text-gray-700">Mevcut Sipariş</h3> <div id="orderPageCurrentOrderItems" class="space-y-3 max-h-[75vh] overflow-y-auto pr-2"> </div> <div id="orderPageCurrentOrderTotal" class="text-right font-bold text-2xl mt-6 text-gray-800"> Toplam: 0 ₺ </div> <div id="discountInfo" class="text-right text-sm text-red-600 mt-1 hidden"></div> <div class="mt-6 space-y-3"> <button id="applyDiscountButton" class="w-full bg-yellow-500 hover:bg-yellow-600 text-black font-semibold p-3 rounded-md transition duration-150 hidden">Personel İndirimi (%30)</button> <button id="showReceiptButton" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold p-3 rounded-md transition duration-150">Fiş Göster/Yazdır</button> <button id="finalizeAndCloseTableButton" class="w-full bg-red-500 hover:bg-red-600 text-white font-semibold p-3 rounded-md transition duration-150 hidden">Masayı Kapat ve Hesabı Tamamla</button> </div> </section> </div> </div>
 <div id="quickSaleModal" class="modal"> <div class="bg-white p-4 md:p-6 rounded-lg shadow-xl w-full max-w-7xl max-h-[95vh] flex flex-col"> <header class="mb-4 flex justify-between items-center"> <h2 class="text-2xl font-semibold text-green-700">Hızlı Satış</h2> <button id="closeQuickSaleModalButton" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button> </header> <div class="grid grid-cols-1 md:grid-cols-3 gap-4 flex-grow overflow-hidden"> <section class="md:col-span-2 bg-gray-50 p-3 rounded-lg shadow-inner overflow-y-auto max-h-[calc(95vh-150px)]"> <div class="mb-3 relative"> <input type="text" id="productSearchInputQuickSale" placeholder="Ürün Ara..." class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 hidden"> <div id="searchResultsQuickSale" class="search-results-container absolute z-10 bg-white border rounded-md shadow-lg mt-1 w-full hidden"></div> </div> <h3 class="text-lg font-semibold mb-3 text-gray-700">Ürün Seçimi</h3> <div id="quickSaleProductGrid" class="space-y-4"> </div> </section> <section class="md:col-span-1 bg-gray-50 p-3 rounded-lg shadow-inner flex flex-col max-h-[calc(95vh-150px)]"> <h3 class="text-lg font-semibold mb-3 text-gray-700">Hızlı Satış Sepeti</h3> <div id="quickSaleCurrentItems" class="space-y-2 flex-grow overflow-y-auto"> <p class="text-gray-500 text-center py-4">Sepet boş.</p> </div> <div id="quickSaleTotal" class="text-right font-bold text-xl mt-4 pt-2 border-t"> Toplam: 0 ₺ </div> <div id="quickSaleDiscountInfo" class="text-right text-sm text-red-600 mt-1 hidden"></div> <input type="text" id="quickSaleCustomerName" placeholder="Müşteri Adı (opsiyonel)" class="w-full p-2 border border-gray-300 rounded-md my-3 focus:ring-2 focus:ring-green-500"> <div class="mt-4 space-y-2"> <button id="applyQuickSaleDiscountButton" class="w-full bg-yellow-500 hover:bg-yellow-600 text-black font-semibold p-2 rounded-md transition duration-150">Personel İndirimi (%30)</button> <button id="completeQuickSaleButton" class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold p-3 rounded-md transition duration-150">Satışı Tamamla ve Fiş Kes</button> </div> </section> </div> </div> </div>
@@ -215,6 +220,8 @@
     const kdsLogoutButton = document.getElementById('kdsLogoutButton');
     const kdsStaticTableGrid = document.getElementById('kdsStaticTableGrid');
     const noKdsOrdersMessage = document.getElementById('noKdsOrdersMessage');
+    const rememberMeCheckbox = document.getElementById('rememberMeCheckbox');
+
 
     function formatPrice(price) { if (typeof price !== 'number' || isNaN(price)) { return '0 ₺'; } const formatted = price.toFixed(2).replace('.', ','); if (formatted.endsWith(',00')) { return formatted.substring(0, formatted.length - 3) + ' ₺'; } return formatted + ' ₺'; }
     function formatTimestamp(timestampInput) { if (!timestampInput) { return '-'; } let initialDate; if (typeof timestampInput === 'number') { initialDate = new Date(timestampInput); } else if (timestampInput instanceof Date) { initialDate = timestampInput; } else if (typeof timestampInput === 'string') { const parts = timestampInput.match(/^(\d{2})\.(\d{2})\.(\d{4}) (\d{2}):(\d{2}):(\d{2})$/); if (parts) { const year = parseInt(parts[3], 10); const monthIndex = parseInt(parts[2], 10) - 1; const day = parseInt(parts[1], 10); const hour = parseInt(parts[4], 10); const minute = parseInt(parts[5], 10); const second = parseInt(parts[6], 10); const utcTimestamp = Date.UTC(year, monthIndex, day, hour, minute, second); initialDate = new Date(utcTimestamp); } else { initialDate = new Date(timestampInput); } } else { return '-'; } if (!initialDate || isNaN(initialDate.getTime())) { return '-'; } try { const options = { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Istanbul', hour12: false }; let formattedDate = new Intl.DateTimeFormat('tr-TR', options).format(initialDate); return formattedDate.replace(',', ''); } catch (e) { const trtEquivalentMilliseconds = initialDate.getTime() + (3 * 60 * 60 * 1000); const trtDate = new Date(trtEquivalentMilliseconds); const day = String(trtDate.getUTCDate()).padStart(2, '0'); const month = String(trtDate.getUTCMonth() + 1).padStart(2, '0'); const year = trtDate.getUTCFullYear(); const hours = String(trtDate.getUTCHours()).padStart(2, '0'); const minutes = String(trtDate.getUTCMinutes()).padStart(2, '0'); return `${day}.${month}.${year} ${hours}:${minutes}`; } }
@@ -222,10 +229,256 @@
     function showLoading(message = "İşleniyor...") { loadingMessage.textContent = message; loadingOverlay.classList.add('active'); }
     function hideLoading() { loadingOverlay.classList.remove('active'); }
 
-    function connectWebSocket() { showLoading("Sunucuya bağlanılıyor..."); socket = new WebSocket(WEBSOCKET_URL); socket.onopen = () => { hideLoading(); const storedUser = localStorage.getItem('adisyonUser'); if (storedUser) { try { appState.user = JSON.parse(storedUser); loginModal.classList.remove('active'); if (appState.user.role === 'kitchen') { kdsContainer.classList.remove('hidden'); kdsContainer.classList.add('active'); kdsActiveUserName.textContent = appState.user.username; kdsActiveUserRole.textContent = appState.user.role; appContainer.classList.add('hidden'); orderPageContainer.classList.remove('active'); } else { appContainer.classList.remove('hidden'); orderPageContainer.classList.remove('active'); kdsContainer.classList.add('hidden'); activeUserNameSpan.textContent = appState.user.username; activeUserRoleSpan.textContent = appState.user.role; } updateUIForRole(); sendMessageToServer('reauthenticate', { user: appState.user }); } catch (e) { localStorage.removeItem('adisyonUser'); loginModal.classList.add('active'); appContainer.classList.add('hidden'); kdsContainer.classList.add('hidden'); orderPageContainer.classList.remove('active'); } } else { loginModal.classList.add('active'); appContainer.classList.add('hidden'); kdsContainer.classList.add('hidden'); orderPageContainer.classList.remove('active'); } }; socket.onmessage = (event) => { let message; try { message = JSON.parse(event.data); } catch (error) { return; } handleServerMessage(message); }; socket.onerror = (error) => { showLoginError("Sunucu bağlantı hatası."); hideLoading(); }; socket.onclose = () => { showLoginError("Bağlantı kesildi. Sayfayı yenileyin."); appContainer.classList.add('hidden'); kdsContainer.classList.add('hidden'); orderPageContainer.classList.remove('active'); loginModal.classList.add('active'); hideLoading(); }; }
-    function sendMessageToServer(type, payload) { if (socket && socket.readyState === WebSocket.OPEN) { socket.send(JSON.stringify({ type, payload })); } else { if (appState.user && (!socket || socket.readyState === WebSocket.CLOSED)) { setTimeout(() => connectWebSocket(), 1000); } else if (!appState.user) { loginModal.classList.add('active'); appContainer.classList.add('hidden'); kdsContainer.classList.add('hidden'); orderPageContainer.classList.remove('active'); showLoginError("Lütfen giriş yapın."); } else { showLoginError("Sunucuya mesaj gönderilemedi."); } } }
-    function handleServerMessage(message) { hideLoading(); switch (message.type) { case 'login_success': const userDataFromServer = message.payload.user; if (message.payload && userDataFromServer) { appState.user = userDataFromServer; appState.tables = message.payload.tables || []; appState.allDefinedTablesForKDS = message.payload.tables.map(t => ({id: t.id, name: t.name, type: t.type})) || []; if (message.payload.products) appState.products = message.payload.products; localStorage.setItem('adisyonUser', JSON.stringify(appState.user)); loginError.textContent = ''; loginModal.classList.remove('active'); if (appState.user.role === 'kitchen') { appContainer.classList.add('hidden'); orderPageContainer.classList.remove('active'); kdsContainer.classList.remove('hidden'); kdsContainer.classList.add('active'); kdsActiveUserName.textContent = appState.user.username; kdsActiveUserRole.textContent = appState.user.role; initializeKdsStaticGrid(); sendMessageToServer('get_initial_kds_orders', {}); } else { kdsContainer.classList.add('hidden'); appContainer.classList.remove('hidden'); orderPageContainer.classList.remove('active'); activeUserNameSpan.textContent = appState.user.username; activeUserRoleSpan.textContent = appState.user.role; renderInitialData(); } updateUIForRole(); } else { showLoginError("Geçersiz giriş yanıtı."); } break; case 'login_fail': showLoginError(message.payload.error || "Kullanıcı adı/şifre hatalı."); localStorage.removeItem('adisyonUser'); break; case 'tables_update': if (appState.user && appState.user.role !== 'kitchen') { appState.tables = message.payload.tables; renderTables(); renderInitialDataIfNeeded(); if (orderPageContainer.classList.contains('active') && appState.currentTableId) { const updatedTable = appState.tables.find(t => t.id === appState.currentTableId); if (updatedTable) renderOrderPageForTable(updatedTable); else showTablesView(); } if (manageTablesModal.classList.contains('active')) populateTableSelectsForManagement(); } else if (appState.user && appState.user.role === 'kitchen' && message.payload.tables) { appState.allDefinedTablesForKDS = message.payload.tables.map(t => ({id: t.id, name: t.name, type: t.type})); initializeKdsStaticGrid(); message.payload.tables.forEach(table => updateKdsTableOrders(table)); renderKdsOrders(); } break; case 'products_update': if (message.payload && message.payload.products) { appState.products = message.payload.products; initialDataRendered = false; renderInitialDataIfNeeded(); if (orderPageContainer.classList.contains('active') && appState.currentTableId) { const currentTable = appState.tables.find(t => t.id === appState.currentTableId); if (currentTable) renderOrderPageForTable(currentTable); } if (quickSaleModal.classList.contains('active')) renderProductGrid(quickSaleProductGrid, true); if (editProductModal.classList.contains('active')) populateSelectProductToEdit(); } break; case 'kds_initial_orders': if (appState.user && appState.user.role === 'kitchen' && message.payload) { if (message.payload.allTables) appState.allDefinedTablesForKDS = message.payload.allTables; initializeKdsStaticGrid(); appState.kdsOrders = {}; if (message.payload.activeOrders) message.payload.activeOrders.forEach(table => updateKdsTableOrders(table)); renderKdsOrders(); } break; case 'new_quick_sale_for_kds': if (appState.user && appState.user.role === 'kitchen' && message.payload) { const quickSaleOrderData = message.payload; if (!appState.kdsOrders[quickSaleOrderData.id]) { appState.kdsOrders[quickSaleOrderData.id] = { tableName: quickSaleOrderData.name, waiterUsername: quickSaleOrderData.waiterUsername, items: [], lastUpdate: quickSaleOrderData.last_order_timestamp, kitchenStatusOverall: quickSaleOrderData.kitchen_status || 'new_order', isQuickSale: true }; } appState.kdsOrders[quickSaleOrderData.id].items = (quickSaleOrderData.order || []).map(item => ({...item, kdsStatus: item.kds_status_mutfak || 'new'})); appState.kdsOrders[quickSaleOrderData.id].lastUpdate = quickSaleOrderData.last_order_timestamp || Date.now(); renderKdsOrders(); } break; case 'table_customer_name_updated': if(appState.currentTableId === message.payload.tableId && orderPageCustomerNameInput) { orderPageCustomerNameInput.value = message.payload.customerName || ''; } const tableInState = appState.tables.find(t => t.id === message.payload.tableId); if(tableInState) tableInState.customerNameOnTable = message.payload.customerName; renderTables(); break; case 'main_menu_product_added': alert(message.payload.message); break; case 'main_menu_product_updated': alert(message.payload.message); break; case 'table_operation_success': alert(message.payload.message); break; case 'table_operation_fail': alert(message.payload.error); break; case 'waiters_list': if (message.payload && message.payload.waiters) { appState.waiters = message.payload.waiters; populateWaiterSelectsForManagement(); } break; case 'waiter_operation_success': alert(message.payload.message); sendMessageToServer('get_waiters_list', {}); break; case 'waiter_operation_fail': alert(message.payload.error); break; case 'sales_report_data': appState.salesReport = message.payload.sales || []; renderSalesReport(); break; case 'order_update_fail': alert(message.payload.error); break; case 'manual_order_update_fail': alert(message.payload.error); break; case 'quick_sale_success': appState.currentQuickSaleOrder = []; renderQuickSaleOrder(); break; case 'quick_sale_fail': alert(message.payload.error); break; case 'error': alert(message.payload.message); break; default: console.warn("Bilinmeyen mesaj tipi:", message.type, message.payload); } }
-    function showLoginError(message) { loginError.textContent = message; passwordInput.value = ''; }
+    function connectWebSocket() {   showLoading("Sunucuya bağlanılıyor...");    socket = new WebSocket(WEBSOCKET_URL);
+    socket.onopen = () => {
+        hideLoading();
+        const storedUser = localStorage.getItem('adisyonUser');
+        if (storedUser) {
+            if(rememberMeCheckbox) rememberMeCheckbox.checked = true;
+            try {
+                appState.user = JSON.parse(storedUser);
+                loginModal.classList.remove('active');
+                if (appState.user.role === 'kitchen') {
+                    kdsContainer.classList.remove('hidden');
+                    kdsContainer.classList.add('active');
+                    kdsActiveUserName.textContent = appState.user.username;
+                    kdsActiveUserRole.textContent = appState.user.role;
+                    appContainer.classList.add('hidden');
+                    orderPageContainer.classList.remove('active');
+                } else {
+                    appContainer.classList.remove('hidden');
+                    orderPageContainer.classList.remove('active');
+                    kdsContainer.classList.add('hidden');
+                    activeUserNameSpan.textContent = appState.user.username;
+                    activeUserRoleSpan.textContent = appState.user.role;
+                }
+                updateUIForRole();
+                sendMessageToServer('reauthenticate', { user: appState.user });
+            } catch (e) {
+                localStorage.removeItem('adisyonUser');
+                if(rememberMeCheckbox) rememberMeCheckbox.checked = false;
+                loginModal.classList.add('active');
+                appContainer.classList.add('hidden');
+                kdsContainer.classList.add('hidden');
+                orderPageContainer.classList.remove('active');
+            }
+        } else {
+            if(rememberMeCheckbox) rememberMeCheckbox.checked = false;
+            loginModal.classList.add('active');
+            appContainer.classList.add('hidden');
+            kdsContainer.classList.add('hidden');
+            orderPageContainer.classList.remove('active');
+        }
+    };
+
+    socket.onmessage = (event) => {
+        let message;
+        try {
+            message = JSON.parse(event.data);
+        } catch (error) {
+            console.error("JSON parse hatası:", error, "Veri:", event.data);
+            return;
+        }
+        handleServerMessage(message);
+    };
+
+    socket.onerror = (error) => {
+        showLoginError("Sunucu bağlantı hatası. Lütfen daha sonra tekrar deneyin.");
+        hideLoading();
+    };
+
+    socket.onclose = () => {
+        showLoginError("Bağlantı kesildi. Lütfen sayfayı yenileyerek tekrar bağlanmayı deneyin.");
+        appContainer.classList.add('hidden');
+        kdsContainer.classList.add('hidden');
+        orderPageContainer.classList.remove('active');
+        loginModal.classList.add('active');
+        hideLoading();
+    };
+}function sendMessageToServer(type, payload) { if (socket && socket.readyState === WebSocket.OPEN) { socket.send(JSON.stringify({ type, payload })); } else { if (appState.user && (!socket || socket.readyState === WebSocket.CLOSED)) { setTimeout(() => connectWebSocket(), 1000); } else if (!appState.user) { loginModal.classList.add('active'); appContainer.classList.add('hidden'); kdsContainer.classList.add('hidden'); orderPageContainer.classList.remove('active'); showLoginError("Lütfen giriş yapın."); } else { showLoginError("Sunucuya mesaj gönderilemedi."); } } }
+   function handleServerMessage(message) {
+    hideLoading();
+    switch (message.type) {
+        case 'login_success':
+            const userDataFromServer = message.payload.user;
+            if (message.payload && userDataFromServer) {
+                appState.user = userDataFromServer;
+                appState.tables = message.payload.tables || [];
+                appState.allDefinedTablesForKDS = message.payload.tables.map(t => ({id: t.id, name: t.name, type: t.type})) || [];
+                if (message.payload.products) {
+                    appState.products = message.payload.products;
+                }
+
+                if (rememberMeCheckbox.checked) {
+                    localStorage.setItem('adisyonUser', JSON.stringify(appState.user));
+                } else {
+                    localStorage.removeItem('adisyonUser');
+                }
+
+                loginError.textContent = '';
+                loginModal.classList.remove('active');
+
+                if (appState.user.role === 'kitchen') {
+                    appContainer.classList.add('hidden');
+                    orderPageContainer.classList.remove('active');
+                    kdsContainer.classList.remove('hidden');
+                    kdsContainer.classList.add('active');
+                    kdsActiveUserName.textContent = appState.user.username;
+                    kdsActiveUserRole.textContent = appState.user.role;
+                    initializeKdsStaticGrid();
+                    sendMessageToServer('get_initial_kds_orders', {});
+                } else {
+                    kdsContainer.classList.add('hidden');
+                    appContainer.classList.remove('hidden');
+                    orderPageContainer.classList.remove('active');
+                    activeUserNameSpan.textContent = appState.user.username;
+                    activeUserRoleSpan.textContent = appState.user.role;
+                    renderInitialData();
+                }
+                updateUIForRole();
+            } else {
+                showLoginError("Geçersiz giriş yanıtı alındı.");
+            }
+            break;
+        case 'login_fail':
+            showLoginError(message.payload.error || "Kullanıcı adı veya şifre hatalı.");
+            localStorage.removeItem('adisyonUser');
+            if(rememberMeCheckbox) rememberMeCheckbox.checked = false;
+            break;
+        case 'tables_update':
+            if (appState.user && appState.user.role !== 'kitchen') {
+                appState.tables = message.payload.tables;
+                renderTables();
+                renderInitialDataIfNeeded();
+                if (orderPageContainer.classList.contains('active') && appState.currentTableId) {
+                    const updatedTable = appState.tables.find(t => t.id === appState.currentTableId);
+                    if (updatedTable) {
+                        renderOrderPageForTable(updatedTable);
+                    } else {
+                        showTablesView();
+                    }
+                }
+                if (manageTablesModal.classList.contains('active')) {
+                    populateTableSelectsForManagement();
+                }
+            } else if (appState.user && appState.user.role === 'kitchen' && message.payload.tables) {
+                appState.allDefinedTablesForKDS = message.payload.tables.map(t => ({id: t.id, name: t.name, type: t.type}));
+                initializeKdsStaticGrid();
+                message.payload.tables.forEach(table => updateKdsTableOrders(table));
+                renderKdsOrders();
+            }
+            break;
+        case 'products_update':
+            if (message.payload && message.payload.products) {
+                appState.products = message.payload.products;
+                initialDataRendered = false;
+                renderInitialDataIfNeeded();
+                if (orderPageContainer.classList.contains('active') && appState.currentTableId) {
+                    const currentTable = appState.tables.find(t => t.id === appState.currentTableId);
+                    if (currentTable) renderOrderPageForTable(currentTable);
+                }
+                if (quickSaleModal.classList.contains('active')) {
+                    renderProductGrid(quickSaleProductGrid, true);
+                }
+                if (editProductModal.classList.contains('active')) {
+                    populateSelectProductToEdit();
+                }
+            }
+            break;
+        case 'kds_initial_orders':
+            if (appState.user && appState.user.role === 'kitchen' && message.payload) {
+                if (message.payload.allTables) appState.allDefinedTablesForKDS = message.payload.allTables;
+                initializeKdsStaticGrid();
+                appState.kdsOrders = {};
+                if (message.payload.activeOrders) {
+                    message.payload.activeOrders.forEach(table => updateKdsTableOrders(table));
+                }
+                renderKdsOrders();
+            }
+            break;
+        case 'new_quick_sale_for_kds':
+             if (appState.user && appState.user.role === 'kitchen' && message.payload) {
+                const quickSaleOrderData = message.payload;
+                if (!appState.kdsOrders[quickSaleOrderData.id]) {
+                    appState.kdsOrders[quickSaleOrderData.id] = {
+                        tableName: quickSaleOrderData.name,
+                        waiterUsername: quickSaleOrderData.waiterUsername,
+                        items: [],
+                        lastUpdate: quickSaleOrderData.last_order_timestamp || Date.now(),
+                        kitchenStatusOverall: quickSaleOrderData.kitchen_status || 'new_order',
+                        isQuickSale: true,
+                        id: quickSaleOrderData.id
+                    };
+                }
+                // Sunucudan gelen kds_item_id'li item'ları işle
+                const kdsOrder = appState.kdsOrders[quickSaleOrderData.id];
+                kdsOrder.items = (quickSaleOrderData.order || []).map(item => ({
+                    ...item,
+                    kdsStatus: item.kds_status_mutfak || 'new'
+                }));
+                kdsOrder.lastUpdate = quickSaleOrderData.last_order_timestamp || Date.now();
+                renderKdsOrders();
+            }
+            break;
+        case 'table_customer_name_updated':
+            if(appState.currentTableId === message.payload.tableId && orderPageCustomerNameInput) {
+                orderPageCustomerNameInput.value = message.payload.customerName || '';
+            }
+            const tableInState = appState.tables.find(t => t.id === message.payload.tableId);
+            if(tableInState) {
+                tableInState.customerNameOnTable = message.payload.customerName;
+            }
+            renderTables(); // Müşteri adını ana masa görünümünde de göstermek için
+            break;
+        case 'main_menu_product_added':
+            alert(message.payload.message || "Yeni ürün menüye eklendi!");
+            break;
+        case 'main_menu_product_updated':
+            alert(message.payload.message || "Ürün menüde güncellendi!");
+            break;
+        case 'table_operation_success':
+            alert(message.payload.message || "Masa işlemi başarılı.");
+            break;
+        case 'table_operation_fail':
+            alert(message.payload.error || "Masa işlemi başarısız oldu.");
+            break;
+        case 'waiters_list':
+            if (message.payload && message.payload.waiters) {
+                appState.waiters = message.payload.waiters;
+                populateWaiterSelectsForManagement();
+            }
+            break;
+        case 'waiter_operation_success':
+            alert(message.payload.message || "Garson işlemi başarılı.");
+            sendMessageToServer('get_waiters_list', {});
+            break;
+        case 'waiter_operation_fail':
+            alert(message.payload.error || "Garson işlemi başarısız oldu.");
+            break;
+        case 'sales_report_data':
+            appState.salesReport = message.payload.sales || [];
+            renderSalesReport();
+            break;
+        case 'order_update_fail':
+            alert(message.payload.error || "Sipariş güncellenemedi.");
+            break;
+        case 'manual_order_update_fail':
+            alert(message.payload.error || "Manuel ürün eklenemedi.");
+            break;
+        case 'quick_sale_success':
+            appState.currentQuickSaleOrder = [];
+            renderQuickSaleOrder();
+            break;
+        case 'quick_sale_fail':
+            alert(message.payload.error || "Hızlı satış tamamlanamadı.");
+            break;
+        case 'error':
+            alert(message.payload.message || "Sunucuda bir hata oluştu.");
+            break;
+        default:
+            console.warn("Bilinmeyen mesaj tipi alındı:", message.type, message.payload);
+    }
+}function showLoginError(message) { loginError.textContent = message; passwordInput.value = ''; }
     function updateUIForRole() { if (!appState.user) return; const isCashier = appState.user.role === 'cashier'; const isWaiter = appState.user.role === 'waiter'; manualProductSection.classList.toggle('hidden', !isCashier); salesReportButton.classList.toggle('hidden', !isCashier); quickSaleButtonContainerTop.classList.toggle('hidden', !isCashier); addProductToMenuButton.classList.toggle('hidden', !isCashier); editProductMenuButton.classList.toggle('hidden', !isCashier); manageTablesButton.classList.toggle('hidden', !isCashier); manageWaitersButton.classList.toggle('hidden', !isCashier); finalizeAndCloseTableButton.classList.toggle('hidden', !isCashier); applyDiscountButton.classList.toggle('hidden', !isCashier); showReceiptButton.classList.toggle('hidden', !(isCashier || isWaiter)); applyQuickSaleDiscountButton.classList.toggle('hidden', !isCashier); productSearchInputOrderPage.classList.toggle('hidden', !(isCashier || isWaiter)); productSearchInputQuickSale.classList.toggle('hidden', !isCashier); logoutButton.textContent = "Uygulamadan Çık"; }
     let initialDataRendered = false; function renderInitialDataIfNeeded() { if (!initialDataRendered || appState.products.length > 0) { if (appState.user && appState.user.role !== 'kitchen') { renderProductGrid(orderPageProductGrid, false); renderProductGrid(quickSaleProductGrid, true); renderProductsForReference(); } populateManualCategorySelect(); populateNewProductCategorySelect(); populateEditProductCategorySelect(); initialDataRendered = true; } }
     function renderInitialData() { renderInitialDataIfNeeded(); }
