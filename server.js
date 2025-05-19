@@ -92,6 +92,11 @@ let nextProductId = currentProductId + 1;
 let tables = [];
 let nextTableIdCounter = 1;
 
+// KDS'de aktif olan Hızlı Satış siparişlerini geçici olarak tutmak için (sunucu yeniden başlarsa uçar)
+// Daha kalıcı bir çözüm için bu da veritabanına yazılabilir veya Redis gibi bir cache kullanılabilir.
+let activeQuickSalesForKDS = {};
+
+
 function initializeTables() {
     tables = [];
     let currentId = 1;
@@ -107,6 +112,7 @@ const clients = new Map();
 
 function broadcast(message) { const messageString = JSON.stringify(message); clients.forEach((userInfo, clientSocket) => { if (clientSocket.readyState === WebSocket.OPEN) { try { clientSocket.send(messageString); } catch (error) { clients.delete(clientSocket); } } }); }
 function broadcastToKitchen(message) { const messageString = JSON.stringify(message); clients.forEach((userInfo, clientSocket) => { if (userInfo && userInfo.role === 'kitchen' && clientSocket.readyState === WebSocket.OPEN) { try { clientSocket.send(messageString); } catch (error) { clients.delete(clientSocket); } } });}
+function broadcastToCashiers(message) { const messageString = JSON.stringify(message); clients.forEach((userInfo, clientSocket) => { if (userInfo && userInfo.role === 'cashier' && clientSocket.readyState === WebSocket.OPEN) { try { clientSocket.send(messageString); } catch (error) { clients.delete(clientSocket); } } });}
 function broadcastTableUpdates() { const tablesCopy = tables.map(t => ({...t, order: t.order.map(o => ({...o})) })); broadcast({ type: 'tables_update', payload: { tables: tablesCopy } }); }
 function fetchProductsFromDB() { return products.slice(); }
 async function broadcastProductsUpdate() { broadcast({ type: 'products_update', payload: { products: fetchProductsFromDB() } });}
@@ -240,14 +246,19 @@ wss.on('connection', (ws, req) => {
                     const quickSaleTimestamp = new Date();
                     const processedByQuickSale = payload.cashierUsername || currentUserInfo.username;
                     const customerName = payload.customerName || null;
-                    const quickSaleKdsId = 'qs_' + Date.now(); // KDS için benzersiz ID
+                    const quickSaleKdsId = 'qs_' + Date.now();
 
-                    const itemsForKds = payload.items.map(item => ({
-                        ...item,
-                        kds_item_id: 'kds_qs_item_' + Date.now() + '_' + Math.random().toString(16).slice(2) + '_' + (item.productId || 'manual'),
-                        kds_status_mutfak: 'new',
-                        waiterUsername: processedByQuickSale // Hızlı satışı yapan kişi
-                    }));
+                    const itemsForKds = payload.items.map(item => {
+                        const productDetails = products.find(p => p.id === item.productId); // Ürün detaylarını al
+                        return {
+                            ...item,
+                            name: item.name || (productDetails ? productDetails.name : 'Bilinmeyen Ürün'), // İsmi sağla
+                            category: item.category || (productDetails ? productDetails.category : 'Hızlı Satış'), // Kategoriyi sağla
+                            kds_item_id: 'kds_qs_item_' + Date.now() + '_' + Math.random().toString(16).slice(2) + '_' + (item.productId || 'manual'),
+                            kds_status_mutfak: 'new',
+                            waiterUsername: processedByQuickSale
+                        };
+                    });
 
                     const pseudoTableForKds = {
                         id: quickSaleKdsId,
@@ -259,13 +270,14 @@ wss.on('connection', (ws, req) => {
                         customerNameOnTable: customerName,
                         isQuickSale: true
                     };
-                    broadcast({ type: 'new_quick_sale_for_kds', payload: pseudoTableForKds });
+                    activeQuickSalesForKDS[quickSaleKdsId] = pseudoTableForKds; // Sunucuda da geçici olarak tut
+                    broadcastToKitchen({ type: 'new_quick_sale_for_kds', payload: pseudoTableForKds });
 
                     const clientQuickSaleDB = await pool.connect();
                     try {
                         await clientQuickSaleDB.query('BEGIN');
                         let totalQuickSaleAmount = 0;
-                        for (const item of payload.items) { // Orijinal itemları logla, kds_item_id'siz
+                        for (const item of payload.items) {
                             const itemPrice = parseFloat(item.priceAtOrder) || 0;
                             const itemQuantity = parseInt(item.quantity, 10) || 0;
                             const totalItemPrice = itemPrice * itemQuantity;
@@ -278,8 +290,7 @@ wss.on('connection', (ws, req) => {
                         ws.send(JSON.stringify({ type: 'quick_sale_success', payload: { message: 'Hızlı satış tamamlandı.'} }));
                         await logActivity(currentUserInfo.username, 'HIZLI_SATIS_TAMAMLANDI', { urunler: payload.items, toplam_tutar: totalQuickSaleAmount, islem_yapan: processedByQuickSale, orijinal_tutar: payload.originalTotal, indirim_tutari: payload.discountAmount, odenecek_tutar: payload.finalTotal, musteri_adi: customerName, kds_id: quickSaleKdsId }, 'QuickSale', null, clientIpAddress);
                     } catch (error) {
-                        await clientQuickSaleDB.query('ROLLBACK');
-                        console.error("DB Hatası:", error); ws.send(JSON.stringify({ type: 'quick_sale_fail', payload: { error: 'Hızlı satış kaydedilirken sorun.' } }));
+                        await clientQuickSaleDB.query('ROLLBACK'); console.error("DB Hatası:", error); ws.send(JSON.stringify({ type: 'quick_sale_fail', payload: { error: 'Hızlı satış kaydedilirken sorun.' } }));
                     } finally { clientQuickSaleDB.release(); }
                 } else { ws.send(JSON.stringify({ type: 'quick_sale_fail', payload: { error: 'Hızlı satış için ürün yok.' } }));}
                 break;
@@ -294,10 +305,100 @@ wss.on('connection', (ws, req) => {
             case 'add_waiter': if (!currentUserInfo || currentUserInfo.role !== 'cashier') { ws.send(JSON.stringify({ type: 'error', payload: { message: 'Yetkiniz yok.' } })); return; } if (payload && payload.username && payload.password) { if (users.find(u => u.username === payload.username)) { ws.send(JSON.stringify({ type: 'waiter_operation_fail', payload: { error: 'Kullanıcı adı mevcut.' } })); return; } const newWaiter = { id: (users.reduce((max, u) => u.id > max ? u.id : max, 0) || 0) + 1, username: payload.username, password: payload.password, role: 'waiter' }; users.push(newWaiter); broadcastWaitersList(); ws.send(JSON.stringify({ type: 'waiter_operation_success', payload: { message: `${newWaiter.username} eklendi.` } })); await logActivity(currentUserInfo.username, 'GARSON_EKLENDI', { garson_kullanici_adi: newWaiter.username }, 'User', newWaiter.id, clientIpAddress); } else { ws.send(JSON.stringify({ type: 'waiter_operation_fail', payload: { error: 'Eksik bilgi.' } }));} break;
             case 'edit_waiter_password': if (!currentUserInfo || currentUserInfo.role !== 'cashier') { ws.send(JSON.stringify({ type: 'error', payload: { message: 'Yetkiniz yok.' } })); return; } if (payload && payload.userId && payload.newPassword) { const waiterToEdit = users.find(u => u.id === parseInt(payload.userId) && u.role === 'waiter'); if (waiterToEdit) { waiterToEdit.password = payload.newPassword; ws.send(JSON.stringify({ type: 'waiter_operation_success', payload: { message: `${waiterToEdit.username} şifresi güncellendi.` } })); await logActivity(currentUserInfo.username, 'GARSON_SIFRE_GUNCELLEME', { garson_kullanici_adi: waiterToEdit.username }, 'User', waiterToEdit.id, clientIpAddress); } else { ws.send(JSON.stringify({ type: 'waiter_operation_fail', payload: { error: 'Garson bulunamadı.' } }));} } else { ws.send(JSON.stringify({ type: 'waiter_operation_fail', payload: { error: 'Eksik bilgi.' } }));} break;
             case 'delete_waiter': if (!currentUserInfo || currentUserInfo.role !== 'cashier') { ws.send(JSON.stringify({ type: 'error', payload: { message: 'Yetkiniz yok.' } })); return; } if (payload && payload.userId) { const waiterIndexToDelete = users.findIndex(u => u.id === parseInt(payload.userId) && u.role === 'waiter'); if (waiterIndexToDelete > -1) { const deletedWaiter = users.splice(waiterIndexToDelete, 1)[0]; broadcastWaitersList(); ws.send(JSON.stringify({ type: 'waiter_operation_success', payload: { message: `${deletedWaiter.username} silindi.` } })); await logActivity(currentUserInfo.username, 'GARSON_SILINDI', { garson_kullanici_adi: deletedWaiter.username }, 'User', deletedWaiter.id, clientIpAddress); } else { ws.send(JSON.stringify({ type: 'waiter_operation_fail', payload: { error: 'Garson bulunamadı.' } }));} } else { ws.send(JSON.stringify({ type: 'waiter_operation_fail', payload: { error: 'Eksik garson IDsi.' } }));} break;
-            case 'get_initial_kds_orders': if (currentUserInfo && currentUserInfo.role === 'kitchen') { const activeOrdersForKDS = tables.filter(t => t.status === 'dolu' && t.order && t.order.length > 0 && t.order.some(item => item.kds_status_mutfak !== 'delivered_to_customer')).map(t => ({ id: t.id, name: t.name, waiterUsername: t.waiterUsername, order: t.order.filter(item => item.kds_status_mutfak !== 'delivered_to_customer').map(item => ({ ...item })), kitchen_status: t.kitchen_status, last_order_timestamp: t.last_order_timestamp, customerNameOnTable: t.customerNameOnTable })); ws.send(JSON.stringify({ type: 'kds_initial_orders', payload: { activeOrders: activeOrdersForKDS, allTables: tables.map(t=>({id: t.id, name: t.name, type: t.type})) } })); } break;
-            case 'kds_item_status_change': if (currentUserInfo && currentUserInfo.role === 'kitchen' && payload && payload.tableId && payload.kds_item_id && payload.newStatus) { const table = tables.find(t => t.id === payload.tableId); if (table && table.order) { const itemInOrder = table.order.find(item => item.kds_item_id === payload.kds_item_id); if (itemInOrder) itemInOrder.kds_status_mutfak = payload.newStatus; const hasNew = table.order.some(it => it.kds_status_mutfak === 'new'); const hasPreparing = table.order.some(it => it.kds_status_mutfak === 'preparing'); const allReadyOrDelivered = table.order.every(it => it.kds_status_mutfak === 'ready' || it.kds_status_mutfak === 'delivered_to_customer'); const hasAnyReady = table.order.some(it => it.kds_status_mutfak === 'ready'); if (allReadyOrDelivered && hasAnyReady) table.kitchen_status = 'ready'; else if (hasPreparing) table.kitchen_status = 'preparing'; else if (hasNew) table.kitchen_status = 'new_order'; else if (table.order.every(it => it.kds_status_mutfak === 'delivered_to_customer')) table.kitchen_status = 'acknowledged'; else table.kitchen_status = 'acknowledged'; broadcastTableUpdates(); } } break;
-            case 'kds_table_status_change': if (currentUserInfo && currentUserInfo.role === 'kitchen' && payload && payload.tableId && payload.newStatusForAllItems) { const table = tables.find(t => t.id === payload.tableId); if (table && table.order) { table.order.forEach(item => { if (item.kds_status_mutfak !== 'delivered_to_customer' && (payload.newStatusForAllItems === 'preparing' ? item.kds_status_mutfak === 'new' : true) ) { item.kds_status_mutfak = payload.newStatusForAllItems; } }); if (payload.newStatusForAllItems === 'ready') { if (table.order.every(it => it.kds_status_mutfak === 'ready' || it.kds_status_mutfak === 'delivered_to_customer')) table.kitchen_status = 'ready'; } else if (payload.newStatusForAllItems === 'preparing') { table.kitchen_status = 'preparing'; } broadcastTableUpdates(); } } break;
-            case 'acknowledge_order_ready': if ((currentUserInfo.role === 'cashier' || currentUserInfo.role === 'waiter') && payload && payload.tableId) { const table = tables.find(t => t.id === payload.tableId); if (table) { table.kitchen_status = 'acknowledged'; if (table.order) { table.order.forEach(item => { if (item.kds_status_mutfak === 'ready') item.kds_status_mutfak = 'delivered_to_customer'; }); } broadcastTableUpdates(); } } break;
+            case 'get_initial_kds_orders': if (currentUserInfo && currentUserInfo.role === 'kitchen') { const activeTableOrders = tables.filter(t => t.status === 'dolu' && t.order && t.order.length > 0 && t.order.some(item => item.kds_status_mutfak !== 'delivered_to_customer')).map(t => ({ id: t.id, name: t.name, waiterUsername: t.waiterUsername, order: t.order.filter(item => item.kds_status_mutfak !== 'delivered_to_customer').map(item => ({ ...item })), kitchen_status: t.kitchen_status, last_order_timestamp: t.last_order_timestamp, customerNameOnTable: t.customerNameOnTable, isQuickSale: false })); const activeQuickSaleOrders = Object.values(activeQuickSalesForKDS).filter(qs => qs.order && qs.order.length > 0 && qs.order.some(item => item.kds_status_mutfak !== 'delivered_to_customer')); const allKdsOrders = [...activeTableOrders, ...activeQuickSaleOrders]; ws.send(JSON.stringify({ type: 'kds_initial_orders', payload: { activeOrders: allKdsOrders, allTables: tables.map(t=>({id: t.id, name: t.name, type: t.type})) } })); } break;
+            case 'kds_item_status_change':
+                if (currentUserInfo && currentUserInfo.role === 'kitchen' && payload && payload.tableId && payload.kds_item_id && payload.newStatus) {
+                    let targetOrderListOwner; // Bu ya bir masa ya da bir hızlı satış objesi olacak
+                    let isQuickSaleOrder = payload.tableId.startsWith('qs_');
+
+                    if (isQuickSaleOrder) {
+                        targetOrderListOwner = activeQuickSalesForKDS[payload.tableId];
+                    } else {
+                        targetOrderListOwner = tables.find(t => t.id === payload.tableId);
+                    }
+
+                    if (targetOrderListOwner && targetOrderListOwner.order) {
+                        const itemInOrder = targetOrderListOwner.order.find(item => item.kds_item_id === payload.kds_item_id);
+                        if (itemInOrder) itemInOrder.kds_status_mutfak = payload.newStatus;
+
+                        const hasNew = targetOrderListOwner.order.some(it => it.kds_status_mutfak === 'new');
+                        const hasPreparing = targetOrderListOwner.order.some(it => it.kds_status_mutfak === 'preparing');
+                        const allReadyOrDelivered = targetOrderListOwner.order.every(it => it.kds_status_mutfak === 'ready' || it.kds_status_mutfak === 'delivered_to_customer');
+                        const hasAnyReady = targetOrderListOwner.order.some(it => it.kds_status_mutfak === 'ready');
+
+                        if (allReadyOrDelivered && hasAnyReady) targetOrderListOwner.kitchen_status = 'ready';
+                        else if (hasPreparing) targetOrderListOwner.kitchen_status = 'preparing';
+                        else if (hasNew) targetOrderListOwner.kitchen_status = 'new_order';
+                        else if (targetOrderListOwner.order.every(it => it.kds_status_mutfak === 'delivered_to_customer')) targetOrderListOwner.kitchen_status = 'acknowledged';
+                        else targetOrderListOwner.kitchen_status = 'acknowledged';
+
+                        if (isQuickSaleOrder) {
+                            broadcastToKitchen({ type: 'kds_quick_sale_item_updated', payload: { quickSaleKdsId: payload.tableId, item: itemInOrder, overallKitchenStatus: targetOrderListOwner.kitchen_status } });
+                            if (targetOrderListOwner.kitchen_status === 'ready') {
+                                broadcastToCashiers({ type: 'notify_quick_sale_ready', payload: { quickSaleKdsId: payload.tableId, displayName: targetOrderListOwner.name } });
+                            }
+                        } else {
+                            broadcastTableUpdates();
+                        }
+                    }
+                }
+                break;
+            case 'kds_table_status_change':
+                 if (currentUserInfo && currentUserInfo.role === 'kitchen' && payload && payload.tableId && payload.newStatusForAllItems) {
+                    let targetOrderListOwner;
+                    let isQuickSaleOrder = payload.tableId.startsWith('qs_');
+                    if (isQuickSaleOrder) {
+                        targetOrderListOwner = activeQuickSalesForKDS[payload.tableId];
+                    } else {
+                        targetOrderListOwner = tables.find(t => t.id === payload.tableId);
+                    }
+
+                    if (targetOrderListOwner && targetOrderListOwner.order) {
+                        targetOrderListOwner.order.forEach(item => {
+                            if (item.kds_status_mutfak !== 'delivered_to_customer' && (payload.newStatusForAllItems === 'preparing' ? item.kds_status_mutfak === 'new' : true) ) {
+                                item.kds_status_mutfak = payload.newStatusForAllItems;
+                            }
+                        });
+                        if (payload.newStatusForAllItems === 'ready') {
+                             if (targetOrderListOwner.order.every(it => it.kds_status_mutfak === 'ready' || it.kds_status_mutfak === 'delivered_to_customer')) targetOrderListOwner.kitchen_status = 'ready';
+                        } else if (payload.newStatusForAllItems === 'preparing') {
+                            targetOrderListOwner.kitchen_status = 'preparing';
+                        }
+
+                        if (isQuickSaleOrder) {
+                             broadcastToKitchen({ type: 'kds_quick_sale_full_update', payload: targetOrderListOwner });
+                             if (targetOrderListOwner.kitchen_status === 'ready') {
+                                broadcastToCashiers({ type: 'notify_quick_sale_ready', payload: { quickSaleKdsId: payload.tableId, displayName: targetOrderListOwner.name } });
+                            }
+                        } else {
+                            broadcastTableUpdates();
+                        }
+                    }
+                 }
+                break;
+            case 'kds_clear_quick_sale': // KDS'den gelen hızlı satışı temizleme isteği
+                if (currentUserInfo && currentUserInfo.role === 'kitchen' && payload && payload.quickSaleKdsId) {
+                    if (activeQuickSalesForKDS[payload.quickSaleKdsId]) {
+                        delete activeQuickSalesForKDS[payload.quickSaleKdsId];
+                        // Diğer KDS ekranlarına da bu temizleme bilgisini gönder
+                        broadcastToKitchen({ type: 'kds_quick_sale_cleared_broadcast', payload: { quickSaleKdsId: payload.quickSaleKdsId }});
+                    }
+                }
+                break;
+            case 'acknowledge_order_ready':
+                if ((currentUserInfo.role === 'cashier' || currentUserInfo.role === 'waiter') && payload && payload.tableId) {
+                    const table = tables.find(t => t.id === payload.tableId);
+                    if (table) {
+                        table.kitchen_status = 'acknowledged';
+                        if (table.order) {
+                            table.order.forEach(item => {
+                                if (item.kds_status_mutfak === 'ready') item.kds_status_mutfak = 'delivered_to_customer';
+                            });
+                        }
+                        broadcastTableUpdates();
+                    }
+                }
+                break;
             case 'logout': if (currentUserInfo) { await logActivity(currentUserInfo.username, 'KULLANICI_CIKIS', {}, 'User', currentUserInfo.id, currentUserInfo.ip); clients.delete(ws); console.log(`Kullanıcı çıkış yaptı: ${currentUserInfo.username}`); } break;
             default: ws.send(JSON.stringify({ type: 'error', payload: { message: `Bilinmeyen mesaj tipi: ${type}` } }));
         }
